@@ -28,27 +28,29 @@ Everything else is a stretch. If something is not on this list, it waits until t
 ## 2. Architecture
 
 ```
- Browser (Next.js)                      Backend (Azure VM, Node + pm2, Caddy)
- ------------------                     -------------------------------------
- - market list/detail      HTTPS        - API (Fastify or Hono)
- - makes secret + hash   <------->      - Polymarket sync job
- - payment request QR                   - Deposit watcher (Zcash testnet)
- - reveal + receipt                     - Receipt signer
- - status by receipt code               - Reveal checker
-                                        - Settlement job (Merkle root, payouts)
-                                        - SQLite (encrypted disk)
-                                                 |
-                              +------------------+------------------+
-                              |                                     |
-                    Polymarket Gamma API                 Zcash testnet via public
-                    (read-only market data)              lightwalletd + wallet process
+ Browser (Next.js - Zero-POST Client)         Backend / Coordinator (Azure VM, Node + pm2, Caddy)
+ -----------------------------------         --------------------------------------------------
+ - Fetches markets (Read-Only)      HTTPS    - Polymarket sync job (mirrors public events)
+ - Generates local 16B secret     <-------   - ZingoClient singleton (mutex queue & lockfile)
+ - Timelock encrypts (side || secret)        - Deposit watcher (scans pot Orchard UA)
+   to drand Quicknet round                   - Automated Timelock Decryption (drand Quicknet beacon)
+ - Encrypts return address via tweetnacl     - Private Settlement (Coordinator X25519 SK)
+   to Coordinator settlement PK              - Parimutuel Settlement (fee-on-profit only)
+ - Displays ZIP-321 QR / URI                 - Shielded Payout dispatcher
+ - Receipt in localStorage ONLY              - SQLite (encrypted disk)
+ (ZERO HTTP POSTs to server!)                         |
+                                             +--------+--------+
+                                             |                 |
+                                   Polymarket Gamma API   Zcash testnet via lightwalletd
+                                   (read-only market)     (testnet.zec.rocks / zaino failover)
 ```
 
 Notes:
 
 - No smart contracts anywhere.
-- Spending key and viewing key live only on the backend VM (env or protected file, never in the repo).
-- Frontend calls our backend only. It never calls Polymarket directly, so the user's market interest does not leak to a third party.
+- Zero-POST Client: Bettors NEVER submit bets, receipts, or reveal data over HTTP. The server learns zero bettor IPs!
+- Memory-Safe VM execution: Single-concurrency mutex queue around `zingo-cli` + `/tmp/nocturne_zingo.lock` prevents OOM on the 1 GiB Azure VM.
+- Safe Public IVK Auditing: Publishing the Pot IVK allows anyone to verify `tlock_envelope` and audit pot tallies, while the winner's return address remains securely encrypted inside `payout_envelope`.
 
 ---
 
@@ -56,14 +58,16 @@ Notes:
 
 | Part            | Choice                                                                                                                         |
 | --------------- | ------------------------------------------------------------------------------------------------------------------------------ |
-| Frontend        | Next.js, TypeScript, Tailwind, shadcn/ui, Framer Motion. Host on Vercel or the same VM                                         |
+| Frontend        | Next.js, TypeScript, Tailwind, shadcn/ui, Framer Motion. Zero-POST bet preparation via WebCrypto                               |
 | Backend         | Node + TypeScript, Fastify or Hono                                                                                             |
 | DB              | SQLite with Drizzle or Prisma                                                                                                  |
 | Process manager | pm2 (or systemd)                                                                                                               |
 | Reverse proxy   | Caddy, access logs off or IP-stripped                                                                                          |
-| Zcash           | TS-first: wallet CLI or wallet library driven from the service, public testnet lightwalletd. Small Rust service only if needed |
-| Crypto helpers  | Standard hash (SHA-256) for commitments, a Merkle tree library, Ed25519 or secp256k1 for receipt signing                       |
-| Hosting limit   | VM has about 2 GB RAM. No full node, no Docker, no self-hosted Supabase                                                        |
+| Zcash Wallet    | `zingo-cli` singleton mutex queue (`ZingoClient`) + birthday guardrail (`tip_height - 100`)                                     |
+| Timelock Crypto | `tlock-js` pinned to drand Quicknet (`52db9ba7...`, 3s period)                                                                 |
+| Privacy Box     | `tweetnacl.box` with ephemeral X25519 keypair and deterministic nonce `SHA-256("NOC2_BOX_NONCE" \|\| ephem_pk \|\| market_id)`  |
+| Compression     | `@scure/base` Bech32m address compression (compresses Orchard UAs from ~110 chars to 61 bytes)                                 |
+
 
 ---
 
@@ -109,26 +113,40 @@ nocturne-markets/
 
 Never log commitments, memos or return addresses in plaintext application logs.
 
-### Memo format (draft, finalize on day 2)
+### Memo Format (Finalized V2 Dual-Envelope Specification)
 
-Fixed-size, padded to the same length every time:
+Valid ASCII UTF-8 string format (`NOC2:<base64url>~....`) padded to exactly 500 characters (strictly `<= 512 bytes` per ZIP-302):
 
-- version byte
-- commitment (32 bytes): SHA-256(side || secret || market_id)
-- return address (shielded, encoded)
-- padding
+1. **`version` (1B)**: `0x02`
+2. **`market_id` (4B)**: `UInt32BE` (numeric ID or SHA-256 slug prefix)
+3. **`tlock_envelope` (217B - Public Audit Envelope)**:
+   - Encrypted via `tlock-js` pinned to drand Quicknet (`52db9ba7...`, 3-sec period).
+   - Plaintext inside: `side (1B: 0x01=YES, 0x00=NO) || secret (16B random)`.
+   - Deterministic binary packing: `round_number (8B) || cipher_ibe (128B) || header_mac (32B) || stream_body (49B)`.
+   - `commitment = SHA-256(tlock_envelope)` (binds bet without wasting 32B in memo).
+4. **`payout_envelope` (110–130B - Private Settlement Envelope)**:
+   - User's Orchard UA compressed via `@scure/base` Bech32m to raw bytes (`~61 bytes`).
+   - Encrypted with `tweetnacl.box` using ephemeral X25519 keypair and Coordinator settlement public key.
+   - Nonce derived deterministically: `SHA-256("NOC2_BOX_NONCE" || ephem_pk || market_id_bytes)[0..24]`.
+   - Store: `ephem_pk (32B) || cipher_length (1B) || boxed_address (16B MAC + N bytes)`.
 
-### Payout formula
+### Parimutuel Payout Formula (Fee-on-Profit Only)
 
-payout = stake x (total pot / winning side pot), minus fee. Chip sizes fixed (draft: 1, 5, 10 test ZEC). Unrevealed bets: refund or forfeit, decide and document. Void or 50/50: refund everyone.
+All calculations executed in exact `BigInt` zatoshis (`1 ZEC = 100_000_000n zats`):
+1. **Single-Sided or Void Refund Rule**:
+   If `yesPot === 0n` OR `noPot === 0n` OR `outcome === 'VOID'`, market status becomes `REFUNDED`. Every bettor receives `stake - zip317TxFee`. Protocol fee is `0`.
+2. **Fee-on-Profit Settlement**:
+   - `distributableLosingPot = (losingPot * (10000n - feeBps)) / 10000n`
+   - `grossPayout_i = stake_i + (stake_i * distributableLosingPot) / winningPot`
+   - `netPayout_i = grossPayout_i - zip317FeePerRecipient`
+   - Conservation Invariant: `sum(grossPayout_i) + protocolFee <= totalPot`.
 
-### API (draft)
+### API (Zero-POST Design)
 
-- GET /markets, GET /markets/:id (cached from Polymarket)
-- POST /bets/prepare (returns pot address + payment request, no secrets stored)
-- GET /bets/status?receipt=...
-- POST /reveal (side + secret)
-- GET /markets/:id/results (totals, merkle root, formula, after close only)
+- `GET /api/markets`: Cached list of mirrored Polymarket events.
+- `GET /api/markets/:id`: Market details, close time, drand round, coordinator public key, and pot address.
+- `GET /api/markets/:id/audit`: (Post-close) Pot totals, commitments list, drand beacon, and Merkle root.
+- **ZERO WRITE ENDPOINTS**: No `/api/bets`, no `/api/reveal`, no HTTP receipts. Bettors generate URIs locally and pay on-chain!
 
 ---
 

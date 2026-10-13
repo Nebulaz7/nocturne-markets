@@ -137,14 +137,54 @@ nocture-markets/
 
 ---
 
-## 7. Active Focus & Immediate Next Actions
+---
+
+## 8. Architectural Upgrade Log: Zero-POST Timelock + Dual-Envelope Architecture (Oct 13, 2026)
+
+### Motivation & Strategic Value
+Before crossing into Phase 2, we upgraded our core Zcash memo and settlement architecture to eliminate three major attack vectors:
+1. **Free-Option Attack & IP Leaks**: In manual commit-reveal, bettors had to return online post-close to POST `(side, secret)` over HTTP. If losing bets were refunded, bettors could withhold reveals (free option); if confiscated, users suffered from connection drops. Moreover, HTTP POST leaked bettor IP addresses.
+2. **IVK Audit Address Leak**: In the original design, publishing the Pot Incoming Viewing Key (IVK) for public post-settlement audits would expose all bettors' return addresses to the public in plaintext memos.
+3. **VM OOM & Process Collisions**: The 1 GiB Azure VM encountered memory spikes and SQLite lock collisions during concurrent `zingo-cli` invocations.
+
+### Implemented Upgrades & Verified Metrics
+1. **Dual-Envelope Timelock Memos (`packages/shared/src/memo.ts`, `scripts/zcash/memo.ts`)**:
+   - Packaged into valid ASCII UTF-8 strings (`NOC2:<base64url>~....`) strictly padded to 500 characters (`<= 512 bytes` per ZIP-302 / ZIP-321).
+   - `tlock_envelope` (217 bytes): Encrypted with `tlock-js` pinned to drand Quicknet (`52db9ba7...`, 3s period). Unpacked from age IBE format into deterministic binary components (`round_number [8B] || cipher_ibe [128B] || header_mac [32B] || stream_body [49B]`).
+   - `commitment` defined as `SHA-256(tlock_envelope)` (binds bet without wasting 32 bytes in the memo).
+   - `payout_envelope` (110–130 bytes): Bettor's Orchard UA compressed via `@scure/base` Bech32m to raw bytes (110 chars $\rightarrow$ 61 bytes) and encrypted with `tweetnacl.box` to Coordinator static X25519 public key with deterministic nonce `SHA-256("NOC2_BOX_NONCE" || ephem_pk || market_id)[0..24]`.
+   - **IVK Audit Safe**: Anyone with Pot IVK can decrypt `tlock_envelope` to verify pot tallies once the drand round publishes, while bettors' return addresses remain confidential inside `payout_envelope`.
+2. **Fee-on-Profit Parimutuel Math (`packages/shared/src/parimutuel.ts`)**:
+   - Calculations performed in exact `BigInt` zatoshis (`1 ZEC = 100_000_000n zats`).
+   - **Fee on Profit Only**: Protocol fee (200 bps = 2%) taken strictly from the losing pot. Winning principal is never taxed.
+   - **Single-Sided / Void Refund Rule**: If `yesPot === 0n`, `noPot === 0n`, or `outcome === 'VOID'`, status becomes `REFUNDED` with `netPayout = stake - zip317TxFee`.
+   - Verified zero-dust invariant: `sum(grossPayouts) + protocolFee <= totalPot`.
+3. **Memory-Safe Singleton Mutex Queue (`scripts/zcash/zingo_client.ts`)**:
+   - In-process FIFO async queue (concurrency = 1) + cross-process filesystem lock (`/tmp/nocturne_zingo.lock` / OS temp).
+   - Failover support: Primary `https://testnet.zec.rocks:443`, fallback `https://zaino.testnet.unsafe.zec.rocks:443`.
+   - Birthday guardrail: Initialized with `--birthday <tip_height - 100>` to prevent full chain scans on the 1 GiB VM.
+4. **Zero-POST Client Architecture (`scripts/zcash/02_prepare_bet_request.ts`)**:
+   - Bettor generates `NOC2:` payment URI locally.
+   - Receipt stored strictly in browser `localStorage`.
+   - Zero HTTP write requests sent to server.
+5. **5-Minute Blitz Market Engine (`scripts/blitz/blitz_market_engine.ts`)**:
+   - Autonomous demo engine executing the complete lifecycle: `OPEN` (deposits) $\rightarrow$ `CLOSED` (drand round reached) $\rightarrow$ `TIMELOCK DECRYPT` (automated reveal) $\rightarrow$ `RESOLVED` (index price) $\rightarrow$ `SETTLED` (shielded payouts).
+6. **Cross-Platform Verification & Test Results**:
+   - Unit tests passed 100% locally on Windows 11 and remotely on Ubuntu 22.04 VM (`ssh nocturne`):
+     - `memo_dual_envelope.test.ts`: PASSED (including live drand Quicknet beacon decryption)
+     - `parimutuel.test.ts`: PASSED (all settlement invariants & refund rules)
+     - `pipeline_simulation.test.ts`: PASSED (end-to-end zero-POST timelock pipeline)
+     - `blitz_market_engine.ts`: PASSED (autonomous 5-minute lifecycle demo)
+
+---
+
+## 9. Active Focus & Immediate Next Actions
 
 ### Current Focus: Phase 2 — Coordinator Backend & DB (Days 4 - 8)
-1. **Database Schema & ORM**:
-   - Set up SQLite schema (Drizzle ORM or better-sqlite3) on the Azure VM for `markets`, `bets`, `reveals`, `payouts`, and `sync_state`.
-2. **Polymarket Sync Job**:
-   - Convert `scripts/polymarket/fetch_markets.ts` into a recurring background worker that populates active markets and monitors resolution.
-3. **Background Deposit Daemon**:
-   - Stand up the automated deposit watcher service on the VM to continuously scan for incoming bet notes and link them to database records.
-4. **API Endpoints (Fastify or Hono)**:
-   - `GET /markets`, `GET /markets/:id`, `POST /bets/prepare`, `GET /bets/status?receipt=...`, `POST /reveal`.
+1. **SQLite Database Schema**:
+   - Implement database schema for markets, detected commitments, settled payouts, and sync checkpoints.
+2. **Polymarket Sync Worker**:
+   - Run scheduled sync against Polymarket Gamma API to mirror popular prediction markets.
+3. **Automated Settlement Worker**:
+   - Poll drand Quicknet rounds and trigger timelock settlement upon market close.
+

@@ -97,16 +97,16 @@ GhostMarket, a confidential dark pool prediction market built on Zama FHEVM (Sep
 
 ---
 
-## 3. How it works (user flow)
+## 3. How it works (user flow: Zero-POST Dual-Envelope)
 
-No accounts, no login, no Privy, no wallet-connect.
+No accounts, no login, no Privy, no wallet-connect, and **Zero HTTP POSTs from bettors**.
 
 1. **Browse** mirrored markets. No signup.
-2. **Place a bet**: pick market, side, chip size. The browser generates a random secret and a commitment (hash of side + secret). The user saves a receipt code and provides a fresh shielded address for payout.
-3. **Pay** from any Zcash wallet (Zashi, Ywallet, etc.) to the market's single pot address. A payment request QR carries the memo (commitment + return address). The pot address is the same for YES and NO so the address never leaks the side.
-4. **Confirm**: the coordinator sees the deposit, waits for confirmations, and returns a signed receipt.
-5. **Reveal** after the market closes: the browser submits side + secret. The coordinator checks it against the stored commitment.
-6. **Resolve and payout**: Polymarket resolves. Winners are paid by shielded send to their return address, batched and delayed. Users check status with their receipt code.
+2. **Place a bet**: pick market, side, chip size. The browser generates a random 16-byte secret, timelock-encrypts `(side || secret)` to the market's drand Quicknet close round (`tlock-js`), and encrypts the bettor's shielded payout address to the Coordinator's X25519 settlement public key (`tweetnacl.box`).
+3. **Pay** from any Zcash wallet (Zashi, Ywallet, Zingo) to the single pot address. A standard ZIP-321 payment URI carries the 500-byte valid ASCII UTF-8 memo (`NOC2:<base64url>~....`). The pot address is the same for YES and NO, so the address never leaks the side.
+4. **Zero-POST Confirmation**: The user's receipt is stored strictly in browser `localStorage`. No HTTP write requests or receipts are submitted to the server.
+5. **Automated Timelock Settlement**: After market close, drand Quicknet publishes the round's randomness. The Coordinator automatically decrypts the `tlock` envelopes to reveal sides and tallies the pot. The bettor never needs to return online to reveal (eliminating free-option attacks and IP leaks).
+6. **Resolve and payout**: Polymarket resolves. The Coordinator decrypts the winners' private payout envelopes and broadcasts shielded payouts with fee-on-profit parimutuel math.
 
 Lost receipt code means lost ability to reveal. The UI must warn loudly and let users export a backup.
 
@@ -139,27 +139,27 @@ Three watchers: the public chain, the network/app layer, and our own coordinator
 
 | Leak                      | How it happens                       | Fix                                                                               |
 | ------------------------- | ------------------------------------ | --------------------------------------------------------------------------------- |
-| Operator sees side        | Side in plaintext memo               | Commit-reveal: memo has only a hash of side + secret                              |
-| Operator sees size        | Decrypts every incoming note         | Fixed chip sizes                                                                  |
+| Operator sees side        | Side in plaintext memo               | Zero-POST Timelock: memo has `tlock_envelope` (Quicknet age IBE)                  |
+| Free-option / IP leak     | Manual HTTP reveal after close       | Eliminated! Coordinator automatically decrypts using drand Quicknet round beacon  |
+| IVK Audit Payout Leak     | Plaintext return address in memo     | Dual-Envelope: return address encrypted with `tweetnacl.box` to Coordinator PK    |
+| Operator sees size        | Decrypts every incoming note         | Fixed chip sizes (1, 5, 10 ZEC)                                                   |
 | Deposit linked to payout  | Amounts and timing match             | Fresh payout address, batching, random delays, split payouts                      |
 | Operator steals pot       | One party holds spending key         | Stretch: TEE or FROST threshold custody                                           |
-| Operator lies about tally | Nobody can check                     | Signed receipts, Merkle root of commitments, published totals and formula         |
-| Transparent address leak  | Deposit from a t-address or exchange | Shielded-only deposits, warn in UI                                                |
-| Network leak              | IP logs, per-market Polymarket calls | Serve cached market list from our backend, no analytics, no IP logs, optional Tor |
+| Operator lies about tally | Nobody can check                     | Anyone with Pot IVK can verify `SHA-256(tlock)` and decrypt `tlock_envelope`      |
+| Transparent address leak  | Deposit from a t-address or exchange | Shielded-only deposits (Orchard UA), warn in UI                                   |
+| Network leak              | IP logs, per-market Polymarket calls | Zero-POST client: no HTTP writes, static read API, optional Tor                   |
 | Live pot sizes            | Pot growth reveals bet sizes         | Hide pots until close                                                             |
-| Memo size patterns        | Different lengths stand out          | Pad all memos to the same size                                                    |
+| Memo size patterns        | Different lengths stand out          | Pad all memos to identical 500-byte valid ASCII UTF-8 footprint (`NOC2:...~...`)  |
 
 ### Honest trust statement (goes in the README)
 
-The chain sees nothing about who bet what. The coordinator sees deposits and, after reveal, sides. Bets are not tied to real identities. We state this plainly and show the mitigations instead of claiming "fully private".
+The chain sees nothing about who bet what. The coordinator sees deposits and, after market close, timelock-decrypts sides via drand Quicknet. Bets are not tied to real identities or IP addresses. We state this plainly and show the mitigations instead of claiming "fully private".
 
-### Verifiability instead of contracts
+### Verifiability & Safe Public IVK Audits
 
-- Signed receipt per bet.
-- Merkle root of all commitments published at close.
-- Pot totals and the payout formula published at settlement.
-- Optional: publish the pot address incoming viewing key after settlement for full audit (reveals amounts and sides, not identities). Decide as a stated policy.
-- Void or 50/50 Polymarket outcome: everyone refunded.
+- **Public Audit Envelope (`tlock_envelope`)**: Anyone with the Pot Incoming Viewing Key (IVK) can independently decrypt every sealed bet once the drand Quicknet round is published and audit the exact tally.
+- **Private Settlement Envelope (`payout_envelope`)**: Encrypted specifically to the Coordinator's static settlement public key. Even if the Pot IVK is published to the world for post-settlement audits, users' return addresses remain 100% confidential.
+- **Fair Parimutuel Math**: Protocol fees (2%) are strictly deducted from the losing pot (profit), never from the winners' principal. Single-sided markets or void outcomes trigger automated full refunds (`stake - zip317TxFee`).
 
 ---
 
