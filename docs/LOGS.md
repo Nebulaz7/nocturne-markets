@@ -74,6 +74,10 @@
   * Initialized living log [`docs/LOGS.md`](file:///C:/Users/PC/desktop/coding/nocture-markets/docs/LOGS.md) for cross-session AI context persistence.
   * Configured Azure VM (`ssh nocturne`) with a 2 GB swapfile to guard against memory spikes on the 1 GiB RAM instance.
   * Created anti-hallucination reference repository in `docs/references/` (ZIP-321, ZIP-316, ZIP-317, Testnet Infrastructure, and Zcash Guardrails).
+  * Built and unit-tested ZIP-321 memo engine in `scripts/zcash/memo.ts` (100% roundtrip pass).
+  * Implemented bet preparation script (`02_prepare_bet_request.ts`), deposit watcher (`03_watch_deposits.ts`), and payout sender (`04_test_payout.ts`).
+  * Created and executed `scripts/zcash/pipeline_simulation.test.ts` — verified end-to-end secret generation $\rightarrow$ commitment hashing $\rightarrow$ memo decode $\rightarrow$ reveal verification $\rightarrow$ parimutuel math.
+  * Created VM environment setup script in `scripts/setup_vm_zcash.sh`.
 
 ---
 
