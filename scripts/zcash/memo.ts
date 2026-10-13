@@ -1,7 +1,24 @@
 import crypto from "crypto";
+export * from "../../packages/shared/src/memo.ts";
+import {
+  MEMO_VERSION_V2,
+  MAX_MEMO_BYTES,
+  TLOCK_ENVELOPE_BYTES,
+  TARGET_MEMO_LENGTH,
+  encodeBetMemoV2,
+  decodeBetMemoV2,
+  packTlockEnvelope,
+  unpackTlockEnvelope,
+  encryptPayoutEnvelope,
+  decryptPayoutEnvelope,
+  generateCoordinatorKeypair,
+  computeCommitment as computeCommitmentV2,
+  encodeZip321Memo,
+  decodeZip321Memo,
+  generateZip321PaymentUri,
+} from "../../packages/shared/src/memo.ts";
 
 export const MEMO_VERSION = 0x01;
-export const MAX_MEMO_BYTES = 512;
 export const COMMITMENT_BYTES = 32;
 
 export interface BetCommitmentData {
@@ -17,10 +34,10 @@ export interface DecodedBetMemo {
 }
 
 /**
- * Computes SHA-256 commitment for a bet:
+ * Legacy V1 commitment calculation:
  * SHA-256(side || secret || marketId)
  */
-export function computeCommitment(data: BetCommitmentData): Buffer {
+export function computeCommitmentV1(data: BetCommitmentData): Buffer {
   const secretBuffer = Buffer.from(data.secret, "hex");
   const payload = Buffer.concat([
     Buffer.from(data.side, "utf-8"),
@@ -31,13 +48,11 @@ export function computeCommitment(data: BetCommitmentData): Buffer {
 }
 
 /**
- * Packs the bet commitment and return address into a binary buffer:
- * [1B version] + [32B commitment] + [2B returnAddressLen] + [returnAddress bytes]
- * Followed by zero-padding up to 512 bytes.
+ * Packs legacy V1 bet memo into 512-byte buffer.
  */
 export function packBetMemo(params: {
   version?: number;
-  commitment: Buffer; // 32 bytes
+  commitment: Buffer;
   returnAddress: string;
 }): Buffer {
   const version = params.version ?? MEMO_VERSION;
@@ -46,7 +61,7 @@ export function packBetMemo(params: {
   }
 
   const addrBuffer = Buffer.from(params.returnAddress.trim(), "utf-8");
-  const headerLen = 1 + COMMITMENT_BYTES + 2; // 35 bytes
+  const headerLen = 1 + COMMITMENT_BYTES + 2;
   const totalLen = headerLen + addrBuffer.length;
 
   if (totalLen > MAX_MEMO_BYTES) {
@@ -55,7 +70,7 @@ export function packBetMemo(params: {
     );
   }
 
-  const buffer = Buffer.alloc(MAX_MEMO_BYTES, 0); // Pre-fill with 0x00 padding
+  const buffer = Buffer.alloc(MAX_MEMO_BYTES, 0);
   buffer.writeUInt8(version, 0);
   params.commitment.copy(buffer, 1);
   buffer.writeUInt16BE(addrBuffer.length, 33);
@@ -65,7 +80,7 @@ export function packBetMemo(params: {
 }
 
 /**
- * Unpacks binary memo bytes into structured commitment and return address.
+ * Unpacks legacy V1 memo buffer into structured data.
  */
 export function unpackBetMemo(buffer: Buffer): DecodedBetMemo {
   if (buffer.length < 35) {
@@ -87,46 +102,4 @@ export function unpackBetMemo(buffer: Buffer): DecodedBetMemo {
     commitment,
     returnAddress,
   };
-}
-
-/**
- * Encodes memo buffer into ZIP-321 base64url format:
- * - RFC 4648 section 5 alphabet (- and _)
- * - Trailing '=' padding characters MUST be removed.
- */
-export function encodeZip321Memo(buffer: Buffer): string {
-  return buffer
-    .toString("base64")
-    .replace(/\+/g, "-")
-    .replace(/\//g, "_")
-    .replace(/=+$/, "");
-}
-
-/**
- * Decodes ZIP-321 base64url string back to buffer.
- */
-export function decodeZip321Memo(base64url: string): Buffer {
-  let base64 = base64url.replace(/-/g, "+").replace(/_/g, "/");
-  while (base64.length % 4 !== 0) {
-    base64 += "=";
-  }
-  return Buffer.from(base64, "base64");
-}
-
-/**
- * Constructs a full ZIP-321 Payment URI:
- * zcash:<address>?amount=<amount>&memo=<base64url>&message=<msg>
- */
-export function generateZip321PaymentUri(params: {
-  address: string;
-  amountZec: number | string;
-  memoBase64url: string;
-  message?: string;
-}): string {
-  const { address, amountZec, memoBase64url, message } = params;
-  let uri = `zcash:${address}?amount=${amountZec}&memo=${memoBase64url}`;
-  if (message) {
-    uri += `&message=${encodeURIComponent(message)}`;
-  }
-  return uri;
 }

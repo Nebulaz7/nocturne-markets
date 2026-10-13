@@ -8,9 +8,13 @@
 
 | Host / URL | Port | Protocol | Status (Verified 2026-10-13) |
 | :--- | :--- | :--- | :--- |
-| `testnet.zec.rocks` | `443` | gRPC / TLS | **ONLINE / VERIFIED** (Primary recommended) |
-| `zaino.testnet.unsafe.zec.rocks` | `443` | gRPC / TLS | **ONLINE / VERIFIED** (Backup/Zaino stack) |
+| `testnet.zec.rocks` | `443` | gRPC / TLS | **ONLINE / PRIMARY** (Tested & Active) |
+| `zaino.testnet.unsafe.zec.rocks` | `443` | gRPC / TLS | **ONLINE / FAILOVER** (Zaino fallback) |
 | `testnet.lightwalletd.com` | `9067` | gRPC | Offline / DNS unresolvable |
+
+### Birthday Height & Memory Guardrails
+* To avoid OOM issues on 1 GiB RAM nodes, always initialize wallets with `--birthday <tip_height - 100>`.
+* All `zingo-cli` operations MUST pass through `ZingoClient` mutex queue (`/tmp/nocturne_zingo.lock`) to enforce single-concurrency execution.
 
 ---
 
