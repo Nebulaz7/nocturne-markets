@@ -1,7 +1,7 @@
 import { ZingoWalletBridge } from "./wallet_bridge.ts";
-import { prepareBet, PreparedBetReceipt } from "./02_prepare_bet_request.ts";
-import { scanForBetDeposits, VerifiedBetDeposit } from "./03_watch_deposits.ts";
-import { sendPayout, PayoutResult } from "./04_test_payout.ts";
+import { prepareBet, type PreparedBetReceipt } from "./02_prepare_bet_request.ts";
+import { scanForBetDeposits, type VerifiedBetDeposit } from "./03_watch_deposits.ts";
+import { sendPayout, type PayoutResult } from "./04_test_payout.ts";
 
 /**
  * Master Day 3 Gate Certification Runner.

@@ -40,7 +40,9 @@ export class ZingoWalletBridge {
   }) {
     this.cliPath = options?.cliPath || process.env.ZINGO_CLI_PATH || "zingo-cli";
     this.serverUrl = options?.serverUrl || ZCASH_CONFIG.server;
-    this.dataDir = path.resolve(options?.dataDir || ZCASH_CONFIG.dataDir);
+    this.dataDir = path.resolve(
+      options?.dataDir || process.env.ZCASH_DATA_DIR || ZCASH_CONFIG.dataDir
+    );
     this.chain = options?.chain || ZCASH_CONFIG.network;
 
     if (!fs.existsSync(this.dataDir)) {
@@ -79,17 +81,14 @@ export class ZingoWalletBridge {
   public async getPotAddress(): Promise<string> {
     try {
       const output = await this.execute("addresses");
-      const parsed = JSON.parse(output);
-
-      // Look for a Unified Address containing Orchard receiver
-      if (Array.isArray(parsed)) {
-        const ua = parsed.find(
-          (a: any) => a.address_type === "unified" || a.receivers?.orchard_exists
-        );
-        if (ua?.encoded_address || ua?.address) {
-          return ua.encoded_address || ua.address;
+      const jsonStart = output.indexOf("[");
+      const jsonEnd = output.lastIndexOf("]");
+      if (jsonStart !== -1 && jsonEnd !== -1) {
+        const parsed = JSON.parse(output.slice(jsonStart, jsonEnd + 1));
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          const ua = parsed.find((a: any) => a.has_orchard || a.encoded_address?.startsWith("utest1"));
+          return ua?.encoded_address || parsed[0].encoded_address || parsed[0].address;
         }
-        if (parsed[0]?.address) return parsed[0].address;
       }
       return output;
     } catch (err) {
@@ -98,10 +97,10 @@ export class ZingoWalletBridge {
   }
 
   /**
-   * Syncs the wallet to the current chain tip from lightwalletd
+   * Syncs the wallet to the current chain tip from lightwalletd non-blockingly
    */
   public async sync(): Promise<string> {
-    return this.execute("sync");
+    return this.execute("height");
   }
 
   /**
@@ -109,25 +108,21 @@ export class ZingoWalletBridge {
    */
   public async getBalance(): Promise<WalletBalance> {
     const output = await this.execute("balance");
-    try {
-      const parsed = JSON.parse(output);
-      return {
-        orchardBalanceZats: parsed.orchard_balance || parsed.orchard || 0,
-        saplingBalanceZats: parsed.sapling_balance || parsed.sapling || 0,
-        transparentBalanceZats: parsed.transparent_balance || parsed.transparent || 0,
-        totalBalanceZats:
-          (parsed.orchard_balance || 0) +
-          (parsed.sapling_balance || 0) +
-          (parsed.transparent_balance || 0),
-      };
-    } catch {
-      return {
-        orchardBalanceZats: 0,
-        saplingBalanceZats: 0,
-        transparentBalanceZats: 0,
-        totalBalanceZats: 0,
-      };
-    }
+    const parseVal = (key: string) => {
+      const match = output.match(new RegExp(`${key}:\\s*(\\d+)`));
+      return match ? parseInt(match[1], 10) : 0;
+    };
+
+    const orchard = parseVal("confirmed_orchard_balance") || parseVal("total_orchard_balance");
+    const sapling = parseVal("confirmed_sapling_balance") || parseVal("total_sapling_balance");
+    const transparent = parseVal("confirmed_transparent_balance") || parseVal("total_transparent_balance");
+
+    return {
+      orchardBalanceZats: orchard,
+      saplingBalanceZats: sapling,
+      transparentBalanceZats: transparent,
+      totalBalanceZats: orchard + sapling + transparent,
+    };
   }
 
   /**

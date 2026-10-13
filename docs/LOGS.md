@@ -139,9 +139,12 @@ nocture-markets/
 
 ## 7. Active Focus & Immediate Next Actions
 
-1. **Zcash Testnet Connectivity**:
-   - Test connection to `testnet.lightwalletd.com:9067` or `zaino.testnet.unsafe.zec.rocks:443`.
-   - Acquire testnet TAZ from the faucet into a test wallet.
-   - Stand up `zingo-cli` test script for Day 3 Gate.
-2. **Polymarket Gamma API Test**:
-   - Run a test script to inspect Polymarket's public API structure (`https://gamma-api.polymarket.com/events`).
+### Current Focus: Phase 2 — Coordinator Backend & DB (Days 4 - 8)
+1. **Database Schema & ORM**:
+   - Set up SQLite schema (Drizzle ORM or better-sqlite3) on the Azure VM for `markets`, `bets`, `reveals`, `payouts`, and `sync_state`.
+2. **Polymarket Sync Job**:
+   - Convert `scripts/polymarket/fetch_markets.ts` into a recurring background worker that populates active markets and monitors resolution.
+3. **Background Deposit Daemon**:
+   - Stand up the automated deposit watcher service on the VM to continuously scan for incoming bet notes and link them to database records.
+4. **API Endpoints (Fastify or Hono)**:
+   - `GET /markets`, `GET /markets/:id`, `POST /bets/prepare`, `GET /bets/status?receipt=...`, `POST /reveal`.

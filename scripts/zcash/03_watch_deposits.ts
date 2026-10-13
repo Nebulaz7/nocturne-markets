@@ -1,5 +1,5 @@
 import { ZingoWalletBridge } from "./wallet_bridge.ts";
-import { decodeZip321Memo, unpackBetMemo, DecodedBetMemo } from "./memo.ts";
+import { decodeZip321Memo, unpackBetMemo, type DecodedBetMemo } from "./memo.ts";
 import { ZCASH_CONFIG } from "./config.ts";
 
 export interface VerifiedBetDeposit {
