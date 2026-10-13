@@ -26,7 +26,9 @@ export interface PolymarketEvent {
   markets: PolymarketMarket[];
 }
 
-export async function fetchActivePolymarketEvents(limit: number = 5): Promise<PolymarketEvent[]> {
+export async function fetchActivePolymarketEvents(
+  limit: number = 5,
+): Promise<PolymarketEvent[]> {
   const url = `https://gamma-api.polymarket.com/events?limit=${limit}&active=true&closed=false&archived=false`;
   console.log(`Fetching active markets from Polymarket Gamma API: ${url}`);
 
@@ -38,7 +40,9 @@ export async function fetchActivePolymarketEvents(limit: number = 5): Promise<Po
   });
 
   if (!res.ok) {
-    throw new Error(`Polymarket API request failed with status ${res.status}: ${res.statusText}`);
+    throw new Error(
+      `Polymarket API request failed with status ${res.status}: ${res.statusText}`,
+    );
   }
 
   const data = (await res.json()) as PolymarketEvent[];
