@@ -178,13 +178,41 @@ Before crossing into Phase 2, we upgraded our core Zcash memo and settlement arc
 
 ---
 
-## 9. Active Focus & Immediate Next Actions
+---
 
-### Current Focus: Phase 2 — Coordinator Backend & DB (Days 4 - 8)
-1. **SQLite Database Schema**:
-   - Implement database schema for markets, detected commitments, settled payouts, and sync checkpoints.
-2. **Polymarket Sync Worker**:
-   - Run scheduled sync against Polymarket Gamma API to mirror popular prediction markets.
-3. **Automated Settlement Worker**:
-   - Poll drand Quicknet rounds and trigger timelock settlement upon market close.
+## 9. Phase 2 Step 1 Completed: SQLite Database Engine & Fastify Coordinator Backend (Oct 14, 2026)
+
+### Achievements & Architecture
+1. **Native SQLite Database Engine (`coordinator/src/db/`)**:
+   - Implemented using Node's native `node:sqlite` (`DatabaseSync`), achieving zero native build friction, zero C++ compilation dependencies, and native WAL mode performance.
+   - Comprehensive schema created:
+     - `markets`: `id`, `polymarket_id`, `title`, `slug`, `close_time`, `drand_round`, `status`, `outcome`, `pot_address`, `pot_uvk`, `merkle_root`, `total_pot_zats`, `yes_pot_zats`, `no_pot_zats`.
+     - `bets`: `id`, `market_id`, `commitment`, `amount_zats`, `tlock_envelope` (BLOB 217B), `payout_envelope` (BLOB), `deposit_txid`, `block_height`, `decrypted_side`, `status`.
+     - `payouts`: `id`, `market_id`, `bet_id`, `amount_zats`, `destination_address`, `txid`, `status`.
+     - `sync_state`: Key-value state tracking for light client sync height and oracle poll timestamps.
+   - Verified 100% test pass rate in [`coordinator/src/db/db.test.ts`](file:///C:/Users/PC/desktop/coding/nocture-markets/coordinator/src/db/db.test.ts).
+
+2. **Zero-POST Read-Only Fastify Backend (`coordinator/src/`)**:
+   - Initialized Fastify server with `@fastify/cors` and zero-IP-logging for privacy.
+   - Endpoints implemented:
+     - `GET /api/health`: Health status and service timestamp.
+     - `GET /api/markets`: Active and settled markets list with pots in Zats & ZEC.
+     - `GET /api/markets/:id`: Market details with `drand_round`, `pot_address`, and `coordinator_public_key` so the browser can construct dual-envelope timelock bets purely client-side.
+     - `GET /api/markets/:id/audit`: Post-settlement public audit endpoint returning revealed commitments, Merkle root, drand round, and published Pot UVK (while keeping user payout envelopes strictly confidential).
+   - Zero HTTP write endpoints (no `/bets/prepare`, no `/reveal`), eliminating bettor IP write leaks.
+   - Integration tests verified 100% in [`coordinator/src/coordinator.test.ts`](file:///C:/Users/PC/desktop/coding/nocture-markets/coordinator/src/coordinator.test.ts).
+
+---
+
+## 10. Active Focus & Immediate Next Actions
+
+### Current Focus: Phase 2 Step 2 — Background Workers & Settlement Automation (Days 4 - 8)
+1. **Deposit Watcher Daemon (`coordinator/src/jobs/depositWatcher.ts`)**:
+   - Continuously scan the pot wallet via `ZingoClient` mutex queue, parse incoming notes with `NOC2:` dual-envelope memos, and insert new bets into the database.
+2. **Polymarket Sync Worker (`coordinator/src/jobs/polymarketSync.ts`)**:
+   - Mirror popular Polymarket prediction markets periodically and seed initial markets.
+3. **Automated Timelock Decrypter & Settlement Worker (`coordinator/src/jobs/settlement.ts`)**:
+   - Monitor drand Quicknet rounds and automatically decrypt timelock envelopes upon market close.
+   - Compute fee-on-profit parimutuel settlements and dispatch shielded payouts via `ZingoClient` quicksend.
+
 
