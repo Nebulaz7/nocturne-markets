@@ -552,3 +552,33 @@ export function generateZip321PaymentUri(params: {
   }
   return uri;
 }
+
+/**
+ * Computes a standard SHA-256 Merkle root from an array of hex leaves (commitments).
+ * Duplicates odd leaf if odd number of elements per level.
+ */
+export function computeMerkleRoot(leaves: string[]): string {
+  if (leaves.length === 0) {
+    return "0".repeat(64);
+  }
+  let hashes: Buffer[] = leaves.map((leaf) => {
+    const buf = /^[0-9a-fA-F]{64}$/.test(leaf)
+      ? Buffer.from(leaf, "hex")
+      : Buffer.from(leaf, "utf-8");
+    return crypto.createHash("sha256").update(buf).digest();
+  });
+
+  while (hashes.length > 1) {
+    if (hashes.length % 2 === 1) {
+      hashes.push(hashes[hashes.length - 1]);
+    }
+    const nextLevel: Buffer[] = [];
+    for (let i = 0; i < hashes.length; i += 2) {
+      const combined = Buffer.concat([hashes[i], hashes[i + 1]]);
+      nextLevel.push(crypto.createHash("sha256").update(combined).digest());
+    }
+    hashes = nextLevel;
+  }
+
+  return hashes[0].toString("hex");
+}

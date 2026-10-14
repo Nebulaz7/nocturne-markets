@@ -204,15 +204,50 @@ Before crossing into Phase 2, we upgraded our core Zcash memo and settlement arc
 
 ---
 
-## 10. Active Focus & Immediate Next Actions
+## 10. Phase 2 Step 2 Completed: Background Workers & Automated Settlement Pipeline (Oct 14, 2026)
 
-### Current Focus: Phase 2 Step 2 — Background Workers & Settlement Automation (Days 4 - 8)
-1. **Deposit Watcher Daemon (`coordinator/src/jobs/depositWatcher.ts`)**:
-   - Continuously scan the pot wallet via `ZingoClient` mutex queue, parse incoming notes with `NOC2:` dual-envelope memos, and insert new bets into the database.
-2. **Polymarket Sync Worker (`coordinator/src/jobs/polymarketSync.ts`)**:
-   - Mirror popular Polymarket prediction markets periodically and seed initial markets.
-3. **Automated Timelock Decrypter & Settlement Worker (`coordinator/src/jobs/settlement.ts`)**:
-   - Monitor drand Quicknet rounds and automatically decrypt timelock envelopes upon market close.
-   - Compute fee-on-profit parimutuel settlements and dispatch shielded payouts via `ZingoClient` quicksend.
+### Achievements & Verification
+1. **Deposit Watcher Job (`coordinator/src/jobs/depositWatcher.ts`)**:
+   - Polls the pot wallet (via memory-safe `WalletBridgeLike` / `ZingoClient`), parses valid `NOC2:` dual-envelope memos, maps them to normalized market IDs via `normalizeMarketId()`, and idempotently commits bets to SQLite while atomically updating market pot totals.
+   - Tested duplicate ingestion defense: re-polling the same notes results in zero duplicates and perfectly preserved pot state.
+
+2. **Polymarket Sync & Rolling 5-Minute Blitz Engine (`coordinator/src/jobs/polymarketSync.ts`)**:
+   - Fetches active prediction events from Polymarket Gamma API (`https://gamma-api.polymarket.com/events?closed=false&limit=6`) with graceful offline fallback seeds.
+   - Computes deterministic `drand_round` for market close timestamps using drand Quicknet (`52db9ba7...`, 3s period).
+   - Seeds a rolling **5-Minute ZEC Blitz Market** (`blitz-btc-XXXX`) so hackathon judges and demo testers can experience the complete bet -> close -> timelock decrypt -> fee-on-profit payout flow in under 5 minutes without waiting days for real-world Polymarket events.
+
+3. **Automated Timelock Settlement Worker (`coordinator/src/jobs/settlement.ts`)**:
+   - Evaluates expired markets at close time and transitions status from `OPEN` to `CLOSED`.
+   - Batch decrypts all `tlock_envelope` payloads (using drand Quicknet beacon or mock fallback), revealing bettors' YES/NO sides.
+   - Computes standard SHA-256 Merkle root across all commitments in the market for public receipt verification.
+   - Resolves outcomes, computes fee-on-profit parimutuel shares ($2\%$ fee strictly on losing pot, 100% single-sided/void refund guarantee).
+   - Decrypts each winner's payout envelope using the Coordinator's X25519 static settlement private key (`decryptPayoutEnvelope()`), revealing their shielded Orchard/Sapling destination address while keeping it hidden from the public.
+   - Creates payout records and broadcasts shielded payments via `bridge.sendShieldedPayout()`.
+   - Publishes Pot UVK (`pot_uvk`) for post-settlement auditability and transitions market status to `SETTLED`.
+
+4. **Integrated Server Architecture (`coordinator/src/index.ts`)**:
+   - Added `enableWorkers` configuration to `buildApp()` with graceful shutdown (`app.addHook("onClose", ...)`).
+   - End-to-end integration test passing 100% on Windows and remote Ubuntu 22.04 LTS (Azure VM):
+     - [`coordinator/src/jobs/jobs.test.ts`](file:///C:/Users/PC/desktop/coding/nocture-markets/coordinator/src/jobs/jobs.test.ts)
+     - [`coordinator/src/coordinator.test.ts`](file:///C:/Users/PC/desktop/coding/nocture-markets/coordinator/src/coordinator.test.ts)
+     - [`coordinator/src/db/db.test.ts`](file:///C:/Users/PC/desktop/coding/nocture-markets/coordinator/src/db/db.test.ts)
+
+---
+
+## 11. Active Focus & Immediate Next Actions
+
+### Current Focus: Phase 3 — Modern Frontend Web UI (Days 9 - 13)
+1. **Next.js 16 Web Application (`app/`)**:
+   - Modern dark-mode UI with sleek cyberpunk/terminal styling matching Nocturne brand.
+   - Markets Feed: Displays mirrored Polymarket cards + 5-Minute Blitz Market with live countdown timers, odds, and pot sizes.
+2. **Client-Side Zero-POST Bet Slip (ZIP-321 QR Generator)**:
+   - User selects YES or NO and amount.
+   - Browser generates random 16-byte secret, timelock encrypts `(side, secret)` to drand Quicknet round, encrypts user's `utest1...` address to Coordinator X25519 PK, formats 500-byte `NOC2:` memo, and displays the standard ZIP-321 QR code for scanning in Zashi/YWallet.
+   - Saves bet receipt locally to `localStorage` (never transmits to server).
+3. **Local Receipt Vault & Settlement Tracker**:
+   - Tracks user's pending commitments against public `/api/markets/:id/audit` endpoint.
+   - Verifies Merkle inclusion proofs locally in the browser when market settles.
+4. **Public Viewing Key Audit Drawer**:
+   - Visualizes published Pot UVK, commitments list, and Merkle root for public auditability.
 
 

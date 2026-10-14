@@ -122,6 +122,16 @@ export class CoordinatorDatabase {
     stmt.run(potUvk, now, id);
   }
 
+  public updateMarketCloseTime(id: string, closeTime: number): void {
+    const now = Math.floor(Date.now() / 1000);
+    const stmt = this.db.prepare(`
+      UPDATE markets
+      SET close_time = ?, updated_at = ?
+      WHERE id = ?
+    `);
+    stmt.run(closeTime, now, id);
+  }
+
   // --- BETS ---
 
   public insertBet(params: {
