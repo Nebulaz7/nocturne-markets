@@ -103,6 +103,50 @@ function runDatabaseTests() {
   assert.strictEqual(db.getSyncState("non_existent_key", "100"), "100");
   console.log("✔ Sync state key-value store verified.");
 
+  // 7. Polymarket Slug Indexing and Event Sub-market Queries
+  const polyMarket1 = db.createMarket({
+    id: "poly-fomc-cut-25",
+    polymarket_id: "m-101",
+    title: "Fed Decision in October: 25 bps decrease",
+    slug: "fed-decision-in-october-cut-25",
+    event_slug: "fed-decision-in-october-20260617",
+    market_slug: "will-the-fed-decrease-rates-25-bps",
+    condition_id: "0xcond101",
+    question: "Will the Fed decrease interest rates by 25 bps?",
+    group_item_title: "25 bps decrease",
+    ref_yes_price: 0.85,
+    close_time: now + 3600,
+    drand_round: 33046000,
+    pot_address: "utest1potaddress123456789",
+  });
+
+  const polyMarket2 = db.createMarket({
+    id: "poly-fomc-cut-50",
+    polymarket_id: "m-102",
+    title: "Fed Decision in October: 50+ bps decrease",
+    slug: "fed-decision-in-october-cut-50",
+    event_slug: "fed-decision-in-october-20260617",
+    market_slug: "will-the-fed-decrease-rates-50-bps",
+    condition_id: "0xcond102",
+    question: "Will the Fed decrease interest rates by 50+ bps?",
+    group_item_title: "50+ bps decrease",
+    ref_yes_price: 0.05,
+    close_time: now + 3600,
+    drand_round: 33046000,
+    pot_address: "utest1potaddress123456789",
+  });
+
+  const foundByMarketSlug = db.getMarketBySlug("will-the-fed-decrease-rates-25-bps");
+  assert.strictEqual(foundByMarketSlug?.id, "poly-fomc-cut-25");
+  assert.strictEqual(foundByMarketSlug?.ref_yes_price, 0.85);
+
+  const foundByEventSlug = db.getMarketBySlug("fed-decision-in-october-20260617");
+  assert.ok(foundByEventSlug, "Should match by event_slug");
+
+  const subMarkets = db.listMarketsByEventSlug("fed-decision-in-october");
+  assert.strictEqual(subMarkets.length, 2, "Should return both sub-markets for the event");
+  console.log("✔ Polymarket slug indexing, event sub-markets, and reference price verified.");
+
   db.close();
   console.log("\n>>> ALL COORDINATOR DATABASE UNIT TESTS PASSED! <<<\n");
 }

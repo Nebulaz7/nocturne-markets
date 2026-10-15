@@ -28,6 +28,21 @@ export class CoordinatorDatabase {
     this.db.exec("PRAGMA foreign_keys = ON;");
     this.db.exec("PRAGMA journal_mode = WAL;");
     this.db.exec(SCHEMA_SQL);
+    this.migrateSchema();
+  }
+
+  private migrateSchema(): void {
+    const columns = this.db.prepare("PRAGMA table_info(markets)").all() as any[];
+    const colNames = new Set(columns.map((c) => c.name));
+    if (!colNames.has("event_slug")) this.db.exec("ALTER TABLE markets ADD COLUMN event_slug TEXT;");
+    if (!colNames.has("market_slug")) this.db.exec("ALTER TABLE markets ADD COLUMN market_slug TEXT;");
+    if (!colNames.has("condition_id")) this.db.exec("ALTER TABLE markets ADD COLUMN condition_id TEXT;");
+    if (!colNames.has("question")) this.db.exec("ALTER TABLE markets ADD COLUMN question TEXT;");
+    if (!colNames.has("group_item_title")) this.db.exec("ALTER TABLE markets ADD COLUMN group_item_title TEXT;");
+    if (!colNames.has("ref_yes_price")) this.db.exec("ALTER TABLE markets ADD COLUMN ref_yes_price REAL;");
+    this.db.exec("CREATE INDEX IF NOT EXISTS idx_markets_event_slug ON markets(event_slug);");
+    this.db.exec("CREATE INDEX IF NOT EXISTS idx_markets_market_slug ON markets(market_slug);");
+    this.db.exec("CREATE INDEX IF NOT EXISTS idx_markets_condition_id ON markets(condition_id);");
   }
 
   // --- MARKETS ---
@@ -37,6 +52,12 @@ export class CoordinatorDatabase {
     polymarket_id?: string | null;
     title: string;
     slug?: string | null;
+    event_slug?: string | null;
+    market_slug?: string | null;
+    condition_id?: string | null;
+    question?: string | null;
+    group_item_title?: string | null;
+    ref_yes_price?: number | null;
     close_time: number;
     drand_round: number;
     pot_address: string;
@@ -45,10 +66,11 @@ export class CoordinatorDatabase {
     const now = Math.floor(Date.now() / 1000);
     const stmt = this.db.prepare(`
       INSERT INTO markets (
-        id, polymarket_id, title, slug, close_time, drand_round, status,
+        id, polymarket_id, title, slug, event_slug, market_slug, condition_id,
+        question, group_item_title, ref_yes_price, close_time, drand_round, status,
         outcome, pot_address, pot_uvk, merkle_root, total_pot_zats,
         yes_pot_zats, no_pot_zats, created_at, updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, 'OPEN', NULL, ?, ?, NULL, 0, 0, 0, ?, ?)
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'OPEN', NULL, ?, ?, NULL, 0, 0, 0, ?, ?)
     `);
 
     stmt.run(
@@ -56,6 +78,12 @@ export class CoordinatorDatabase {
       params.polymarket_id ?? null,
       params.title,
       params.slug ?? null,
+      params.event_slug ?? null,
+      params.market_slug ?? null,
+      params.condition_id ?? null,
+      params.question ?? null,
+      params.group_item_title ?? null,
+      params.ref_yes_price ?? null,
       params.close_time,
       params.drand_round,
       params.pot_address,
@@ -71,6 +99,40 @@ export class CoordinatorDatabase {
     const stmt = this.db.prepare("SELECT * FROM markets WHERE id = ?");
     const row = stmt.get(id) as any;
     return row ? (row as MarketRecord) : null;
+  }
+
+  public getMarketBySlug(slug: string): MarketRecord | null {
+    const clean = slug.trim().toLowerCase();
+    const stmt = this.db.prepare(`
+      SELECT * FROM markets 
+      WHERE LOWER(market_slug) = ? 
+         OR LOWER(event_slug) = ? 
+         OR LOWER(slug) = ? 
+         OR id = ?
+      LIMIT 1
+    `);
+    const row = stmt.get(clean, clean, clean, slug) as any;
+    return row ? (row as MarketRecord) : null;
+  }
+
+  public listMarketsByEventSlug(eventSlug: string): MarketRecord[] {
+    const clean = eventSlug.trim().toLowerCase();
+    const stmt = this.db.prepare(`
+      SELECT * FROM markets 
+      WHERE LOWER(event_slug) = ? OR LOWER(event_slug) LIKE ?
+      ORDER BY close_time ASC
+    `);
+    return (stmt.all(clean, `${clean}%`) as any[]) as MarketRecord[];
+  }
+
+  public updateMarketRefPrice(id: string, refYesPrice: number): void {
+    const now = Math.floor(Date.now() / 1000);
+    const stmt = this.db.prepare(`
+      UPDATE markets 
+      SET ref_yes_price = ?, updated_at = ?
+      WHERE id = ?
+    `);
+    stmt.run(refYesPrice, now, id);
   }
 
   public listMarkets(filter?: { status?: MarketStatus }): MarketRecord[] {

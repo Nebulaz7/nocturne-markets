@@ -234,20 +234,42 @@ Before crossing into Phase 2, we upgraded our core Zcash memo and settlement arc
 
 ---
 
-## 11. Active Focus & Immediate Next Actions
+## 11. Zero-Leak "Shield Any Polymarket Link" Teleporter + URL Prefix Route (Oct 15, 2026)
 
-### Current Focus: Phase 3 — Modern Frontend Web UI (Days 9 - 13)
-1. **Next.js 16 Web Application (`app/`)**:
-   - Modern dark-mode UI with sleek cyberpunk/terminal styling matching Nocturne brand.
-   - Markets Feed: Displays mirrored Polymarket cards + 5-Minute Blitz Market with live countdown timers, odds, and pot sizes.
-2. **Client-Side Zero-POST Bet Slip (ZIP-321 QR Generator)**:
-   - User selects YES or NO and amount.
-   - Browser generates random 16-byte secret, timelock encrypts `(side, secret)` to drand Quicknet round, encrypts user's `utest1...` address to Coordinator X25519 PK, formats 500-byte `NOC2:` memo, and displays the standard ZIP-321 QR code for scanning in Zashi/YWallet.
-   - Saves bet receipt locally to `localStorage` (never transmits to server).
-3. **Local Receipt Vault & Settlement Tracker**:
-   - Tracks user's pending commitments against public `/api/markets/:id/audit` endpoint.
-   - Verifies Merkle inclusion proofs locally in the browser when market settles.
-4. **Public Viewing Key Audit Drawer**:
-   - Visualizes published Pot UVK, commitments list, and Merkle root for public auditability.
+### Achievements & Architecture
+1. **Bulk Background Pre-Indexing (`coordinator/src/jobs/polymarketSync.ts`)**:
+   - Paginates Polymarket Gamma API in batches of 100 up to 300 active events (~4,000+ binary sub-markets) every 5 minutes.
+   - Extracts `event_slug`, `market_slug`, `condition_id`, `question`, `group_item_title`, and `ref_yes_price`.
+   - Filters strictly for binary `["Yes", "No"]` markets.
+   - SQLite schema migrated with non-destructive `ALTER TABLE` checks and indexed lookups on `event_slug`, `market_slug`, and `condition_id`.
+
+2. **Pure In-Memory URL Parser & Matcher (`packages/shared/src/polymarket_url.ts` & `app/lib/polymarket_url.ts`)**:
+   - **Zero-Network Guarantee**: Matching happens 100% locally in browser memory against pre-fetched active markets. No ad-hoc HTTP queries are ever sent to Polymarket or our coordinator when a user pastes or types a link, eliminating market interest profiling and IP timing attacks.
+   - Handles all 9 URL variants: event URLs, nested sub-market URLs, query strings, anchor hashes, mobile/short links (`/e/`, `/m/`), address-bar prepends (`nocturnemarkets.cv/https://polymarket.com/...`), mangled double-slash paths, and raw slugs.
+   - Fuzzy prefix/suffix slug matcher handles Polymarket's appended timestamps and hashes (e.g. `fed-decision-in-october` matches `fed-decision-in-october-20260617190323537`).
+   - Automatically resolves single-market events directly, and provides structured sub-market disambiguation for multi-bracket events (e.g. FOMC rate cut brackets).
+   - 100% test pass rate in [`packages/shared/src/polymarket_url.test.ts`](file:///C:/Users/PC/desktop/coding/nocture-markets/packages/shared/src/polymarket_url.test.ts).
+
+3. **Command Bar & URL-Prefix Catch-All Route (`app/`)**:
+   - [`app/components/ShieldUrlBar.tsx`](file:///C:/Users/PC/desktop/coding/nocture-markets/app/components/ShieldUrlBar.tsx): Sleek dark-mode command bar on homepage with live paste detection, neon verification badge (`🛡️ Zero-Leak Local Match — 100% in-memory resolution (No network query sent)`), and 1-click outcome selector.
+   - [`app/app/[...polyUrl]/page.tsx`](file:///C:/Users/PC/desktop/coding/nocture-markets/app/app/%5B...polyUrl%5D/page.tsx): Next.js catch-all route supporting direct address bar prepend (`nocturnemarkets.cv/https://polymarket.com/event/...`) with automatic teleportation to the corresponding shielded market.
+   - [`app/app/market/[id]/page.tsx`](file:///C:/Users/PC/desktop/coding/nocture-markets/app/app/market/%5Bid%5D/page.tsx): Market detail view with pot metrics, closing timestamps, drand Quicknet beacon round, and shielded pool status.
+   - Successfully verified with Next.js 16.4.0 Turbopack production build (`pnpm --dir app build`).
+
+---
+
+## 12. Active Focus & Immediate Next Actions
+
+### Current Focus: Phase 3 — Complete Frontend Web UI & Bet Slip (Days 9 - 13)
+1. **Zero-POST Bet Slip Modal (`app/components/BetSlipModal.tsx`)**:
+   - Local browser form (Amount in ZEC, Side: YES/NO).
+   - Uses WebCrypto + `@scure/base` to timelock encrypt `(side, secret)` to target `drand_round` and box return address to Coordinator's X25519 PK.
+   - Generates and displays ZIP-321 payment QR code (`zcash:utest1...?amount=X&memo=NOC2:...`) for instant mobile wallet scanning (Zashi / YWallet).
+2. **Local Receipt Vault (`localStorage`)**:
+   - Saves `PreparedBetReceiptV2` locally in browser with secret, commitment hash, market ID, and timestamp.
+   - Never exposes secret or return address to the network.
+3. **Receipt Verifier & Public IVK Audit Drawer**:
+   - Queries `/api/markets/:id/audit` to show public Merkle root, revealed commitments list, and published Pot UVK post-settlement.
+   - Verifies local user receipt against published Merkle root client-side.
 
 

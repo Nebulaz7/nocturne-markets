@@ -19,7 +19,9 @@
       }
     ],
     "paths": {
-      "@/*": ["./*"]
+      "@/*": ["./*"],
+      "@nocturne/shared": ["../packages/shared/src/index.ts"],
+      "@nocturne/shared/*": ["../packages/shared/src/*"]
     }
   },
   "include": [

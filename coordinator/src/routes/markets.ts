@@ -14,15 +14,26 @@ export const marketRoutes: FastifyPluginAsync<MarketRoutesOptions> = async (
 
   /**
    * GET /api/markets
-   * Returns list of all mirrored markets with pot sizes and status.
+   * Returns list of all mirrored markets with pot sizes, slug metadata, and status.
    */
-  fastify.get("/api/markets", async (_req, reply) => {
-    const markets = db.listMarkets();
+  fastify.get<{ Querystring: { event_slug?: string; status?: any } }>("/api/markets", async (req, reply) => {
+    const { event_slug, status } = req.query;
+
+    let markets = event_slug
+      ? db.listMarketsByEventSlug(event_slug)
+      : db.listMarkets(status ? { status } : undefined);
+
     const formatted = markets.map((m) => ({
       id: m.id,
       polymarket_id: m.polymarket_id,
       title: m.title,
       slug: m.slug,
+      event_slug: m.event_slug || null,
+      market_slug: m.market_slug || null,
+      condition_id: m.condition_id || null,
+      question: m.question || null,
+      group_item_title: m.group_item_title || null,
+      ref_yes_price: m.ref_yes_price ?? null,
       close_time: m.close_time,
       drand_round: m.drand_round,
       status: m.status,
@@ -46,13 +57,18 @@ export const marketRoutes: FastifyPluginAsync<MarketRoutesOptions> = async (
    */
   fastify.get<{ Params: { id: string } }>("/api/markets/:id", async (req, reply) => {
     const { id } = req.params;
-    const market = db.getMarket(id);
+    let market = db.getMarket(id);
+
+    if (!market) {
+      // Fallback search by slug or event_slug
+      market = db.getMarketBySlug(id);
+    }
 
     if (!market) {
       return reply.status(404).send({ error: `Market '${id}' not found` });
     }
 
-    const betsCount = db.listBetsForMarket(id).length;
+    const betsCount = db.listBetsForMarket(market.id).length;
 
     return reply.send({
       market: {
@@ -60,6 +76,12 @@ export const marketRoutes: FastifyPluginAsync<MarketRoutesOptions> = async (
         polymarket_id: market.polymarket_id,
         title: market.title,
         slug: market.slug,
+        event_slug: market.event_slug || null,
+        market_slug: market.market_slug || null,
+        condition_id: market.condition_id || null,
+        question: market.question || null,
+        group_item_title: market.group_item_title || null,
+        ref_yes_price: market.ref_yes_price ?? null,
         close_time: market.close_time,
         drand_round: market.drand_round,
         status: market.status,
