@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
 const COORDINATOR_URL =
   process.env.NEXT_PUBLIC_COORDINATOR_URL ||
   process.env.COORDINATOR_URL ||
-  "http://127.0.0.1:3001";
+  "http://127.0.0.1:3000";
 
 async function getMarkets(): Promise<MarketSummary[]> {
   try {
@@ -56,10 +56,15 @@ export default async function HomePage() {
             <span>drand Quicknet + Dual-Envelope Shielded Pools</span>
           </div>
           <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight text-white mb-3">
-            Public Prices. <span className="bg-gradient-to-r from-cyan-400 to-indigo-400 bg-clip-text text-transparent">Private People.</span>
+            Public Prices.{" "}
+            <span className="bg-gradient-to-r from-cyan-400 to-indigo-400 bg-clip-text text-transparent">
+              Private People.
+            </span>
           </h1>
           <p className="text-sm sm:text-base text-zinc-400 leading-relaxed">
-            Mirror real-world Polymarket events with shielded Zcash parimutuel pools. Zero-POST timelock encryption guarantees zero IP write leaks and game-theory safety.
+            Mirror real-world Polymarket events with shielded Zcash parimutuel
+            pools. Zero-POST timelock encryption guarantees zero IP write leaks
+            and game-theory safety.
           </p>
         </div>
 
@@ -87,7 +92,8 @@ export default async function HomePage() {
           {markets.length === 0 ? (
             <div className="p-12 text-center rounded-2xl bg-zinc-950 border border-zinc-900">
               <p className="text-zinc-400 text-sm">
-                No active markets indexed yet. Coordinator service is starting up...
+                No active markets indexed yet. Coordinator service is starting
+                up...
               </p>
             </div>
           ) : (
@@ -131,10 +137,15 @@ export default async function HomePage() {
                       <span>
                         Pot:{" "}
                         <strong className="text-zinc-200">
-                          {m.total_pot_zec ? m.total_pot_zec.toFixed(2) : "0.00"} ZEC
+                          {m.total_pot_zec
+                            ? m.total_pot_zec.toFixed(2)
+                            : "0.00"}{" "}
+                          ZEC
                         </strong>
                       </span>
-                      <span className="text-cyan-400 font-medium">Trade Shielded →</span>
+                      <span className="text-cyan-400 font-medium">
+                        Trade Shielded →
+                      </span>
                     </div>
                   </Link>
                 );
@@ -146,21 +157,30 @@ export default async function HomePage() {
         {/* Zero-POST Security Pillars */}
         <section className="w-full mt-16 pt-12 border-t border-zinc-900 grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="p-5 rounded-xl bg-zinc-950/60 border border-zinc-900">
-            <h4 className="text-sm font-bold text-white mb-1">Zero-POST Timelock</h4>
+            <h4 className="text-sm font-bold text-white mb-1">
+              Zero-POST Timelock
+            </h4>
             <p className="text-xs text-zinc-400 leading-relaxed">
-              No HTTP write calls. Bets are sealed to the drand Quicknet beacon and decrypted automatically by the network.
+              No HTTP write calls. Bets are sealed to the drand Quicknet beacon
+              and decrypted automatically by the network.
             </p>
           </div>
           <div className="p-5 rounded-xl bg-zinc-950/60 border border-zinc-900">
-            <h4 className="text-sm font-bold text-white mb-1">Dual-Envelope Memos</h4>
+            <h4 className="text-sm font-bold text-white mb-1">
+              Dual-Envelope Memos
+            </h4>
             <p className="text-xs text-zinc-400 leading-relaxed">
-              Timelock envelope is public for post-close audit; payout return address is boxed with NaCl to Coordinator only.
+              Timelock envelope is public for post-close audit; payout return
+              address is boxed with NaCl to Coordinator only.
             </p>
           </div>
           <div className="p-5 rounded-xl bg-zinc-950/60 border border-zinc-900">
-            <h4 className="text-sm font-bold text-white mb-1">Fee on Profit Only</h4>
+            <h4 className="text-sm font-bold text-white mb-1">
+              Fee on Profit Only
+            </h4>
             <p className="text-xs text-zinc-400 leading-relaxed">
-              2% protocol fee is strictly taken from the losing pool. Winners always get 100% of their principal back.
+              2% protocol fee is strictly taken from the losing pool. Winners
+              always get 100% of their principal back.
             </p>
           </div>
         </section>

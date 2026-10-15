@@ -5,7 +5,13 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev:backend": "node --experimental-strip-types coordinator/src/index.ts",
+    "dev:frontend": "pnpm --dir app dev",
+    "test:db": "node --experimental-strip-types coordinator/src/db/db.test.ts",
+    "test:coordinator": "node --experimental-strip-types coordinator/src/coordinator.test.ts",
+    "test:jobs": "node --experimental-strip-types coordinator/src/jobs/jobs.test.ts",
+    "test:url": "node --experimental-strip-types packages/shared/src/polymarket_url.test.ts",
+    "test": "node --experimental-strip-types packages/shared/src/polymarket_url.test.ts && node --experimental-strip-types coordinator/src/db/db.test.ts && node --experimental-strip-types coordinator/src/coordinator.test.ts"
   },
   "keywords": [],
   "author": "",

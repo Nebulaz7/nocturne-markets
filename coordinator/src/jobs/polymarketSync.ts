@@ -45,7 +45,7 @@ export async function syncPolymarketMarketsOnce(
 
       const res = await fetch(url, {
         headers: { "User-Agent": "NocturneMarkets/0.2.0" },
-        signal: AbortSignal.timeout(8000),
+        signal: AbortSignal.timeout(15000),
       });
 
       if (!res.ok) {

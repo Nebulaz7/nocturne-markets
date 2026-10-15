@@ -3,6 +3,14 @@ import path from "path";
 import nacl from "tweetnacl";
 import { ZCASH_CONFIG } from "../../scripts/zcash/config.ts";
 
+if (typeof process.loadEnvFile === "function") {
+  try {
+    process.loadEnvFile();
+  } catch {
+    // .env file optional
+  }
+}
+
 export interface CoordinatorConfig {
   port: number;
   host: string;
@@ -16,7 +24,9 @@ export interface CoordinatorConfig {
   corsOrigin: boolean | string;
 }
 
-const DATA_DIR = path.resolve(process.env.NOCTURNE_DATA_DIR || "./nocturne-data");
+const DATA_DIR = path.resolve(
+  process.env.NOCTURNE_DATA_DIR || "./nocturne-data",
+);
 if (!fs.existsSync(DATA_DIR)) {
   fs.mkdirSync(DATA_DIR, { recursive: true });
 }
@@ -57,9 +67,9 @@ function getOrCreateSettlementKeypair(): {
         secretKey: Buffer.from(generated.secretKey).toString("hex"),
       },
       null,
-      2
+      2,
     ),
-    "utf-8"
+    "utf-8",
   );
 
   return generated;
@@ -68,8 +78,14 @@ function getOrCreateSettlementKeypair(): {
 const settlementKeypair = getOrCreateSettlementKeypair();
 
 export const COORDINATOR_CONFIG: CoordinatorConfig = {
-  port: parseInt(process.env.PORT || "3001", 10),
-  host: process.env.HOST || "0.0.0.0",
+  port: parseInt(
+    process.env.COORDINATOR_PORT ||
+      (process.env.PORT && process.env.PORT !== "3000"
+        ? process.env.PORT
+        : "3000"),
+    10,
+  ),
+  host: process.env.HOST || "127.0.0.1",
   dataDir: DATA_DIR,
   dbPath: path.join(DATA_DIR, "nocturne.sqlite"),
   potAddress:

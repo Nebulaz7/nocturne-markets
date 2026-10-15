@@ -10,13 +10,14 @@ import {
   zecToZats,
   type BetPosition,
 } from "../../../packages/shared/src/parimutuel.ts";
+import type { WalletBridgeLike } from "./depositWatcher.ts";
 import { ZingoWalletBridge } from "../../../scripts/zcash/wallet_bridge.ts";
 
 export interface SettlementWorkerOptions {
   db: CoordinatorDatabase;
   coordinatorSecretKey: Uint8Array;
   potUvk?: string;
-  bridge?: ZingoWalletBridge;
+  bridge?: WalletBridgeLike | ZingoWalletBridge;
   mockDrand?: boolean;
 }
 
