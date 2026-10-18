@@ -52,7 +52,7 @@ function cleanPrefixes(raw: string): string {
     const before = s;
 
     // Strip Nocturne domains / localhost
-    s = s.replace(/^(?:https?:\/?\/?)?(?:www\.)?nocturnemarkets\.(?:cv|com|xyz|org|net)\/?/i, "");
+    s = s.replace(/^(?:https?:\/?\/?)?(?:www\.)?nocturnemarkets\.(?:tech|cv|com|xyz|org|net)\/?/i, "");
     s = s.replace(/^(?:https?:\/?\/?)?localhost(?::\d+)?\/?/i, "");
 
     // Strip Polymarket domains

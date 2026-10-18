@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { BetSlipModal } from "./BetSlipModal";
 import { MyBetsDrawer } from "./MyBetsDrawer";
+import { AuditDrawer } from "./AuditDrawer";
 import type { BetSide } from "@/lib/bet_builder";
 
 export interface MarketTradeViewProps {
@@ -26,6 +27,7 @@ export function MarketTradeView({ market }: MarketTradeViewProps) {
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedSide, setSelectedSide] = useState<BetSide>("YES");
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [auditOpen, setAuditOpen] = useState(false);
 
   const openBetModal = (side: BetSide) => {
     setSelectedSide(side);
@@ -47,6 +49,14 @@ export function MarketTradeView({ market }: MarketTradeViewProps) {
         </Link>
 
         <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => setAuditOpen(true)}
+            className="px-3 py-1 rounded-full bg-zinc-900 border border-zinc-700 hover:border-cyan-500/50 text-xs font-mono text-zinc-300 hover:text-cyan-300 transition-colors flex items-center gap-1.5"
+          >
+            <span>🔍 Public Audit & Proofs</span>
+          </button>
+
           <button
             type="button"
             onClick={() => setDrawerOpen(true)}
@@ -171,6 +181,16 @@ export function MarketTradeView({ market }: MarketTradeViewProps) {
               {market.pot_address}
             </span>
           </div>
+
+          <div className="pt-2 border-t border-zinc-800 flex justify-end">
+            <button
+              type="button"
+              onClick={() => setAuditOpen(true)}
+              className="text-xs font-mono text-cyan-400 hover:text-cyan-300 hover:underline flex items-center gap-1"
+            >
+              <span>Inspect Merkle Root & Inclusion Proofs →</span>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -198,6 +218,14 @@ export function MarketTradeView({ market }: MarketTradeViewProps) {
       <MyBetsDrawer
         isOpen={drawerOpen}
         onClose={() => setDrawerOpen(false)}
+      />
+
+      {/* Public Audit Drawer */}
+      <AuditDrawer
+        isOpen={auditOpen}
+        onClose={() => setAuditOpen(false)}
+        marketId={market.id}
+        marketTitle={market.title}
       />
     </div>
   );

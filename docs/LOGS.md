@@ -287,15 +287,42 @@ Before crossing into Phase 2, we upgraded our core Zcash memo and settlement arc
 
 ---
 
-## 14. Active Focus & Immediate Next Actions
+## 14. Phase 3 Step 2 Completed: Public Merkle Audit Drawer & Client-Side Proof Verifier (Oct 18, 2026)
 
-### Next Priority: Phase 3 Step 2 — Public Merkle Audit & Receipt Verifier
-1. **Public Audit Drawer / Inspector (`app/components/AuditDrawer.tsx`)**:
-   - Connects to `GET /api/markets/:id/audit`.
-   - Displays published SHA-256 Merkle root, list of revealed commitments, and published Pot UVK post-settlement.
-2. **Client-Side Merkle Proof Verifier**:
-   - Compares the user's local vaulted commitment against the Coordinator's published Merkle root to mathematically prove their bet was included in the pot without trusting the Coordinator.
-3. **Phase 4 Preparation**:
-   - Remote Azure VM daemonization (`pm2` / `systemd`) with live `zingo-cli`.
+### Achievements & Architecture
+1. **Client-Side Merkle Engine & Proof Verifier ([`app/lib/merkle.ts`](file:///C:/Users/PC/desktop/coding/nocture-markets/app/lib/merkle.ts))**:
+   - `computeMerkleRootClient(leaves)`: In-browser SHA-256 Merkle tree calculation matching Coordinator's `computeMerkleRoot()` 100%. Handles empty trees, single leaves, even, and odd duplicate leaf layers.
+   - `generateMerkleProof(leaves, targetLeaf, expectedRoot)`: Traverses the Merkle tree to produce the exact cryptographic inclusion path (`{ sibling, position, level }`).
+   - `verifyMerkleProof(targetLeaf, steps, expectedRoot)`: Reconstructs the root from the leaf and sibling path using native browser WebCrypto (`crypto.subtle.digest`).
+   - Rejects all tamper attempts (tampered leaf, tampered sibling, tampered root).
+   - 100% test pass rate in [`app/lib/merkle.test.ts`](file:///C:/Users/PC/desktop/coding/nocture-markets/app/lib/merkle.test.ts).
+
+2. **Public Merkle Audit Drawer ([`app/components/AuditDrawer.tsx`](file:///C:/Users/PC/desktop/coding/nocture-markets/app/components/AuditDrawer.tsx))**:
+   - Fetches public audit packages from `GET /api/markets/:id/audit`.
+   - Displays published SHA-256 Merkle root, settlement outcome, drand Quicknet close round, and published Pot UVK (Unified Viewing Key) post-settlement.
+   - Auto-detects user's vaulted bets for the current market and provides a 1-click `"Verify My Bet"` shortcut.
+   - Allows verifying any commitment hash with interactive step-by-step Merkle path inspection.
+   - Displays a public table of all pool commitments with decrypted sides (`SEALED`, `YES`, `NO`) and 1-click row verification.
+
+3. **Integrated Navigation & Vault Linking**:
+   - [`app/components/MarketTradeView.tsx`](file:///C:/Users/PC/desktop/coding/nocture-markets/app/components/MarketTradeView.tsx): Added `"🔍 Public Audit & Proofs"` button in top navigation and in the Technical Parameters card.
+   - [`app/components/MyBetsDrawer.tsx`](file:///C:/Users/PC/desktop/coding/nocture-markets/app/components/MyBetsDrawer.tsx): Added `"Audit Proof 🔍"` action on every vaulted bet card to directly open the audit drawer with the bet's commitment pre-loaded into the verifier.
+   - All tests passing 100% (`pnpm test`) and Next.js 16.4.0 Turbopack production build verified (`pnpm --dir app build`).
+
+---
+
+## 15. Active Focus & Immediate Next Actions
+
+### Next Priority: Phase 4 — Production VM Daemon & Remote Deployment (Days 14 - 15)
+1. **Remote Azure VM Coordinator Daemonization (`ssh nocturne`)**:
+   - Configure Coordinator under `pm2` or `systemd` daemon on Ubuntu 22.04 LTS VM.
+   - Ensure `zingo-cli` is active and syncing with testnet lightwalletd (`testnet.zec.rocks:443`).
+   - Configure public API access or domain (`api.nocturnemarkets.cv` or VM port 3001).
+2. **Deploy Next.js Frontend to Vercel**:
+   - Connect GitHub repository to Vercel with `NEXT_PUBLIC_COORDINATOR_URL` pointed to the Azure VM.
+3. **Phase 5: Hackathon Submission Artifacts**:
+   - Final threat model whitepaper / leak audit (`docs/LEAK_AUDIT.md`).
+   - 5-minute Blitz testnet demo run for ZECATHON judges.
+   - Demo video recording and submission text.
 
 

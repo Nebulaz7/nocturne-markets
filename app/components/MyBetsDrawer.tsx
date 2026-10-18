@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { getBetReceipts, deleteBetReceipt, type PreparedBetReceipt } from "@/lib/vault";
+import { AuditDrawer } from "./AuditDrawer";
 
 export interface MyBetsDrawerProps {
   isOpen: boolean;
@@ -12,6 +13,11 @@ export interface MyBetsDrawerProps {
 export function MyBetsDrawer({ isOpen, onClose }: MyBetsDrawerProps) {
   const [receipts, setReceipts] = useState<PreparedBetReceipt[]>([]);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [auditTarget, setAuditTarget] = useState<{
+    marketId: string;
+    marketTitle?: string;
+    commitment?: string;
+  } | null>(null);
 
   const loadReceipts = () => {
     setReceipts(getBetReceipts());
@@ -138,13 +144,28 @@ export function MyBetsDrawer({ isOpen, onClose }: MyBetsDrawerProps) {
                 </div>
 
                 <div className="flex items-center justify-between pt-2 border-t border-zinc-800/80">
-                  <Link
-                    href={`/market/${r.marketId}`}
-                    onClick={onClose}
-                    className="text-[11px] text-cyan-400 hover:underline font-mono"
-                  >
-                    View Market →
-                  </Link>
+                  <div className="flex items-center gap-3">
+                    <Link
+                      href={`/market/${r.marketId}`}
+                      onClick={onClose}
+                      className="text-[11px] text-zinc-400 hover:text-white font-mono"
+                    >
+                      View Market →
+                    </Link>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setAuditTarget({
+                          marketId: r.marketId,
+                          marketTitle: r.marketTitle,
+                          commitment: r.commitment,
+                        })
+                      }
+                      className="text-[11px] text-cyan-400 hover:underline font-mono"
+                    >
+                      Audit Proof 🔍
+                    </button>
+                  </div>
 
                   <div className="flex gap-2">
                     <button
@@ -176,6 +197,16 @@ export function MyBetsDrawer({ isOpen, onClose }: MyBetsDrawerProps) {
           </p>
         </div>
       </div>
+
+      {auditTarget && (
+        <AuditDrawer
+          isOpen={Boolean(auditTarget)}
+          onClose={() => setAuditTarget(null)}
+          marketId={auditTarget.marketId}
+          marketTitle={auditTarget.marketTitle}
+          initialCommitment={auditTarget.commitment}
+        />
+      )}
     </div>
   );
 }
