@@ -258,18 +258,44 @@ Before crossing into Phase 2, we upgraded our core Zcash memo and settlement arc
 
 ---
 
-## 12. Active Focus & Immediate Next Actions
+## 13. Phase 3 Step 1 Completed: Zero-POST Bet Slip Modal & Local Storage Vault (Oct 15, 2026)
 
-### Current Focus: Phase 3 — Complete Frontend Web UI & Bet Slip (Days 9 - 13)
-1. **Zero-POST Bet Slip Modal (`app/components/BetSlipModal.tsx`)**:
-   - Local browser form (Amount in ZEC, Side: YES/NO).
-   - Uses WebCrypto + `@scure/base` to timelock encrypt `(side, secret)` to target `drand_round` and box return address to Coordinator's X25519 PK.
-   - Generates and displays ZIP-321 payment QR code (`zcash:utest1...?amount=X&memo=NOC2:...`) for instant mobile wallet scanning (Zashi / YWallet).
-2. **Local Receipt Vault (`localStorage`)**:
-   - Saves `PreparedBetReceiptV2` locally in browser with secret, commitment hash, market ID, and timestamp.
-   - Never exposes secret or return address to the network.
-3. **Receipt Verifier & Public IVK Audit Drawer**:
-   - Queries `/api/markets/:id/audit` to show public Merkle root, revealed commitments list, and published Pot UVK post-settlement.
-   - Verifies local user receipt against published Merkle root client-side.
+### Achievements & Architecture
+1. **Pure In-Browser Cryptographic Bet Builder (`app/lib/bet_builder.ts`)**:
+   - Runs 100% locally in browser client components with native WebCrypto (`globalThis.crypto.subtle`), `tweetnacl`, `@scure/base`, and `tlock-js`.
+   - Generates 16-byte random secrets, computes deterministic SHA-256 commitments, and encrypts `(side, secret)` to target drand Quicknet rounds.
+   - Compresses bettor's Orchard UA (`utest1...`) via Bech32m and boxes it with TweetNaCl to the Coordinator's X25519 static public key.
+   - Packages into standard 500-char wire memos (`NOC2:<base64url>~....`) and standard ZIP-321 URIs (`zcash:utest1...?amount=X&memo=...`).
+   - 100% roundtrip verified with Coordinator decoder in [`app/lib/bet_builder.test.ts`](file:///C:/Users/PC/desktop/coding/nocture-markets/app/lib/bet_builder.test.ts).
+
+2. **Browser LocalStorage Private Vault (`app/lib/vault.ts`)**:
+   - Zero-leak local receipt vault storing secrets, commitments, and payment URIs strictly on the bettor's device.
+   - Emits custom `nocturne-vault-updated` events for reactive UI state synchronization without any network requests.
+
+3. **Wireframe Bet Slip Modal & QR Code Generator (`app/components/BetSlipModal.tsx`)**:
+   - Clean, functional wireframe UI focusing on cryptographic correctness and state clarity.
+   - Features side toggle (YES/NO), stake amount with quick chips (0.5, 1.0, 2.0, 5.0 ZEC), and return address input with a demo testnet UA shortcut.
+   - Renders a scannable QR code via `qrcode.react` (`QRCodeSVG`), 1-click "Copy Payment URI" and "Copy NOC2: Memo" buttons, and commitment verification details.
+
+4. **"My Private Bets" Drawer & Header Counter (`app/components/MyBetsDrawer.tsx` & `app/components/HeaderNav.tsx`)**:
+   - Persistent top navigation button with live bet count badge.
+   - Slide-over drawer listing all local vaulted receipts with 1-click commitment/secret copying, direct market links, and deletion management.
+
+5. **Integrated Market Trading View (`app/components/MarketTradeView.tsx` & `app/app/market/[id]/page.tsx`)**:
+   - Prominent "Trade Private YES" and "Trade Private NO" action buttons on all market detail pages.
+   - All tests passing 100% (`pnpm test`) and Next.js 16.4.0 Turbopack production build verified (`pnpm --dir app build`).
+
+---
+
+## 14. Active Focus & Immediate Next Actions
+
+### Next Priority: Phase 3 Step 2 — Public Merkle Audit & Receipt Verifier
+1. **Public Audit Drawer / Inspector (`app/components/AuditDrawer.tsx`)**:
+   - Connects to `GET /api/markets/:id/audit`.
+   - Displays published SHA-256 Merkle root, list of revealed commitments, and published Pot UVK post-settlement.
+2. **Client-Side Merkle Proof Verifier**:
+   - Compares the user's local vaulted commitment against the Coordinator's published Merkle root to mathematically prove their bet was included in the pot without trusting the Coordinator.
+3. **Phase 4 Preparation**:
+   - Remote Azure VM daemonization (`pm2` / `systemd`) with live `zingo-cli`.
 
 
