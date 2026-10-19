@@ -1,8 +1,15 @@
 @import "tailwindcss";
 
 :root {
-  --background: #000000;
-  --foreground: #f4f4f5;
+  /* Warm Obsidian Dark Base */
+  --background: #090706;
+  --foreground: #fef3c7;
+
+  /* Nocturne Warm Ember Brand Identity */
+  --theme-rust: #7c2d12;     /* Deep Rust / Burnt Amber */
+  --theme-ember: #fb923c;    /* Radiant Warm Orange (Primary) */
+  --theme-cream: #fef3c7;    /* Warm Sunlight Cream (Text & Surface) */
+
   --font-sans: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
   --font-heading: var(--font-heading), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-mono), ui-monospace, monospace;
@@ -11,6 +18,9 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-rust: var(--theme-rust);
+  --color-ember: var(--theme-ember);
+  --color-cream: var(--theme-cream);
   --font-sans: var(--font-sans);
   --font-heading: var(--font-heading);
   --font-mono: var(--font-mono);
@@ -26,8 +36,14 @@ h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-heading);
 }
 
+::selection {
+  background-color: #fb923c;
+  color: #451a03;
+}
+
 /* ========================================================
    Monad-Style Micro-Engineered Buttons & Specular Lighting
+   Theme: Rust (#7c2d12) | Ember (#fb923c) | Cream (#fef3c7)
    ======================================================== */
 
 .btn-monad-base {
@@ -39,9 +55,9 @@ h1, h2, h3, h4, h5, h6 {
   white-space: nowrap;
   text-transform: uppercase;
   font-family: var(--font-mono);
-  letter-spacing: 0.02em;
+  letter-spacing: 0.025em;
   font-size: 0.75rem;
-  font-weight: 500;
+  font-weight: 600;
   border-radius: 4px;
   cursor: pointer;
   user-select: none;
@@ -69,13 +85,16 @@ h1, h2, h3, h4, h5, h6 {
   opacity: 0.5;
 }
 
-/* Monad Signature Purple Radial Specular Bloom */
+/* 1. Radiant Ember Primary Button (#fb923c) */
+.btn-ember,
 .btn-monad-primary {
-  color: #ffffff;
-  background: radial-gradient(50% 50% at 50% 50%, #6e54ff00 0%, #ffffff1f 100%), #6e54ff;
-  box-shadow: 0 1px 2px #0000004d, inset 0 1px 0.5px #ffffff40, inset 0 -1px 0.5px #ffffff40, 0 0 0 1px #4f47ebe6;
+  color: #431407;
+  background: radial-gradient(50% 50% at 50% 50%, #fb923c00 0%, #ffffff38 100%), #fb923c;
+  box-shadow: 0 1px 2px #00000066, inset 0 1px 0.5px #ffffffb3, inset 0 -1px 0.5px #7c2d1280, 0 0 0 1px #ea580c;
+  font-weight: 700;
 }
 
+.btn-ember::before,
 .btn-monad-primary::before {
   content: "";
   position: absolute;
@@ -83,47 +102,49 @@ h1, h2, h3, h4, h5, h6 {
   border-radius: inherit;
   pointer-events: none;
   opacity: 0;
-  background: radial-gradient(50% 50%, #6e54ffa8 0%, #ffffff80 100%);
+  background: radial-gradient(50% 50%, #fed7aae6 0%, #ffffffcc 100%);
   transition: opacity 0.35s ease-out;
-  box-shadow: 0 1px 2px #0000004d, inset 0 0.75px 0.66px #ffffffcc, inset 0 -0.75px 0.66px #ffffffcc, 0 0 0 1px #4f47eb80;
+  box-shadow: 0 1px 3px #00000066, inset 0 1px 0.8px #ffffff, inset 0 -1px 0.8px #ffedd5, 0 0 0 1px #fb923c;
 }
 
+.btn-ember:hover::before,
 .btn-monad-primary:hover::before {
   opacity: 1;
 }
 
-/* Nocturne Electric Cyan Radial Specular Bloom */
-.btn-monad-cyan {
-  color: #042f2e;
-  background: radial-gradient(50% 50% at 50% 50%, #06b6d400 0%, #ffffff33 100%), #22d3ee;
-  box-shadow: 0 1px 2px #0000004d, inset 0 1px 0.5px #ffffff80, inset 0 -1px 0.5px #ffffff40, 0 0 0 1px #0891b2e6;
-  font-weight: 600;
+/* 2. Deep Rust Button (#7c2d12) */
+.btn-rust {
+  color: #fef3c7;
+  background: radial-gradient(50% 50% at 50% 50%, #7c2d1200 0%, #fb923c33 100%), #7c2d12;
+  box-shadow: 0 1px 2px #00000080, inset 0 1px 0.5px #fb923c66, inset 0 -1px 0.5px #431407, 0 0 0 1px #9a3412;
 }
 
-.btn-monad-cyan::before {
+.btn-rust::before {
   content: "";
   position: absolute;
   inset: 0;
   border-radius: inherit;
   pointer-events: none;
   opacity: 0;
-  background: radial-gradient(50% 50%, #38bdf8b3 0%, #ffffffa6 100%);
+  background: radial-gradient(50% 50%, #9a3412cc 0%, #fb923c66 100%);
   transition: opacity 0.35s ease-out;
-  box-shadow: 0 1px 2px #0000004d, inset 0 0.75px 0.66px #ffffffff, inset 0 -0.75px 0.66px #ffffffff, 0 0 0 1px #06b6d4;
+  box-shadow: 0 1px 3px #00000080, inset 0 1px 0.8px #fed7aa80, inset 0 -1px 0.8px #431407, 0 0 0 1px #ea580c;
 }
 
-.btn-monad-cyan:hover::before {
+.btn-rust:hover::before {
   opacity: 1;
 }
 
-/* Monad Off-White / Ceramic Specular */
+/* 3. Sunlight Cream Ceramic Button (#fef3c7) */
+.btn-cream,
 .btn-monad-secondary {
-  color: #09090b;
-  background: radial-gradient(50% 50% at 50% 50%, #fafafa54 0%, #7373730a 100%), #fbfaf9;
-  box-shadow: 0 1px 2px #0000004d, inset 0 1px #ffffff, inset 0 -1px #ffffff, 0 0 0 1px #0000001a;
-  font-weight: 600;
+  color: #7c2d12;
+  background: radial-gradient(50% 50% at 50% 50%, #fffbeb66 0%, #fde68a1a 100%), #fef3c7;
+  box-shadow: 0 1px 2px #0000004d, inset 0 1px #ffffff, inset 0 -1px #fde68a, 0 0 0 1px #7c2d1233;
+  font-weight: 700;
 }
 
+.btn-cream::before,
 .btn-monad-secondary::before {
   content: "";
   position: absolute;
@@ -131,22 +152,25 @@ h1, h2, h3, h4, h5, h6 {
   border-radius: inherit;
   pointer-events: none;
   opacity: 0;
-  background: radial-gradient(50% 50%, #fafafad9 0%, #7373731a 100%);
+  background: radial-gradient(50% 50%, #ffffff 0%, #fef3c7cc 100%);
   transition: opacity 0.35s ease-out;
-  box-shadow: 0 1px 2px #0000004d, inset 0 1px #ffffff, inset 0 -1px #ffffff, 0 0 0 1px #0000001a;
+  box-shadow: 0 1px 3px #0000004d, inset 0 1px #ffffff, inset 0 -1px #fed7aa, 0 0 0 1px #7c2d124d;
 }
 
+.btn-cream:hover::before,
 .btn-monad-secondary:hover::before {
   opacity: 1;
 }
 
-/* Monad Dark Void / Obsidian Specular */
+/* 4. Dark Obsidian Void Button with Rust/Ember Specular Edge */
+.btn-void,
 .btn-monad-void {
-  color: #f4f4f5;
-  background: radial-gradient(50% 50% at 50% 50%, #18181b4d 0%, #ffffff14 100%), #09090b;
-  box-shadow: 0 1px 2px #00000066, inset 0 1px 0.5px #ffffff26, inset 0 -1px 0.5px #ffffff1a, 0 0 0 1px #27272a;
+  color: #fef3c7;
+  background: radial-gradient(50% 50% at 50% 50%, #1c141066 0%, #fb923c0d 100%), #0d0a08;
+  box-shadow: 0 1px 2px #00000099, inset 0 1px 0.5px #ffffff26, inset 0 -1px 0.5px #7c2d1240, 0 0 0 1px #27201c;
 }
 
+.btn-void::before,
 .btn-monad-void::before {
   content: "";
   position: absolute;
@@ -154,12 +178,14 @@ h1, h2, h3, h4, h5, h6 {
   border-radius: inherit;
   pointer-events: none;
   opacity: 0;
-  background: radial-gradient(50% 50%, #27272aa8 0%, #ffffff33 100%);
+  background: radial-gradient(50% 50%, #291a13a8 0%, #7c2d1233 100%);
   transition: opacity 0.35s ease-out;
-  box-shadow: 0 1px 2px #00000066, inset 0 1px 0.5px #ffffff40, inset 0 -1px 0.5px #ffffff40, 0 0 0 1px #3f3f46;
+  box-shadow: 0 1px 2px #00000099, inset 0 1px 0.5px #fb923c40, inset 0 -1px 0.5px #7c2d1266, 0 0 0 1px #7c2d12;
 }
 
+.btn-void:hover::before,
 .btn-monad-void:hover::before {
   opacity: 1;
 }
+
 
