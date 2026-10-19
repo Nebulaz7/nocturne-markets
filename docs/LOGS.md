@@ -7,7 +7,7 @@
 
 ## 1. Project Snapshot
 
-* **Project**: Nocturne Markets (codename: Project Z | handle: `@nocmarkets` | domain: `nocturnemarkets.cv`)
+* **Project**: Nocturne Markets (codename: Project Z | handle: `@nocmarkets` | domain: `nocturnemarkets.tech`)
 * **Event**: [ZECATHON](https://thezecathon.com) (Privacy hackathon by zkSNARKs)
 * **Track**: **Private Markets** ($15k track prize, $20k grand prize)
 * **Timeline**:
