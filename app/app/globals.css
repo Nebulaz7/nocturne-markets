@@ -1,26 +1,165 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #000000;
+  --foreground: #f4f4f5;
+  --font-sans: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-heading: var(--font-heading), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-mono), ui-monospace, monospace;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --font-sans: var(--font-sans);
+  --font-heading: var(--font-heading);
+  --font-mono: var(--font-mono);
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans);
 }
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading);
+}
+
+/* ========================================================
+   Monad-Style Micro-Engineered Buttons & Specular Lighting
+   ======================================================== */
+
+.btn-monad-base {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
+  white-space: nowrap;
+  text-transform: uppercase;
+  font-family: var(--font-mono);
+  letter-spacing: 0.02em;
+  font-size: 0.75rem;
+  font-weight: 500;
+  border-radius: 4px;
+  cursor: pointer;
+  user-select: none;
+  outline: none;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.btn-monad-base > * {
+  position: relative;
+  z-index: 10;
+}
+
+.btn-monad-base:active {
+  transform: scale(0.97);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .btn-monad-base:active {
+    transform: none;
+  }
+}
+
+.btn-monad-base:disabled {
+  pointer-events: none;
+  opacity: 0.5;
+}
+
+/* Monad Signature Purple Radial Specular Bloom */
+.btn-monad-primary {
+  color: #ffffff;
+  background: radial-gradient(50% 50% at 50% 50%, #6e54ff00 0%, #ffffff1f 100%), #6e54ff;
+  box-shadow: 0 1px 2px #0000004d, inset 0 1px 0.5px #ffffff40, inset 0 -1px 0.5px #ffffff40, 0 0 0 1px #4f47ebe6;
+}
+
+.btn-monad-primary::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0;
+  background: radial-gradient(50% 50%, #6e54ffa8 0%, #ffffff80 100%);
+  transition: opacity 0.35s ease-out;
+  box-shadow: 0 1px 2px #0000004d, inset 0 0.75px 0.66px #ffffffcc, inset 0 -0.75px 0.66px #ffffffcc, 0 0 0 1px #4f47eb80;
+}
+
+.btn-monad-primary:hover::before {
+  opacity: 1;
+}
+
+/* Nocturne Electric Cyan Radial Specular Bloom */
+.btn-monad-cyan {
+  color: #042f2e;
+  background: radial-gradient(50% 50% at 50% 50%, #06b6d400 0%, #ffffff33 100%), #22d3ee;
+  box-shadow: 0 1px 2px #0000004d, inset 0 1px 0.5px #ffffff80, inset 0 -1px 0.5px #ffffff40, 0 0 0 1px #0891b2e6;
+  font-weight: 600;
+}
+
+.btn-monad-cyan::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0;
+  background: radial-gradient(50% 50%, #38bdf8b3 0%, #ffffffa6 100%);
+  transition: opacity 0.35s ease-out;
+  box-shadow: 0 1px 2px #0000004d, inset 0 0.75px 0.66px #ffffffff, inset 0 -0.75px 0.66px #ffffffff, 0 0 0 1px #06b6d4;
+}
+
+.btn-monad-cyan:hover::before {
+  opacity: 1;
+}
+
+/* Monad Off-White / Ceramic Specular */
+.btn-monad-secondary {
+  color: #09090b;
+  background: radial-gradient(50% 50% at 50% 50%, #fafafa54 0%, #7373730a 100%), #fbfaf9;
+  box-shadow: 0 1px 2px #0000004d, inset 0 1px #ffffff, inset 0 -1px #ffffff, 0 0 0 1px #0000001a;
+  font-weight: 600;
+}
+
+.btn-monad-secondary::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0;
+  background: radial-gradient(50% 50%, #fafafad9 0%, #7373731a 100%);
+  transition: opacity 0.35s ease-out;
+  box-shadow: 0 1px 2px #0000004d, inset 0 1px #ffffff, inset 0 -1px #ffffff, 0 0 0 1px #0000001a;
+}
+
+.btn-monad-secondary:hover::before {
+  opacity: 1;
+}
+
+/* Monad Dark Void / Obsidian Specular */
+.btn-monad-void {
+  color: #f4f4f5;
+  background: radial-gradient(50% 50% at 50% 50%, #18181b4d 0%, #ffffff14 100%), #09090b;
+  box-shadow: 0 1px 2px #00000066, inset 0 1px 0.5px #ffffff26, inset 0 -1px 0.5px #ffffff1a, 0 0 0 1px #27272a;
+}
+
+.btn-monad-void::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0;
+  background: radial-gradient(50% 50%, #27272aa8 0%, #ffffff33 100%);
+  transition: opacity 0.35s ease-out;
+  box-shadow: 0 1px 2px #00000066, inset 0 1px 0.5px #ffffff40, inset 0 -1px 0.5px #ffffff40, 0 0 0 1px #3f3f46;
+}
+
+.btn-monad-void:hover::before {
+  opacity: 1;
+}
+
