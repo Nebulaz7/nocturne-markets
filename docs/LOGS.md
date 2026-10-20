@@ -7,15 +7,15 @@
 
 ## 1. Project Snapshot
 
-* **Project**: Nocturne Markets (codename: Project Z | handle: `@nocmarkets` | domain: `nocturnemarkets.tech`)
-* **Event**: [ZECATHON](https://thezecathon.com) (Privacy hackathon by zkSNARKs)
-* **Track**: **Private Markets** ($15k track prize, $20k grand prize)
-* **Timeline**:
-  * Hackathon duration: Sep 28 – Oct 28, 2026 (23:59 UTC) / Lagos target: Oct 27 evening.
-  * Start Date: Mon, Oct 12, 2026 (Day 1 of 17).
-* **Tagline / Core Concept**: *"Public prices. Private people."*  
+- **Project**: Nocturne Markets (codename: Project Z | handle: `@nocmarkets` | domain: `nocturnemarkets.tech`)
+- **Event**: [ZECATHON](https://thezecathon.com) (Privacy hackathon by zkSNARKs)
+- **Track**: **Private Markets** ($15k track prize, $20k grand prize)
+- **Timeline**:
+  - Hackathon duration: Sep 28 – Oct 28, 2026 (23:59 UTC) / Lagos target: Oct 27 evening.
+  - Start Date: Mon, Oct 12, 2026 (Day 1 of 17).
+- **Tagline / Core Concept**: _"Public prices. Private people."_  
   A private prediction market mirroring real-world Polymarket markets (read-only reference data and resolution via public Gamma API) running on an independent **shielded Zcash parimutuel pool**. Bets, sides, and payouts are shielded; sides are hidden until close via commit-reveal; payouts are batched, delayed, and shielded.
-* **Solo Builder**: Nebulaz (Olamide) with AI pair programming.
+- **Solo Builder**: Nebulaz (Olamide) with AI pair programming.
 
 ---
 
@@ -32,6 +32,7 @@
 ```
 
 ### Core Privacy & Trust Properties
+
 1. **No Smart Contracts**: Zcash base layer lacks EVM smart contracts; pool and settlement logic runs off-chain in the coordinator backend.
 2. **Parimutuel Pool (not AMM)**:
    - Eliminates continuous price discovery side-channels (cannot probe the pool with micro-bets).
@@ -52,32 +53,33 @@
 
 ## 3. Architecture & Design Decision Log
 
-| Date | Decision | Choice | Rationale & Alternatives Considered |
-| :--- | :--- | :--- | :--- |
-| **2026-10-12** | Pool Model | Parimutuel | Avoids continuous AMM price probe leaks, no USD peg needed, no house liquidity risk. |
-| **2026-10-12** | Market Oracle | Mirror Polymarket Gamma API | Eliminates complex AI or multi-sig oracles. Outcome directly matches real Polymarket resolution. Void/50-50 triggers automatic refund. |
-| **2026-10-12** | Wallet Onboarding | External Zcash wallet (Zashi, Ywallet) via QR | Lowest build risk for hackathon timeline. Avoids complex in-browser WASM Zcash keys on MVP. No Privy/EVM login (avoids identity linkage). |
-| **2026-10-12** | Network | Zcash Testnet | Free test ZEC, zero real-money regulatory friction, perfect for hackathon prototype. Mainnet shielded wallet used solely for prize payout. |
-| **2026-10-12** | Database & Server | SQLite + Node.js/TS on Azure VM | Fits low-resource VM (2GB RAM, no heavy Docker or managed DBs). Data remains on VM disk. |
-| **2026-10-12** | Web Stack | Next.js 16 (App Router), React 19, Tailwind CSS v4, TypeScript | Modern, high performance, native support for fast UI interactions and animations. |
+| Date           | Decision          | Choice                                                         | Rationale & Alternatives Considered                                                                                                        |
+| :------------- | :---------------- | :------------------------------------------------------------- | :----------------------------------------------------------------------------------------------------------------------------------------- |
+| **2026-10-12** | Pool Model        | Parimutuel                                                     | Avoids continuous AMM price probe leaks, no USD peg needed, no house liquidity risk.                                                       |
+| **2026-10-12** | Market Oracle     | Mirror Polymarket Gamma API                                    | Eliminates complex AI or multi-sig oracles. Outcome directly matches real Polymarket resolution. Void/50-50 triggers automatic refund.     |
+| **2026-10-12** | Wallet Onboarding | External Zcash wallet (Zashi, Ywallet) via QR                  | Lowest build risk for hackathon timeline. Avoids complex in-browser WASM Zcash keys on MVP. No Privy/EVM login (avoids identity linkage).  |
+| **2026-10-12** | Network           | Zcash Testnet                                                  | Free test ZEC, zero real-money regulatory friction, perfect for hackathon prototype. Mainnet shielded wallet used solely for prize payout. |
+| **2026-10-12** | Database & Server | SQLite + Node.js/TS on Azure VM                                | Fits low-resource VM (2GB RAM, no heavy Docker or managed DBs). Data remains on VM disk.                                                   |
+| **2026-10-12** | Web Stack         | Next.js 16 (App Router), React 19, Tailwind CSS v4, TypeScript | Modern, high performance, native support for fast UI interactions and animations.                                                          |
 
 ---
 
 ## 4. Journey & Progress Log
 
 ### Day 1 — Mon, Oct 12, 2026
-* **Status**: Planning complete, workspace initialized.
-* **Accomplishments**:
-  * Created foundational specifications in [`docs/ABOUT.md`](file:///C:/Users/PC/desktop/coding/nocture-markets/docs/ABOUT.md) and [`docs/PLAN.md`](file:///C:/Users/PC/desktop/coding/nocture-markets/docs/PLAN.md).
-  * Outlined threat model, leak analysis, scoring criteria, and 17-day schedule.
-  * Scaffolded Next.js 16 + Tailwind v4 frontend in [`app/`](file:///C:/Users/PC/desktop/coding/nocture-markets/app).
-  * Initialized living log [`docs/LOGS.md`](file:///C:/Users/PC/desktop/coding/nocture-markets/docs/LOGS.md) for cross-session AI context persistence.
-  * Configured Azure VM (`ssh nocturne`) with a 2 GB swapfile to guard against memory spikes on the 1 GiB RAM instance.
-  * Created anti-hallucination reference repository in `docs/references/` (ZIP-321, ZIP-316, ZIP-317, Testnet Infrastructure, and Zcash Guardrails).
-  * Built and unit-tested ZIP-321 memo engine in `scripts/zcash/memo.ts` (100% roundtrip pass).
-  * Implemented bet preparation script (`02_prepare_bet_request.ts`), deposit watcher (`03_watch_deposits.ts`), and payout sender (`04_test_payout.ts`).
-  * Created and executed `scripts/zcash/pipeline_simulation.test.ts` — verified end-to-end secret generation $\rightarrow$ commitment hashing $\rightarrow$ memo decode $\rightarrow$ reveal verification $\rightarrow$ parimutuel math.
-  * Created VM environment setup script in `scripts/setup_vm_zcash.sh`.
+
+- **Status**: Planning complete, workspace initialized.
+- **Accomplishments**:
+  - Created foundational specifications in [`docs/ABOUT.md`](file:///C:/Users/PC/desktop/coding/nocture-markets/docs/ABOUT.md) and [`docs/PLAN.md`](file:///C:/Users/PC/desktop/coding/nocture-markets/docs/PLAN.md).
+  - Outlined threat model, leak analysis, scoring criteria, and 17-day schedule.
+  - Scaffolded Next.js 16 + Tailwind v4 frontend in [`app/`](file:///C:/Users/PC/desktop/coding/nocture-markets/app).
+  - Initialized living log [`docs/LOGS.md`](file:///C:/Users/PC/desktop/coding/nocture-markets/docs/LOGS.md) for cross-session AI context persistence.
+  - Configured Azure VM (`ssh nocturne`) with a 2 GB swapfile to guard against memory spikes on the 1 GiB RAM instance.
+  - Created anti-hallucination reference repository in `docs/references/` (ZIP-321, ZIP-316, ZIP-317, Testnet Infrastructure, and Zcash Guardrails).
+  - Built and unit-tested ZIP-321 memo engine in `scripts/zcash/memo.ts` (100% roundtrip pass).
+  - Implemented bet preparation script (`02_prepare_bet_request.ts`), deposit watcher (`03_watch_deposits.ts`), and payout sender (`04_test_payout.ts`).
+  - Created and executed `scripts/zcash/pipeline_simulation.test.ts` — verified end-to-end secret generation $\rightarrow$ commitment hashing $\rightarrow$ memo decode $\rightarrow$ reveal verification $\rightarrow$ parimutuel math.
+  - Created VM environment setup script in `scripts/setup_vm_zcash.sh`.
 
 ---
 
@@ -142,12 +144,15 @@ nocture-markets/
 ## 8. Architectural Upgrade Log: Zero-POST Timelock + Dual-Envelope Architecture (Oct 13, 2026)
 
 ### Motivation & Strategic Value
+
 Before crossing into Phase 2, we upgraded our core Zcash memo and settlement architecture to eliminate three major attack vectors:
+
 1. **Free-Option Attack & IP Leaks**: In manual commit-reveal, bettors had to return online post-close to POST `(side, secret)` over HTTP. If losing bets were refunded, bettors could withhold reveals (free option); if confiscated, users suffered from connection drops. Moreover, HTTP POST leaked bettor IP addresses.
 2. **IVK Audit Address Leak**: In the original design, publishing the Pot Incoming Viewing Key (IVK) for public post-settlement audits would expose all bettors' return addresses to the public in plaintext memos.
 3. **VM OOM & Process Collisions**: The 1 GiB Azure VM encountered memory spikes and SQLite lock collisions during concurrent `zingo-cli` invocations.
 
 ### Implemented Upgrades & Verified Metrics
+
 1. **Dual-Envelope Timelock Memos (`packages/shared/src/memo.ts`, `scripts/zcash/memo.ts`)**:
    - Packaged into valid ASCII UTF-8 strings (`NOC2:<base64url>~....`) strictly padded to 500 characters (`<= 512 bytes` per ZIP-302 / ZIP-321).
    - `tlock_envelope` (217 bytes): Encrypted with `tlock-js` pinned to drand Quicknet (`52db9ba7...`, 3s period). Unpacked from age IBE format into deterministic binary components (`round_number [8B] || cipher_ibe [128B] || header_mac [32B] || stream_body [49B]`).
@@ -183,6 +188,7 @@ Before crossing into Phase 2, we upgraded our core Zcash memo and settlement arc
 ## 9. Phase 2 Step 1 Completed: SQLite Database Engine & Fastify Coordinator Backend (Oct 14, 2026)
 
 ### Achievements & Architecture
+
 1. **Native SQLite Database Engine (`coordinator/src/db/`)**:
    - Implemented using Node's native `node:sqlite` (`DatabaseSync`), achieving zero native build friction, zero C++ compilation dependencies, and native WAL mode performance.
    - Comprehensive schema created:
@@ -207,6 +213,7 @@ Before crossing into Phase 2, we upgraded our core Zcash memo and settlement arc
 ## 10. Phase 2 Step 2 Completed: Background Workers & Automated Settlement Pipeline (Oct 14, 2026)
 
 ### Achievements & Verification
+
 1. **Deposit Watcher Job (`coordinator/src/jobs/depositWatcher.ts`)**:
    - Polls the pot wallet (via memory-safe `WalletBridgeLike` / `ZingoClient`), parses valid `NOC2:` dual-envelope memos, maps them to normalized market IDs via `normalizeMarketId()`, and idempotently commits bets to SQLite while atomically updating market pot totals.
    - Tested duplicate ingestion defense: re-polling the same notes results in zero duplicates and perfectly preserved pot state.
@@ -237,6 +244,7 @@ Before crossing into Phase 2, we upgraded our core Zcash memo and settlement arc
 ## 11. Zero-Leak "Shield Any Polymarket Link" Teleporter + URL Prefix Route (Oct 15, 2026)
 
 ### Achievements & Architecture
+
 1. **Bulk Background Pre-Indexing (`coordinator/src/jobs/polymarketSync.ts`)**:
    - Paginates Polymarket Gamma API in batches of 100 up to 300 active events (~4,000+ binary sub-markets) every 5 minutes.
    - Extracts `event_slug`, `market_slug`, `condition_id`, `question`, `group_item_title`, and `ref_yes_price`.
@@ -261,6 +269,7 @@ Before crossing into Phase 2, we upgraded our core Zcash memo and settlement arc
 ## 13. Phase 3 Step 1 Completed: Zero-POST Bet Slip Modal & Local Storage Vault (Oct 15, 2026)
 
 ### Achievements & Architecture
+
 1. **Pure In-Browser Cryptographic Bet Builder (`app/lib/bet_builder.ts`)**:
    - Runs 100% locally in browser client components with native WebCrypto (`globalThis.crypto.subtle`), `tweetnacl`, `@scure/base`, and `tlock-js`.
    - Generates 16-byte random secrets, computes deterministic SHA-256 commitments, and encrypts `(side, secret)` to target drand Quicknet rounds.
@@ -290,6 +299,7 @@ Before crossing into Phase 2, we upgraded our core Zcash memo and settlement arc
 ## 14. Phase 3 Step 2 Completed: Public Merkle Audit Drawer & Client-Side Proof Verifier (Oct 18, 2026)
 
 ### Achievements & Architecture
+
 1. **Client-Side Merkle Engine & Proof Verifier ([`app/lib/merkle.ts`](file:///C:/Users/PC/desktop/coding/nocture-markets/app/lib/merkle.ts))**:
    - `computeMerkleRootClient(leaves)`: In-browser SHA-256 Merkle tree calculation matching Coordinator's `computeMerkleRoot()` 100%. Handles empty trees, single leaves, even, and odd duplicate leaf layers.
    - `generateMerkleProof(leaves, targetLeaf, expectedRoot)`: Traverses the Merkle tree to produce the exact cryptographic inclusion path (`{ sibling, position, level }`).
@@ -314,6 +324,7 @@ Before crossing into Phase 2, we upgraded our core Zcash memo and settlement arc
 ## 15. Active Focus & Immediate Next Actions
 
 ### Next Priority: Phase 4 — Production VM Daemon & Remote Deployment (Days 14 - 15)
+
 1. **Remote Azure VM Coordinator Daemonization (`ssh nocturne`)**:
    - Configure Coordinator under `pm2` or `systemd` daemon on Ubuntu 22.04 LTS VM.
    - Ensure `zingo-cli` is active and syncing with testnet lightwalletd (`testnet.zec.rocks:443`).
@@ -324,5 +335,3 @@ Before crossing into Phase 2, we upgraded our core Zcash memo and settlement arc
    - Final threat model whitepaper / leak audit (`docs/LEAK_AUDIT.md`).
    - 5-minute Blitz testnet demo run for ZECATHON judges.
    - Demo video recording and submission text.
-
-
