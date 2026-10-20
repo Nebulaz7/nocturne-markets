@@ -1,6 +1,7 @@
 import { DatabaseSync } from "node:sqlite";
 import path from "path";
 import fs from "fs";
+import crypto from "crypto";
 import {
   SCHEMA_SQL,
   type MarketRecord,
@@ -40,9 +41,17 @@ export class CoordinatorDatabase {
     if (!colNames.has("question")) this.db.exec("ALTER TABLE markets ADD COLUMN question TEXT;");
     if (!colNames.has("group_item_title")) this.db.exec("ALTER TABLE markets ADD COLUMN group_item_title TEXT;");
     if (!colNames.has("ref_yes_price")) this.db.exec("ALTER TABLE markets ADD COLUMN ref_yes_price REAL;");
+    if (!colNames.has("yes_token_id")) this.db.exec("ALTER TABLE markets ADD COLUMN yes_token_id TEXT;");
+    if (!colNames.has("no_token_id")) this.db.exec("ALTER TABLE markets ADD COLUMN no_token_id TEXT;");
+    if (!colNames.has("category")) this.db.exec("ALTER TABLE markets ADD COLUMN category TEXT NOT NULL DEFAULT 'Others';");
     this.db.exec("CREATE INDEX IF NOT EXISTS idx_markets_event_slug ON markets(event_slug);");
     this.db.exec("CREATE INDEX IF NOT EXISTS idx_markets_market_slug ON markets(market_slug);");
     this.db.exec("CREATE INDEX IF NOT EXISTS idx_markets_condition_id ON markets(condition_id);");
+    this.db.exec("CREATE INDEX IF NOT EXISTS idx_markets_category ON markets(category);");
+
+    const payoutCols = this.db.prepare("PRAGMA table_info(payouts)").all() as any[];
+    const payoutColNames = new Set(payoutCols.map((c) => c.name));
+    if (!payoutColNames.has("payout_hash")) this.db.exec("ALTER TABLE payouts ADD COLUMN payout_hash TEXT;");
   }
 
   // --- MARKETS ---
@@ -58,19 +67,23 @@ export class CoordinatorDatabase {
     question?: string | null;
     group_item_title?: string | null;
     ref_yes_price?: number | null;
+    yes_token_id?: string | null;
+    no_token_id?: string | null;
+    category?: string | null;
     close_time: number;
     drand_round: number;
     pot_address: string;
     pot_uvk?: string | null;
   }): MarketRecord {
     const now = Math.floor(Date.now() / 1000);
+    const category = params.category || "Others";
     const stmt = this.db.prepare(`
       INSERT INTO markets (
         id, polymarket_id, title, slug, event_slug, market_slug, condition_id,
-        question, group_item_title, ref_yes_price, close_time, drand_round, status,
-        outcome, pot_address, pot_uvk, merkle_root, total_pot_zats,
-        yes_pot_zats, no_pot_zats, created_at, updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'OPEN', NULL, ?, ?, NULL, 0, 0, 0, ?, ?)
+        question, group_item_title, ref_yes_price, yes_token_id, no_token_id, category,
+        close_time, drand_round, status, outcome, pot_address, pot_uvk, merkle_root,
+        total_pot_zats, yes_pot_zats, no_pot_zats, created_at, updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'OPEN', NULL, ?, ?, NULL, 0, 0, 0, ?, ?)
     `);
 
     stmt.run(
@@ -84,6 +97,9 @@ export class CoordinatorDatabase {
       params.question ?? null,
       params.group_item_title ?? null,
       params.ref_yes_price ?? null,
+      params.yes_token_id ?? null,
+      params.no_token_id ?? null,
+      category,
       params.close_time,
       params.drand_round,
       params.pot_address,
@@ -135,10 +151,42 @@ export class CoordinatorDatabase {
     stmt.run(refYesPrice, now, id);
   }
 
-  public listMarkets(filter?: { status?: MarketStatus }): MarketRecord[] {
+  public updateMarketTokensAndCategory(
+    id: string,
+    params: {
+      yes_token_id?: string | null;
+      no_token_id?: string | null;
+      category?: string | null;
+    }
+  ): void {
+    const now = Math.floor(Date.now() / 1000);
+    const stmt = this.db.prepare(`
+      UPDATE markets 
+      SET yes_token_id = COALESCE(?, yes_token_id),
+          no_token_id = COALESCE(?, no_token_id),
+          category = COALESCE(?, category),
+          updated_at = ?
+      WHERE id = ?
+    `);
+    stmt.run(params.yes_token_id ?? null, params.no_token_id ?? null, params.category ?? null, now, id);
+  }
+
+  public listMarkets(filter?: { status?: MarketStatus; category?: string }): MarketRecord[] {
+    if (filter?.status && filter?.category) {
+      const stmt = this.db.prepare(
+        "SELECT * FROM markets WHERE status = ? AND LOWER(category) = LOWER(?) ORDER BY close_time ASC"
+      );
+      return (stmt.all(filter.status, filter.category) as any[]) as MarketRecord[];
+    }
     if (filter?.status) {
       const stmt = this.db.prepare("SELECT * FROM markets WHERE status = ? ORDER BY close_time ASC");
       return (stmt.all(filter.status) as any[]) as MarketRecord[];
+    }
+    if (filter?.category) {
+      const stmt = this.db.prepare(
+        "SELECT * FROM markets WHERE LOWER(category) = LOWER(?) ORDER BY close_time ASC"
+      );
+      return (stmt.all(filter.category) as any[]) as MarketRecord[];
     }
     const stmt = this.db.prepare("SELECT * FROM markets ORDER BY close_time ASC");
     return (stmt.all() as any[]) as MarketRecord[];
@@ -257,6 +305,12 @@ export class CoordinatorDatabase {
     return (stmt.all(marketId) as any[]) as BetRecord[];
   }
 
+  public countBetsForMarket(marketId: string): number {
+    const stmt = this.db.prepare("SELECT COUNT(*) as count FROM bets WHERE market_id = ?");
+    const row = stmt.get(marketId) as any;
+    return row ? Number(row.count) : 0;
+  }
+
   public updateBetDecryptedSide(id: string, side: BetSide): void {
     const stmt = this.db.prepare(`
       UPDATE bets 
@@ -278,13 +332,24 @@ export class CoordinatorDatabase {
     market_id: string;
     bet_id: string;
     amount_zats: number;
-    destination_address: string;
+    destination_address?: string | null;
+    payout_hash?: string;
   }): PayoutRecord {
     const now = Math.floor(Date.now() / 1000);
+    const payoutHash =
+      params.payout_hash ||
+      crypto
+        .createHash("sha256")
+        .update(params.destination_address || params.id)
+        .digest("hex");
+
+    // Do NOT write plaintext destination_address alongside bet_id in SQLite
+    const safeDestination = "[SHIELDED]";
+
     const stmt = this.db.prepare(`
       INSERT INTO payouts (
-        id, market_id, bet_id, amount_zats, destination_address, txid, status, created_at, sent_at
-      ) VALUES (?, ?, ?, ?, ?, NULL, 'PENDING', ?, NULL)
+        id, market_id, bet_id, amount_zats, payout_hash, destination_address, txid, status, created_at, sent_at
+      ) VALUES (?, ?, ?, ?, ?, ?, NULL, 'PENDING', ?, NULL)
     `);
 
     stmt.run(
@@ -292,7 +357,8 @@ export class CoordinatorDatabase {
       params.market_id,
       params.bet_id,
       params.amount_zats,
-      params.destination_address,
+      payoutHash,
+      safeDestination,
       now
     );
 

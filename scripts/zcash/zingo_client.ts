@@ -304,6 +304,27 @@ export class ZingoClient {
     }
     return this.execute("quicksend", args);
   }
+
+  public async sendShieldedPayoutsBatch(
+    payouts: Array<{ destinationAddress: string; amountZats: bigint | number; memo?: string }>
+  ): Promise<string> {
+    if (payouts.length === 0) return "";
+    if (payouts.length === 1) {
+      return this.sendShieldedPayout(
+        payouts[0].destinationAddress,
+        payouts[0].amountZats,
+        payouts[0].memo
+      );
+    }
+    const args: string[] = [];
+    for (const p of payouts) {
+      args.push(p.destinationAddress, p.amountZats.toString());
+      if (p.memo) {
+        args.push(`"${p.memo}"`);
+      }
+    }
+    return this.execute("quicksend", args);
+  }
 }
 
 export const defaultZingoClient = new ZingoClient();

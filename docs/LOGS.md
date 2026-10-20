@@ -253,14 +253,14 @@ Before crossing into Phase 2, we upgraded our core Zcash memo and settlement arc
 
 2. **Pure In-Memory URL Parser & Matcher (`packages/shared/src/polymarket_url.ts` & `app/lib/polymarket_url.ts`)**:
    - **Zero-Network Guarantee**: Matching happens 100% locally in browser memory against pre-fetched active markets. No ad-hoc HTTP queries are ever sent to Polymarket or our coordinator when a user pastes or types a link, eliminating market interest profiling and IP timing attacks.
-   - Handles all 9 URL variants: event URLs, nested sub-market URLs, query strings, anchor hashes, mobile/short links (`/e/`, `/m/`), address-bar prepends (`nocturnemarkets.cv/https://polymarket.com/...`), mangled double-slash paths, and raw slugs.
+   - Handles all 9 URL variants: event URLs, nested sub-market URLs, query strings, anchor hashes, mobile/short links (`/e/`, `/m/`), address-bar prepends (`nocturnemarkets.tech/https://polymarket.com/...`), mangled double-slash paths, and raw slugs.
    - Fuzzy prefix/suffix slug matcher handles Polymarket's appended timestamps and hashes (e.g. `fed-decision-in-october` matches `fed-decision-in-october-20260617190323537`).
    - Automatically resolves single-market events directly, and provides structured sub-market disambiguation for multi-bracket events (e.g. FOMC rate cut brackets).
    - 100% test pass rate in [`packages/shared/src/polymarket_url.test.ts`](file:///C:/Users/PC/desktop/coding/nocture-markets/packages/shared/src/polymarket_url.test.ts).
 
 3. **Command Bar & URL-Prefix Catch-All Route (`app/`)**:
    - [`app/components/ShieldUrlBar.tsx`](file:///C:/Users/PC/desktop/coding/nocture-markets/app/components/ShieldUrlBar.tsx): Sleek dark-mode command bar on homepage with live paste detection, neon verification badge (`🛡️ Zero-Leak Local Match — 100% in-memory resolution (No network query sent)`), and 1-click outcome selector.
-   - [`app/app/[...polyUrl]/page.tsx`](file:///C:/Users/PC/desktop/coding/nocture-markets/app/app/%5B...polyUrl%5D/page.tsx): Next.js catch-all route supporting direct address bar prepend (`nocturnemarkets.cv/https://polymarket.com/event/...`) with automatic teleportation to the corresponding shielded market.
+   - [`app/app/[...polyUrl]/page.tsx`](file:///C:/Users/PC/desktop/coding/nocture-markets/app/app/%5B...polyUrl%5D/page.tsx): Next.js catch-all route supporting direct address bar prepend (`nocturnemarkets.tech/https://polymarket.com/event/...`) with automatic teleportation to the corresponding shielded market.
    - [`app/app/market/[id]/page.tsx`](file:///C:/Users/PC/desktop/coding/nocture-markets/app/app/market/%5Bid%5D/page.tsx): Market detail view with pot metrics, closing timestamps, drand Quicknet beacon round, and shielded pool status.
    - Successfully verified with Next.js 16.4.0 Turbopack production build (`pnpm --dir app build`).
 
@@ -328,7 +328,7 @@ Before crossing into Phase 2, we upgraded our core Zcash memo and settlement arc
 1. **Remote Azure VM Coordinator Daemonization (`ssh nocturne`)**:
    - Configure Coordinator under `pm2` or `systemd` daemon on Ubuntu 22.04 LTS VM.
    - Ensure `zingo-cli` is active and syncing with testnet lightwalletd (`testnet.zec.rocks:443`).
-   - Configure public API access or domain (`api.nocturnemarkets.cv` or VM port 3001).
+   - Configure public API access or domain (`api.nocturnemarkets.tech` or VM port 3001).
 2. **Deploy Next.js Frontend to Vercel**:
    - Connect GitHub repository to Vercel with `NEXT_PUBLIC_COORDINATOR_URL` pointed to the Azure VM.
 3. **Phase 5: Hackathon Submission Artifacts**:

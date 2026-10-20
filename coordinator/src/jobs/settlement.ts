@@ -48,7 +48,7 @@ export async function processSettlementOnce(
   for (const market of openMarkets) {
     if (market.close_time > now) continue;
 
-    console.log(`[SettlementWorker] 🔒 Closing Market ${market.id} (Reached close time)...`);
+    console.log(`[SettlementWorker] Closing Market ${market.id} (Reached close time)...`);
     db.updateMarketStatus(market.id, "CLOSED");
     marketsClosed++;
 
@@ -74,7 +74,7 @@ export async function processSettlementOnce(
           } else {
             noZats += bet.amount_zats;
           }
-          console.log(`[SettlementWorker]   ✔ Unlocked bet ${bet.id}: Side = ${decrypted.side}`);
+          console.log(`[SettlementWorker] Unlocked bet ${bet.id}: Side = ${decrypted.side}`);
         } catch (err: any) {
           console.error(`[SettlementWorker] Failed to decrypt tlock envelope for bet ${bet.id}:`, err.message);
         }
@@ -90,7 +90,7 @@ export async function processSettlementOnce(
     // Compute Merkle Root of all commitments in the market
     const merkleRoot = computeMerkleRoot(commitments);
     db.updateMarketStatus(market.id, "CLOSED", null, merkleRoot);
-    console.log(`[SettlementWorker]   ✔ Merkle Root Published: ${merkleRoot.slice(0, 16)}...`);
+    console.log(`[SettlementWorker] Merkle Root Published: ${merkleRoot.slice(0, 16)}...`);
   }
 
   // 2. Process CLOSED markets ready for resolution & payout
@@ -104,7 +104,7 @@ export async function processSettlementOnce(
         // Default Blitz or test markets resolve to YES for demo simulation
         outcome = "YES";
         db.updateMarketStatus(market.id, "RESOLVED", outcome);
-        console.log(`[SettlementWorker] ⚖️ Blitz/Demo Market ${market.id} Resolved: Outcome = ${outcome}`);
+        console.log(`[SettlementWorker] Blitz/Demo Market ${market.id} Resolved: Outcome = ${outcome}`);
       } else {
         // Awaiting external oracle resolution
         continue;
@@ -118,7 +118,7 @@ export async function processSettlementOnce(
       continue;
     }
 
-    // Decrypt return addresses for all winning bets
+    // Decrypt return addresses for all winning bets in ephemeral memory only
     const betPositions: BetPosition[] = [];
     const decryptedAddresses: Map<string, string> = new Map();
 
@@ -148,7 +148,10 @@ export async function processSettlementOnce(
       outcome,
     });
 
-    console.log(`[SettlementWorker] 💰 Settling Market ${market.id}: Status = ${settlement.status}`);
+    console.log(`[SettlementWorker] Settling Market ${market.id}: Status = ${settlement.status}`);
+
+    const batchPayouts: Array<{ destinationAddress: string; amountZats: bigint; memo?: string }> = [];
+    const createdPayoutRecords: Array<{ id: string }> = [];
 
     for (const p of settlement.payouts) {
       if (p.grossPayoutZats <= 0n) continue;
@@ -157,6 +160,7 @@ export async function processSettlementOnce(
       const existingPayout = db.getPayout(payoutId);
       if (existingPayout) continue;
 
+      // Plaintext address is NOT persisted in SQLite; db.createPayout hashes it
       const payoutRecord = db.createPayout({
         id: payoutId,
         market_id: market.id,
@@ -166,21 +170,40 @@ export async function processSettlementOnce(
       });
 
       payoutsCreated++;
+      createdPayoutRecords.push(payoutRecord);
+      batchPayouts.push({
+        destinationAddress: p.returnAddress,
+        amountZats: p.netPayoutZats,
+        memo: `Nocturne Settlement: ${market.id}`,
+      });
+    }
 
-      // Dispatch shielded payout if live wallet bridge is connected
-      if (bridge) {
-        try {
-          console.log(`[SettlementWorker] Broadcasting shielded payout of ${Number(p.netPayoutZats) / 100_000_000} ZEC...`);
-          const txid = await bridge.sendShieldedPayout(
-            p.returnAddress,
-            p.netPayoutZats,
-            `Nocturne Settlement: ${market.id}`
+    // Batch Shielded Payouts: Dispatch all winner payouts in a single batched transaction
+    // to prevent Zcash Orchard unconfirmed change-note locking.
+    if (bridge && batchPayouts.length > 0) {
+      try {
+        console.log(
+          `[SettlementWorker] Broadcasting batched shielded payout for ${batchPayouts.length} winners in market ${market.id}...`
+        );
+        let txid: string;
+        if (bridge.sendShieldedPayoutsBatch) {
+          txid = await bridge.sendShieldedPayoutsBatch(batchPayouts);
+        } else if (bridge.sendShieldedPayout && batchPayouts.length === 1) {
+          txid = await bridge.sendShieldedPayout(
+            batchPayouts[0].destinationAddress,
+            batchPayouts[0].amountZats,
+            batchPayouts[0].memo
           );
-          db.updatePayoutTxid(payoutRecord.id, txid, "BROADCASTED");
-          console.log(`[SettlementWorker]   ✔ Shielded Payout Broadcasted! Txid: ${txid}`);
-        } catch (err: any) {
-          console.warn(`[SettlementWorker] Payout broadcast delayed or failed: ${err.message}`);
+        } else {
+          throw new Error("Wallet bridge does not support batch shielded payouts");
         }
+
+        for (const record of createdPayoutRecords) {
+          db.updatePayoutTxid(record.id, txid, "BROADCASTED");
+        }
+        console.log(`[SettlementWorker] Shielded Batch Payout Broadcasted! Txid: ${txid}`);
+      } catch (err: any) {
+        console.warn(`[SettlementWorker] Batch payout broadcast delayed or failed: ${err.message}`);
       }
     }
 
@@ -191,7 +214,7 @@ export async function processSettlementOnce(
 
     db.updateMarketStatus(market.id, "SETTLED");
     marketsSettled++;
-    console.log(`[SettlementWorker] ✔ Market ${market.id} Settlement Complete!\n`);
+    console.log(`[SettlementWorker] Market ${market.id} Settlement Complete!\n`);
   }
 
   return {

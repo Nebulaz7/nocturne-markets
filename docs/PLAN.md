@@ -1,6 +1,6 @@
 # Nocturne Markets (Project Z): Implementation Plan
 
-Domain: nocturnemarkets.cv (point an A record at the Azure VM, Caddy handles HTTPS automatically).
+Domain: nocturnemarkets.tech (point an A record at the Azure VM, Caddy handles HTTPS automatically).
 
 Companion to about.md. This is the build plan: architecture, structure, resources to check, and a day-by-day schedule.
 

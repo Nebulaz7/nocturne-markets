@@ -56,4 +56,10 @@ export class ZingoWalletBridge {
   ): Promise<string> {
     return this.client.sendShieldedPayout(destinationAddress, amountZats, memo);
   }
+
+  public sendShieldedPayoutsBatch(
+    payouts: Array<{ destinationAddress: string; amountZats: bigint | number; memo?: string }>
+  ): Promise<string> {
+    return this.client.sendShieldedPayoutsBatch(payouts);
+  }
 }

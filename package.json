@@ -12,7 +12,8 @@
     "test:client": "node --experimental-strip-types app/lib/bet_builder.test.ts",
     "test:merkle": "node --experimental-strip-types app/lib/merkle.test.ts",
     "test:url": "node --experimental-strip-types packages/shared/src/polymarket_url.test.ts",
-    "test": "node --experimental-strip-types app/lib/merkle.test.ts && node --experimental-strip-types app/lib/bet_builder.test.ts && node --experimental-strip-types packages/shared/src/polymarket_url.test.ts && node --experimental-strip-types coordinator/src/db/db.test.ts && node --experimental-strip-types coordinator/src/coordinator.test.ts"
+    "test:api": "node --experimental-strip-types app/lib/market_api.test.ts",
+    "test": "node --experimental-strip-types app/lib/merkle.test.ts && node --experimental-strip-types app/lib/bet_builder.test.ts && node --experimental-strip-types packages/shared/src/polymarket_url.test.ts && node --experimental-strip-types coordinator/src/db/db.test.ts && node --experimental-strip-types coordinator/src/coordinator.test.ts && node --experimental-strip-types app/lib/market_api.test.ts"
   },
   "keywords": [],
   "author": "",

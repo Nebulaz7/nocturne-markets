@@ -38,7 +38,7 @@ export interface PolymarketMatchResult {
 
 /**
  * Strips repeated protocol/domain prefixes iteratively, handling stacked URLs like:
- * "https://nocturnemarkets.cv/https://polymarket.com/event/fed-decision-in-october"
+ * "https://nocturnemarkets.tech/https://polymarket.com/event/fed-decision-in-october"
  * or mangled browser pathnames like "https:/polymarket.com/event/...".
  */
 function cleanPrefixes(raw: string): string {

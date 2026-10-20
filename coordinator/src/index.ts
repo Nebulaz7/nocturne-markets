@@ -44,9 +44,18 @@ export class DevMockWalletBridge implements WalletBridgeLike {
     memo?: string
   ): Promise<string> {
     console.log(
-      `[DevMockWallet] 🛡️ Simulated payout of ${Number(amountZats) / 100_000_000} ZEC to ${destinationAddress.slice(0, 16)}...`
+      `[DevMockWallet] Simulated payout of ${Number(amountZats) / 100_000_000} ZEC to ${destinationAddress.slice(0, 16)}...`
     );
     return `mock-txid-${Date.now()}`;
+  }
+
+  public async sendShieldedPayoutsBatch(
+    payouts: Array<{ destinationAddress: string; amountZats: number | bigint; memo?: string }>
+  ): Promise<string> {
+    console.log(
+      `[DevMockWallet] Simulated batched payout to ${payouts.length} recipients.`
+    );
+    return `mock-batch-txid-${Date.now()}`;
   }
 }
 
@@ -118,13 +127,13 @@ export async function buildApp(
       bridge = new ZingoWalletBridge();
     } else {
       console.log(
-        "[Coordinator] ℹ️ zingo-cli not found on PATH. Initializing DevMockWalletBridge (simulated wallet mode for local dev)."
+        "[Coordinator] zingo-cli not found on PATH. Initializing DevMockWalletBridge (simulated wallet mode for local dev)."
       );
       bridge = new DevMockWalletBridge();
     }
     const mockDrand = options.mockDrand ?? false;
 
-    console.log("[Coordinator] 🚀 Starting background worker tasks...");
+    console.log("[Coordinator] Starting background worker tasks...");
 
     const watcher = startDepositWatcher(
       db,
@@ -170,7 +179,7 @@ if (process.argv[1]?.endsWith("index.ts")) {
     console.log(
       "===============================================================",
     );
-    console.log("🌌 NOCTURNE MARKETS: ZERO-POST COORDINATOR SERVICE 🌌");
+    console.log("NOCTURNE MARKETS: ZERO-POST COORDINATOR SERVICE");
     console.log(
       "===============================================================\n",
     );

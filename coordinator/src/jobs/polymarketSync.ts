@@ -11,6 +11,7 @@ export interface PolymarketMarket {
   endDate?: string;
   outcomes?: string; // JSON string, e.g. '["Yes", "No"]'
   outcomePrices?: string; // JSON string, e.g. '["0.0015", "0.9985"]'
+  clobTokenIds?: string; // JSON string, e.g. '["token1", "token2"]'
   groupItemTitle?: string;
   active?: boolean;
   closed?: boolean;
@@ -20,10 +21,96 @@ export interface PolymarketEvent {
   id: string;
   title: string;
   slug: string;
+  category?: string;
+  tags?: Array<{ id?: string; label?: string; slug?: string }>;
   endDate?: string;
   closed?: boolean;
   active?: boolean;
   markets?: PolymarketMarket[];
+}
+
+export type MarketCategory = "Politics" | "Crypto" | "Sports" | "Others";
+
+/**
+ * Strictly normalizes any Polymarket category or event tags into one of exactly 4 categories:
+ * 'Politics', 'Crypto', 'Sports', or 'Others'.
+ */
+export function normalizeCategory(
+  rawCategory?: string | null,
+  tags?: Array<{ label?: string; slug?: string }> | null,
+  title?: string | null
+): MarketCategory {
+  const cat = (rawCategory || "").trim().toLowerCase();
+  if (cat === "politics") return "Politics";
+  if (cat === "crypto" || cat === "cryptocurrency") return "Crypto";
+  if (cat === "sports") return "Sports";
+
+  // Check tags
+  if (tags && Array.isArray(tags)) {
+    for (const t of tags) {
+      const tagStr = `${t.label || ""} ${t.slug || ""}`.toLowerCase();
+      if (
+        tagStr.includes("politic") ||
+        tagStr.includes("election") ||
+        tagStr.includes("geopolitics")
+      ) {
+        return "Politics";
+      }
+      if (
+        tagStr.includes("crypto") ||
+        tagStr.includes("bitcoin") ||
+        tagStr.includes("ethereum") ||
+        tagStr.includes("solana")
+      ) {
+        return "Crypto";
+      }
+      if (
+        tagStr.includes("sport") ||
+        tagStr.includes("nba") ||
+        tagStr.includes("nfl") ||
+        tagStr.includes("soccer") ||
+        tagStr.includes("football") ||
+        tagStr.includes("baseball") ||
+        tagStr.includes("tennis") ||
+        tagStr.includes("mma") ||
+        tagStr.includes("ufc")
+      ) {
+        return "Sports";
+      }
+    }
+  }
+
+  // Keyword check in title and metadata
+  const text = `${rawCategory || ""} ${title || ""}`.toLowerCase();
+
+  // Crypto keywords
+  if (
+    /\b(crypto|bitcoin|btc|ethereum|eth|solana|sol|binance|coinbase|tether|usdt|usdc|token|nft|defi|doge|xrp)\b/i.test(
+      text
+    )
+  ) {
+    return "Crypto";
+  }
+
+  // Politics keywords
+  if (
+    /\b(politics|election|trump|biden|harris|kamala|senate|president|white house|democrat|republican|congress|ceasefire|war|geopolitics|putin|zelensky|ukraine|gaza|israel|nato|governor|supreme court)\b/i.test(
+      text
+    )
+  ) {
+    return "Politics";
+  }
+
+  // Sports keywords
+  if (
+    /\b(sports|nba|nfl|mlb|nhl|soccer|uefa|premier league|champions league|fifa|tennis|ufc|f1|formula 1|boxing|ballon d'or|super bowl|world cup|touchdown|quarterback)\b/i.test(
+      text
+    )
+  ) {
+    return "Sports";
+  }
+
+  return "Others";
 }
 
 /**
@@ -97,11 +184,31 @@ export async function syncPolymarketMarketsOnce(
           // If expired, skip
           if (closeTimeSec <= now + 60) continue;
 
+          // Parse CLOB token IDs
+          let yesTokenId: string | null = null;
+          let noTokenId: string | null = null;
+          try {
+            const tokenIds = JSON.parse(m.clobTokenIds || "[]");
+            if (Array.isArray(tokenIds) && tokenIds.length >= 2) {
+              const yesIndex = outcomes[0].toLowerCase() === "yes" ? 0 : 1;
+              const noIndex = yesIndex === 0 ? 1 : 0;
+              yesTokenId = tokenIds[yesIndex] || null;
+              noTokenId = tokenIds[noIndex] || null;
+            }
+          } catch {}
+
+          const normalizedCat = normalizeCategory(evt.category, evt.tags, evt.title);
+
           const existing = db.getMarket(m.id);
           if (existing) {
             if (refYesPrice !== null && existing.ref_yes_price !== refYesPrice) {
               db.updateMarketRefPrice(m.id, refYesPrice);
             }
+            db.updateMarketTokensAndCategory(m.id, {
+              yes_token_id: yesTokenId,
+              no_token_id: noTokenId,
+              category: normalizedCat,
+            });
             continue;
           }
 
@@ -121,6 +228,9 @@ export async function syncPolymarketMarketsOnce(
             question: m.question || null,
             group_item_title: m.groupItemTitle || null,
             ref_yes_price: refYesPrice,
+            yes_token_id: yesTokenId,
+            no_token_id: noTokenId,
+            category: normalizedCat,
             close_time: closeTimeSec,
             drand_round: drandRound,
             pot_address: potAddress,
@@ -157,6 +267,9 @@ function seedFallbackMarkets(db: CoordinatorDatabase, potAddress: string): numbe
       question: "Will Bitcoin hit $100,000 before December 31, 2026?",
       group_item_title: null,
       ref_yes_price: 0.68,
+      yes_token_id: "token-btc-100k-yes",
+      no_token_id: "token-btc-100k-no",
+      category: "Crypto" as MarketCategory,
       closeTimeOffset: 30 * 24 * 3600,
     },
     {
@@ -169,6 +282,9 @@ function seedFallbackMarkets(db: CoordinatorDatabase, potAddress: string): numbe
       question: "Will Ethereum flip Bitcoin by market cap in 2026?",
       group_item_title: null,
       ref_yes_price: 0.12,
+      yes_token_id: "token-eth-flip-btc-yes",
+      no_token_id: "token-eth-flip-btc-no",
+      category: "Crypto" as MarketCategory,
       closeTimeOffset: 14 * 24 * 3600,
     },
   ];
@@ -189,6 +305,9 @@ function seedFallbackMarkets(db: CoordinatorDatabase, potAddress: string): numbe
         question: m.question,
         group_item_title: m.group_item_title,
         ref_yes_price: m.ref_yes_price,
+        yes_token_id: m.yes_token_id,
+        no_token_id: m.no_token_id,
+        category: m.category,
         close_time: closeTime,
         drand_round: drandRound,
         pot_address: potAddress,
@@ -225,7 +344,7 @@ export async function ensureActiveBlitzMarket(
   const newMarket = db.createMarket({
     id: blitzId,
     polymarket_id: "blitz-oracle",
-    title: "⚡ Blitz: Will BTC 1-min candle close above $65,000?",
+    title: "Blitz: Will BTC 1-min candle close above $65,000?",
     slug: blitzId,
     event_slug: "blitz-market",
     market_slug: blitzId,
@@ -233,12 +352,13 @@ export async function ensureActiveBlitzMarket(
     question: "Will BTC 1-min candle close above $65,000?",
     group_item_title: "1-min candle",
     ref_yes_price: 0.50,
+    category: "Crypto",
     close_time: closeTime,
     drand_round: drandRound,
     pot_address: potAddress,
   });
 
-  console.log(`[PolymarketSync] ⚡ Fresh 5-Minute Blitz Market Seeded: ${newMarket.id} (Closes at ${new Date(closeTime * 1000).toLocaleTimeString()})`);
+  console.log(`[PolymarketSync] Fresh 5-Minute Blitz Market Seeded: ${newMarket.id} (Closes at ${new Date(closeTime * 1000).toLocaleTimeString()})`);
   return newMarket.id;
 }
 

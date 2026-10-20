@@ -6,6 +6,12 @@ import {
   normalizeMarketId,
 } from "../../../packages/shared/src/memo.ts";
 
+export interface ShieldedPayoutRecipient {
+  destinationAddress: string;
+  amountZats: number | bigint;
+  memo?: string;
+}
+
 export interface WalletBridgeLike {
   sync(): Promise<string>;
   listNotes(): Promise<IncomingNote[]>;
@@ -13,6 +19,9 @@ export interface WalletBridgeLike {
     destinationAddress: string,
     amountZats: number | bigint,
     memo?: string
+  ): Promise<string>;
+  sendShieldedPayoutsBatch?(
+    payouts: ShieldedPayoutRecipient[]
   ): Promise<string>;
 }
 
@@ -98,7 +107,7 @@ export async function pollDepositsOnce(
 
       newBetsInserted++;
       console.log(
-        `[DepositWatcher] ✔ Verified Bet Recorded: ${betId} for Market ${market.id} (${Number(note.amountZats) / 100_000_000} ZEC)`
+        `[DepositWatcher] Verified Bet Recorded: ${betId} for Market ${market.id} (${Number(note.amountZats) / 100_000_000} ZEC)`
       );
     } catch (err: any) {
       console.debug(`[DepositWatcher] Note ${note.txid} failed NOC2 parse: ${err.message}`);

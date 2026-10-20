@@ -1,6 +1,6 @@
 # Nocturne Markets (codename: Project Z)
 
-Domain: nocturnemarkets.cv
+Domain: nocturnemarkets.tech
 Short handle: nocmarkets
 Tagline idea: Public prices. Private people.
 

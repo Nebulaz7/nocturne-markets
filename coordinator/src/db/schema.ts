@@ -19,6 +19,9 @@ export interface MarketRecord {
   question?: string | null;
   group_item_title?: string | null;
   ref_yes_price?: number | null;
+  yes_token_id?: string | null;
+  no_token_id?: string | null;
+  category?: string;
   close_time: number; // Unix seconds
   drand_round: number;
   status: MarketStatus;
@@ -52,7 +55,8 @@ export interface PayoutRecord {
   market_id: string;
   bet_id: string;
   amount_zats: number;
-  destination_address: string;
+  payout_hash: string;
+  destination_address?: string | null;
   txid: string | null;
   status: "PENDING" | "BROADCASTED" | "CONFIRMED" | "FAILED";
   created_at: number;
@@ -77,6 +81,9 @@ CREATE TABLE IF NOT EXISTS markets (
   question TEXT,
   group_item_title TEXT,
   ref_yes_price REAL,
+  yes_token_id TEXT,
+  no_token_id TEXT,
+  category TEXT NOT NULL DEFAULT 'Others',
   close_time INTEGER NOT NULL,
   drand_round INTEGER NOT NULL,
   status TEXT NOT NULL DEFAULT 'OPEN',
@@ -110,7 +117,8 @@ CREATE TABLE IF NOT EXISTS payouts (
   market_id TEXT NOT NULL REFERENCES markets(id),
   bet_id TEXT NOT NULL REFERENCES bets(id),
   amount_zats INTEGER NOT NULL,
-  destination_address TEXT NOT NULL,
+  payout_hash TEXT NOT NULL,
+  destination_address TEXT,
   txid TEXT,
   status TEXT NOT NULL DEFAULT 'PENDING',
   created_at INTEGER NOT NULL,
@@ -126,6 +134,7 @@ CREATE TABLE IF NOT EXISTS sync_state (
 CREATE INDEX IF NOT EXISTS idx_markets_event_slug ON markets(event_slug);
 CREATE INDEX IF NOT EXISTS idx_markets_market_slug ON markets(market_slug);
 CREATE INDEX IF NOT EXISTS idx_markets_condition_id ON markets(condition_id);
+CREATE INDEX IF NOT EXISTS idx_markets_category ON markets(category);
 CREATE INDEX IF NOT EXISTS idx_bets_market_id ON bets(market_id);
 CREATE INDEX IF NOT EXISTS idx_bets_commitment ON bets(commitment);
 CREATE INDEX IF NOT EXISTS idx_payouts_market_id ON payouts(market_id);

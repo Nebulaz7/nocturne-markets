@@ -21,7 +21,8 @@ function runDatabaseTests() {
   assert.strictEqual(market.id, "blitz-btc-100k");
   assert.strictEqual(market.status, "OPEN");
   assert.strictEqual(market.total_pot_zats, 0);
-  console.log("✔ Market created successfully in SQLite.");
+  assert.strictEqual(market.category, "Others");
+  console.log("PASS: Market created successfully in SQLite.");
 
   // 2. Insert Bets
   const mockTlock = Buffer.alloc(217, 0xaa);
@@ -56,15 +57,16 @@ function runDatabaseTests() {
   // Check market pot increment
   const updatedMarket = db.getMarket(market.id)!;
   assert.strictEqual(updatedMarket.total_pot_zats, 300_000_000);
-  console.log("✔ Bets inserted and market total pot atomically incremented.");
+  console.log("PASS: Bets inserted and market total pot atomically incremented.");
 
   // 3. Querying Bets
   const bets = db.listBetsForMarket(market.id);
   assert.strictEqual(bets.length, 2);
+  assert.strictEqual(db.countBetsForMarket(market.id), 2);
   const fetchedByCommitment = db.getBetByCommitment(bet1.commitment)!;
   assert.strictEqual(fetchedByCommitment.id, bet1.id);
   assert.strictEqual(fetchedByCommitment.tlock_envelope.length, 217);
-  console.log("✔ Querying bets by market and commitment verified.");
+  console.log("PASS: Querying bets by market and commitment verified.");
 
   // 4. Update Decrypted Sides & Market Status
   db.updateBetDecryptedSide(bet1.id, "YES");
@@ -79,31 +81,35 @@ function runDatabaseTests() {
   assert.strictEqual(resolvedMarket.status, "RESOLVED");
   assert.strictEqual(resolvedMarket.outcome, "YES");
   assert.strictEqual(resolvedMarket.merkle_root, "merkle-root-abc123");
-  console.log("✔ Bet decryption and market status transitions verified.");
+  console.log("PASS: Bet decryption and market status transitions verified.");
 
-  // 5. Payouts
+  // 5. Payouts (Zero Plaintext Address Persistence in SQLite)
+  const testWinnerAddr = "utest1winneraddress999999999999999999999999999999999999999999999999999999";
   const payout = db.createPayout({
     id: "payout-1",
     market_id: market.id,
     bet_id: bet1.id,
     amount_zats: 295_000_000,
-    destination_address: "utest1winneraddress999999999999999999999999999999999999999999999999999999",
+    destination_address: testWinnerAddr,
   });
   assert.strictEqual(payout.status, "PENDING");
+  assert(payout.payout_hash && payout.payout_hash.length === 64, "payout_hash must be 64-char hex");
+  assert.notStrictEqual(payout.destination_address, testWinnerAddr, "Plaintext payout address must not be stored in SQLite");
+  assert.strictEqual(payout.destination_address, "[SHIELDED]");
 
   db.updatePayoutTxid(payout.id, "payout-txid-777", "CONFIRMED");
   const confirmedPayout = db.getPayout(payout.id)!;
   assert.strictEqual(confirmedPayout.status, "CONFIRMED");
   assert.strictEqual(confirmedPayout.txid, "payout-txid-777");
-  console.log("✔ Payout record creation and txid update verified.");
+  console.log("PASS: Payout record creation and txid update verified.");
 
   // 6. Sync State
   db.setSyncState("zcash_scan_height", "4498850");
   assert.strictEqual(db.getSyncState("zcash_scan_height"), "4498850");
   assert.strictEqual(db.getSyncState("non_existent_key", "100"), "100");
-  console.log("✔ Sync state key-value store verified.");
+  console.log("PASS: Sync state key-value store verified.");
 
-  // 7. Polymarket Slug Indexing and Event Sub-market Queries
+  // 7. Polymarket Slug Indexing, Categories, Tokens, and Event Sub-market Queries
   const polyMarket1 = db.createMarket({
     id: "poly-fomc-cut-25",
     polymarket_id: "m-101",
@@ -115,6 +121,9 @@ function runDatabaseTests() {
     question: "Will the Fed decrease interest rates by 25 bps?",
     group_item_title: "25 bps decrease",
     ref_yes_price: 0.85,
+    yes_token_id: "token-yes-101",
+    no_token_id: "token-no-101",
+    category: "Politics",
     close_time: now + 3600,
     drand_round: 33046000,
     pot_address: "utest1potaddress123456789",
@@ -131,6 +140,9 @@ function runDatabaseTests() {
     question: "Will the Fed decrease interest rates by 50+ bps?",
     group_item_title: "50+ bps decrease",
     ref_yes_price: 0.05,
+    yes_token_id: "token-yes-102",
+    no_token_id: "token-no-102",
+    category: "Politics",
     close_time: now + 3600,
     drand_round: 33046000,
     pot_address: "utest1potaddress123456789",
@@ -139,13 +151,20 @@ function runDatabaseTests() {
   const foundByMarketSlug = db.getMarketBySlug("will-the-fed-decrease-rates-25-bps");
   assert.strictEqual(foundByMarketSlug?.id, "poly-fomc-cut-25");
   assert.strictEqual(foundByMarketSlug?.ref_yes_price, 0.85);
+  assert.strictEqual(foundByMarketSlug?.yes_token_id, "token-yes-101");
+  assert.strictEqual(foundByMarketSlug?.no_token_id, "token-no-101");
+  assert.strictEqual(foundByMarketSlug?.category, "Politics");
 
   const foundByEventSlug = db.getMarketBySlug("fed-decision-in-october-20260617");
   assert.ok(foundByEventSlug, "Should match by event_slug");
 
   const subMarkets = db.listMarketsByEventSlug("fed-decision-in-october");
   assert.strictEqual(subMarkets.length, 2, "Should return both sub-markets for the event");
-  console.log("✔ Polymarket slug indexing, event sub-markets, and reference price verified.");
+
+  const politicsMarkets = db.listMarkets({ category: "Politics" });
+  assert.strictEqual(politicsMarkets.length, 2);
+
+  console.log("PASS: Polymarket slug indexing, tokens, categories, and event sub-markets verified.");
 
   db.close();
   console.log("\n>>> ALL COORDINATOR DATABASE UNIT TESTS PASSED! <<<\n");

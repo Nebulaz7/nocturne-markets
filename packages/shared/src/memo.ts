@@ -1,7 +1,13 @@
 import crypto from "crypto";
 import nacl from "tweetnacl";
 import { bech32m } from "@scure/base";
-import { timelockEncrypt, timelockDecrypt, mainnetClient } from "tlock-js";
+import { timelockEncrypt, timelockDecrypt, mainnetClient, defaultChainInfo } from "tlock-js";
+
+export const OFFLINE_DRAND_CLIENT = {
+  chain: () => ({
+    info: async () => defaultChainInfo,
+  }),
+};
 
 export const MEMO_VERSION_V2 = 0x02;
 export const MAX_MEMO_BYTES = 512;
@@ -362,7 +368,7 @@ export async function packTlockEnvelope(params: {
     return envelope;
   }
 
-  const drandClient = client ?? mainnetClient();
+  const drandClient = client ?? OFFLINE_DRAND_CLIENT;
   const armored = await timelockEncrypt(Number(roundNum), plaintext, drandClient);
   return packAgePayloadToTlockEnvelope(armored);
 }

@@ -42,7 +42,7 @@ function runPolymarketUrlTests() {
   assert.strictEqual(p5.isExplicitMarket, true);
 
   // Variant E: Prepend Domain Prefix (Address bar prepending)
-  const p6 = parsePolymarketUrl("https://nocturnemarkets.cv/https://polymarket.com/event/fed-decision-in-october");
+  const p6 = parsePolymarketUrl("https://nocturnemarkets.tech/https://polymarket.com/event/fed-decision-in-october");
   assert.strictEqual(p6.eventSlug, "fed-decision-in-october");
 
   // Variant F: Mangled protocol from catch-all route (/https:/polymarket.com/...)
@@ -57,7 +57,7 @@ function runPolymarketUrlTests() {
   const p9 = parsePolymarketUrl("fed-decision-in-october");
   assert.strictEqual(p9.eventSlug, "fed-decision-in-october");
 
-  console.log("   ✔ All 9 URL syntax variants parsed successfully.");
+  console.log("   PASS: All 9 URL syntax variants parsed successfully.");
 
   // --------------------------------------------------------------------------
   // 2. Slug Matching with Timestamp/Random Suffixes
@@ -75,7 +75,7 @@ function runPolymarketUrlTests() {
     slugMatches("will-btc-hit-100k", "will-eth-hit-10k"),
     false
   );
-  console.log("   ✔ Slug fuzzy prefix and suffix matching verified.");
+  console.log("   PASS: Slug fuzzy prefix and suffix matching verified.");
 
   // --------------------------------------------------------------------------
   // 3. In-Memory Matching against Cached Markets
@@ -135,7 +135,7 @@ function runPolymarketUrlTests() {
   assert.strictEqual(matchEvent.matched, true);
   assert.strictEqual(matchEvent.type, "MULTI_MARKET");
   assert.strictEqual(matchEvent.subMarkets?.length, 3);
-  console.log("   ✔ Multi-bracket event correctly returns MULTI_MARKET with 3 sub-markets.");
+  console.log("   PASS: Multi-bracket event correctly returns MULTI_MARKET with 3 sub-markets.");
 
   // Test Case B: User pastes explicit sub-market URL
   const matchSubMarket = matchPolymarketUrl(
@@ -146,7 +146,7 @@ function runPolymarketUrlTests() {
   assert.strictEqual(matchSubMarket.type, "SINGLE_MARKET");
   assert.strictEqual(matchSubMarket.market?.id, "fomc-cut-25");
   assert.strictEqual(matchSubMarket.market?.ref_yes_price, 0.85);
-  console.log("   ✔ Explicit sub-market URL directly resolves to target binary market.");
+  console.log("   PASS: Explicit sub-market URL directly resolves to target binary market.");
 
   // Test Case C: Single binary market event resolves directly to SINGLE_MARKET
   const matchBtc = matchPolymarketUrl(
@@ -156,23 +156,23 @@ function runPolymarketUrlTests() {
   assert.strictEqual(matchBtc.matched, true);
   assert.strictEqual(matchBtc.type, "SINGLE_MARKET");
   assert.strictEqual(matchBtc.market?.id, "btc-100k-market");
-  console.log("   ✔ Single-market event directly resolves to SINGLE_MARKET.");
+  console.log("   PASS: Single-market event directly resolves to SINGLE_MARKET.");
 
   // Test Case D: Prepend prefix in address bar
   const matchPrepend = matchPolymarketUrl(
-    "nocturnemarkets.cv/https://polymarket.com/market/will-btc-hit-100k-before-dec-2026?r=123",
+    "nocturnemarkets.tech/https://polymarket.com/market/will-btc-hit-100k-before-dec-2026?r=123",
     mockMarkets
   );
   assert.strictEqual(matchPrepend.matched, true);
   assert.strictEqual(matchPrepend.type, "SINGLE_MARKET");
   assert.strictEqual(matchPrepend.market?.id, "btc-100k-market");
-  console.log("   ✔ Address bar prepend URL successfully matched.");
+  console.log("   PASS: Address bar prepend URL successfully matched.");
 
   // Test Case E: Condition ID match
   const matchCondition = matchPolymarketUrl("0xcond102", mockMarkets);
   assert.strictEqual(matchCondition.matched, true);
   assert.strictEqual(matchCondition.market?.id, "fomc-cut-50");
-  console.log("   ✔ Condition ID fallback match verified.");
+  console.log("   PASS: Condition ID fallback match verified.");
 
   // Test Case F: Unknown market
   const matchUnknown = matchPolymarketUrl(
@@ -181,7 +181,7 @@ function runPolymarketUrlTests() {
   );
   assert.strictEqual(matchUnknown.matched, false);
   assert.strictEqual(matchUnknown.type, "NOT_FOUND");
-  console.log("   ✔ Non-existent market correctly returns NOT_FOUND.");
+  console.log("   PASS: Non-existent market correctly returns NOT_FOUND.");
 
   console.log("\n>>> ALL POLYMARKET URL PARSER & MATCHER TESTS PASSED! <<<\n");
 }

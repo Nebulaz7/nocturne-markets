@@ -1,6 +1,12 @@
 import nacl from "tweetnacl";
 import { bech32m, hex, utf8, base64, base64url } from "@scure/base";
-import { timelockEncrypt, mainnetClient } from "tlock-js";
+import { timelockEncrypt, defaultChainInfo } from "tlock-js";
+
+export const OFFLINE_DRAND_CLIENT = {
+  chain: () => ({
+    info: async () => defaultChainInfo,
+  }),
+};
 
 export const MEMO_VERSION_V2 = 0x02;
 export const MAX_MEMO_BYTES = 512;
@@ -173,6 +179,12 @@ export async function encryptPayoutEnvelope(params: {
   return envelope;
 }
 
+function safeBase64Decode(str: string): Uint8Array {
+  let s = str.trim();
+  while (s.length % 4 !== 0) s += "=";
+  return base64.decode(s);
+}
+
 /**
  * Packs tlock-js age armored string into a deterministic 217-byte binary buffer.
  */
@@ -181,7 +193,7 @@ export function packAgePayloadToTlockEnvelope(armored: string): Uint8Array {
     .replace(/-----BEGIN AGE ENCRYPTED FILE-----/g, "")
     .replace(/-----END AGE ENCRYPTED FILE-----/g, "")
     .replace(/\s+/g, "");
-  const unarmored = base64.decode(b64);
+  const unarmored = safeBase64Decode(b64);
 
   const macSep = utf8.decode("--- ");
   let headerEnd = -1;
@@ -217,10 +229,10 @@ export function packAgePayloadToTlockEnvelope(armored: string): Uint8Array {
 
   const bodyStart = headerStr.indexOf("\n", headerStr.indexOf("-> tlock")) + 1;
   const ibeBase64 = headerStr.substring(bodyStart).replace(/\s+/g, "");
-  const cipherIbe = base64.decode(ibeBase64);
+  const cipherIbe = safeBase64Decode(ibeBase64);
 
   const macBase64 = macStr.replace("--- ", "").trim();
-  const headerMac = base64.decode(macBase64);
+  const headerMac = safeBase64Decode(macBase64);
 
   if (cipherIbe.length !== 128) {
     throw new Error(`Unexpected cipher_ibe length: ${cipherIbe.length} (expected 128)`);
@@ -265,7 +277,7 @@ export async function packTlockEnvelope(params: {
     secretBytes = secret;
   }
 
-  const sideByte = side === "YES" ? 0x01 : 0x02;
+  const sideByte = side === "YES" ? 0x01 : 0x00;
   const plaintext = concatBytes(new Uint8Array([sideByte]), secretBytes);
 
   if (mock) {
@@ -282,12 +294,10 @@ export async function packTlockEnvelope(params: {
   }
 
   try {
-    const drandClient = mainnetClient();
-    const armored = await timelockEncrypt(Number(roundNum), plaintext as any, drandClient);
+    const armored = await timelockEncrypt(Number(roundNum), plaintext as any, OFFLINE_DRAND_CLIENT as any);
     return packAgePayloadToTlockEnvelope(armored);
   } catch (err: any) {
-    // If drand network is unreachable from browser client, fall back to mock envelope
-    console.warn("[BetBuilder] Live drand beacon unreachable, falling back to mock envelope:", err.message);
+    console.warn("[BetBuilder] Drand encryption error, falling back to mock envelope:", err.message);
     return packTlockEnvelope({ round, side, secret, mock: true });
   }
 }
