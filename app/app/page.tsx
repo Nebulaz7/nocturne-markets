@@ -3,6 +3,7 @@ import { ShieldUrlBar } from "../components/ShieldUrlBar";
 import { HeaderNav } from "../components/HeaderNav";
 import Navbar from "./components/Navbar";
 import type { MarketSummary } from "@/lib/polymarket_url";
+import Hero from "./components/Hero";
 
 export const dynamic = "force-dynamic";
 
@@ -31,6 +32,7 @@ export default async function HomePage() {
     <>
       <div className="min-h-screen bg-black text-zinc-100 flex flex-col font-sans selection:bg-cyan-500 selection:text-black">
         <Navbar />
+        <Hero />
       </div>
     </>
   );

@@ -282,11 +282,7 @@ export default function Navbar() {
             {/* Public Merkle Audit Trigger (Desktop/Tablet) */}
             <Link
               href="/audit"
-              className="md:hidden btn-monad-base btn-void h-8 px-3 rounded-full text-[11px]"
-              style={{
-                display: "none",
-                // display shouds be bloock for larger screen sizes
-              }}
+              className="hidden sm:inline-flex btn-monad-base btn-void h-8 px-3 rounded-full text-[11px]"
             >
               <span>Audit Proofs</span>
             </Link>

@@ -131,10 +131,6 @@ CREATE TABLE IF NOT EXISTS sync_state (
   updated_at INTEGER NOT NULL
 );
 
-CREATE INDEX IF NOT EXISTS idx_markets_event_slug ON markets(event_slug);
-CREATE INDEX IF NOT EXISTS idx_markets_market_slug ON markets(market_slug);
-CREATE INDEX IF NOT EXISTS idx_markets_condition_id ON markets(condition_id);
-CREATE INDEX IF NOT EXISTS idx_markets_category ON markets(category);
 CREATE INDEX IF NOT EXISTS idx_bets_market_id ON bets(market_id);
 CREATE INDEX IF NOT EXISTS idx_bets_commitment ON bets(commitment);
 CREATE INDEX IF NOT EXISTS idx_payouts_market_id ON payouts(market_id);
