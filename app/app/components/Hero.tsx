@@ -161,9 +161,15 @@ export default function Hero({ initialMarkets = [] }: HeroProps) {
       return FALLBACK_TICKER_ITEMS;
     }
 
+    const now = Math.floor(Date.now() / 1000);
+
     // 1. Pick blitz demo markets
     const blitz = markets.filter(
-      (m) => m.id?.startsWith("blitz-") || m.slug?.startsWith("blitz-"),
+      (m) =>
+        (m.id?.startsWith("blitz-") || m.slug?.startsWith("blitz-")) &&
+        m.status !== "SETTLED" &&
+        m.status !== "CLOSED" &&
+        (!m.close_time || m.close_time > now),
     );
 
     // 2. Pick active markets with valid reference probabilities
@@ -171,6 +177,9 @@ export default function Hero({ initialMarkets = [] }: HeroProps) {
       (m) =>
         !m.id?.startsWith("blitz-") &&
         !m.slug?.startsWith("blitz-") &&
+        m.status !== "SETTLED" &&
+        m.status !== "CLOSED" &&
+        (!m.close_time || m.close_time > now) &&
         m.ref_yes_price !== null &&
         m.ref_yes_price !== undefined &&
         m.ref_yes_price > 0.05 &&

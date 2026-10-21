@@ -1,8 +1,8 @@
 "use client";
 
 import React, { useRef, useState } from "react";
-import Link from "next/link";
-import { ArrowUpRight, Shield, Zap, Clock } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Shield, Zap, Clock } from "lucide-react";
 
 export interface MarketItem {
   id: string;
@@ -22,9 +22,9 @@ interface MarketCardProps {
   market: MarketItem;
 }
 
-// React Bits Spotlight Card effect with Nocturne Obsidian/Ember specular lighting
 export default function MarketCard({ market }: MarketCardProps) {
-  const cardRef = useRef<HTMLAnchorElement>(null);
+  const router = useRouter();
+  const cardRef = useRef<HTMLDivElement>(null);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
   const [isHovered, setIsHovered] = useState(false);
 
@@ -38,13 +38,33 @@ export default function MarketCard({ market }: MarketCardProps) {
   const noPercent = 100 - yesPercent;
   const potZec = market.total_pot_zec ?? 0;
 
-  const handleMouseMove = (e: React.MouseEvent<HTMLAnchorElement>) => {
+  // Arc gauge calculation (semi-circle from 180deg to 0deg)
+  const rad = (yesPercent / 100) * Math.PI;
+  const dotX = Number((34 - 26 * Math.cos(rad)).toFixed(2));
+  const dotY = Number((34 - 26 * Math.sin(rad)).toFixed(2));
+  const gaugeColor = yesPercent >= 50 ? "#22c55e" : "#ef4444";
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     if (!cardRef.current) return;
     const rect = cardRef.current.getBoundingClientRect();
     setMousePos({
       x: e.clientX - rect.left,
       y: e.clientY - rect.top,
     });
+  };
+
+  const handleCardClick = () => {
+    router.push(`/market/${market.id}`);
+  };
+
+  const handleTradeYes = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    router.push(`/market/${market.id}?side=YES`);
+  };
+
+  const handleTradeNo = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    router.push(`/market/${market.id}?side=NO`);
   };
 
   // Format close time or drand round
@@ -61,9 +81,17 @@ export default function MarketCard({ market }: MarketCardProps) {
   const timeRemaining = formatTimeRemaining();
 
   return (
-    <Link
+    <div
       ref={cardRef}
-      href={`/market/${market.id}`}
+      onClick={handleCardClick}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          handleCardClick();
+        }
+      }}
+      role="article"
+      tabIndex={0}
       onMouseMove={handleMouseMove}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
@@ -118,65 +146,100 @@ export default function MarketCard({ market }: MarketCardProps) {
           </div>
         </div>
 
-        {/* Market Title */}
-        <h3 className="text-sm sm:text-base font-heading font-semibold text-[#fef3c7] line-clamp-2 leading-snug group-hover:text-[#fed7aa] transition-colors mb-4 z-10 relative">
-          {market.title}
-        </h3>
-      </div>
+        {/* Market Title & Semi-Circular Chance Gauge */}
+        <div className="flex items-start justify-between gap-3 mb-4 z-10 relative">
+          <h3 className="text-sm sm:text-base font-heading font-semibold text-[#fef3c7] line-clamp-2 leading-snug group-hover:text-[#fed7aa] transition-colors flex-1">
+            {market.title}
+          </h3>
 
-      {/* Middle: Probabilities & Binary Price Bar */}
-      <div className="space-y-2 my-2 z-10 relative">
-        <div className="flex items-center justify-between text-xs font-mono">
-          <span className="text-[#fb923c] font-bold flex items-center gap-1">
-            <span>YES</span>
-            <span className="text-sm font-extrabold">{yesPercent}¢</span>
-          </span>
-          <span className="text-[#fef3c7]/50 font-bold flex items-center gap-1">
-            <span>NO</span>
-            <span className="text-sm font-extrabold">{noPercent}¢</span>
-          </span>
-        </div>
-
-        {/* Odds Indicator Bar with Specular Lighting */}
-        <div className="relative w-full h-2 rounded-full overflow-hidden bg-[#24150f] border border-[#7c2d12]/30 flex">
-          <div
-            className="h-full bg-gradient-to-r from-[#ea580c] to-[#fb923c] transition-all duration-500 rounded-l-full relative"
-            style={{ width: `${yesPercent}%` }}
-          >
-            <div className="absolute inset-0 bg-white/15 opacity-50" />
+          {/* Arc Gauge for Probability */}
+          <div className="relative shrink-0 w-[68px] h-[46px] flex items-center justify-center select-none pt-1">
+            <svg viewBox="0 0 68 46" className="w-[68px] h-[46px] overflow-visible">
+              {/* Background Arc Track */}
+              <path
+                d="M 8 34 A 26 26 0 0 1 60 34"
+                fill="none"
+                stroke="#2a1d17"
+                strokeWidth="3.5"
+                strokeLinecap="round"
+              />
+              {/* Active Progress Arc */}
+              <path
+                d="M 8 34 A 26 26 0 0 1 60 34"
+                fill="none"
+                stroke={gaugeColor}
+                strokeWidth="3.5"
+                strokeLinecap="round"
+                strokeDasharray="81.68"
+                strokeDashoffset={81.68 * (1 - yesPercent / 100)}
+                className="transition-all duration-500"
+              />
+              {/* Indicator Dot */}
+              <circle
+                cx={dotX}
+                cy={dotY}
+                r="2.5"
+                fill={gaugeColor}
+                className="transition-all duration-500"
+              />
+            </svg>
+            <div className="absolute inset-x-0 bottom-0 flex flex-col items-center justify-center text-center pointer-events-none">
+              <span className="text-xs sm:text-sm font-bold text-[#fef3c7] leading-none">
+                {yesPercent}%
+              </span>
+              <span className="text-[9px] text-[#fef3c7]/50 font-medium leading-none mt-0.5">
+                chance
+              </span>
+            </div>
           </div>
-          <div
-            className="h-full bg-[#3d180d] transition-all duration-500 rounded-r-full"
-            style={{ width: `${noPercent}%` }}
-          />
         </div>
       </div>
 
-      {/* Bottom: Shielded Pot & Action */}
-      <div className="pt-3 border-t border-[#7c2d12]/25 flex items-center justify-between text-xs font-mono z-10 relative">
-        <div className="flex items-center gap-1.5 text-[#fef3c7]/60">
-          <Shield className="w-3.5 h-3.5 text-[#fb923c]/70 shrink-0" />
-          <span>
-            Pot:{" "}
-            <strong className="text-[#fef3c7] font-bold">
-              {potZec > 0 ? potZec.toFixed(2) : "0.00"} ZEC
-            </strong>
+      {/* Bottom Section: Shielded Pot & Trade YES / NO Buttons */}
+      <div className="pt-3 border-t border-[#7c2d12]/25 space-y-3 z-10 relative">
+        {/* Pot Info */}
+        <div className="flex items-center justify-between text-xs font-mono text-[#fef3c7]/60">
+          <div className="flex items-center gap-1.5">
+            <Shield className="w-3.5 h-3.5 text-[#fb923c]/70 shrink-0" />
+            <span>
+              Pot:{" "}
+              <strong className="text-[#fef3c7] font-bold">
+                {potZec > 0 ? potZec.toFixed(2) : "0.00"} ZEC
+              </strong>
+            </span>
+          </div>
+          <span className="text-[11px] text-[#fef3c7]/40">
+            Parimutuel Pool
           </span>
         </div>
 
-        <span className="btn-monad-base btn-void text-[11px] px-3 py-1 rounded-full text-[#fef3c7] border border-[#7c2d12]/50 group-hover:border-[#fb923c] group-hover:text-[#fb923c] transition-all flex items-center gap-1">
-          <span>Trade</span>
-          <ArrowUpRight className="w-3 h-3 text-[#fb923c] group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
-        </span>
+        {/* Action Trade YES / NO Buttons (Dark muted green & dark red, flat - no glow, no shadow, no gradient) */}
+        <div className="grid grid-cols-2 gap-2.5">
+          <button
+            type="button"
+            onClick={handleTradeYes}
+            className="w-full py-2.5 px-3 rounded-xl bg-[#12281c] hover:bg-[#183525] active:bg-[#0d1e15] text-[#22c55e] font-sans font-bold text-sm flex items-center justify-center transition-colors cursor-pointer shadow-none outline-none border-none"
+          >
+            Yes
+          </button>
+
+          <button
+            type="button"
+            onClick={handleTradeNo}
+            className="w-full py-2.5 px-3 rounded-xl bg-[#361212] hover:bg-[#461717] active:bg-[#290d0d] text-[#f87171] font-sans font-bold text-sm flex items-center justify-center transition-colors cursor-pointer shadow-none outline-none border-none"
+          >
+            No
+          </button>
+        </div>
       </div>
-    </Link>
+    </div>
   );
 }
 
 // Shimmer Skeleton Loader matching Nocturne Obsidian/Ember Design
 export function MarketCardSkeleton() {
   return (
-    <div className="relative flex flex-col justify-between p-5 rounded-2xl bg-[#0e0a08] border border-[#7c2d12]/25 overflow-hidden animate-pulse min-h-[190px]">
+    <div className="relative flex flex-col justify-between p-5 rounded-2xl bg-[#0e0a08] border border-[#7c2d12]/25 overflow-hidden animate-pulse min-h-[200px]">
       {/* Top Header skeleton */}
       <div>
         <div className="flex items-center justify-between mb-4">
@@ -184,26 +247,23 @@ export function MarketCardSkeleton() {
           <div className="h-4 w-12 rounded bg-[#1f1510]" />
         </div>
 
-        {/* Title skeleton */}
-        <div className="space-y-2 mb-4">
-          <div className="h-4 w-full rounded bg-[#261711]" />
-          <div className="h-4 w-3/4 rounded bg-[#261711]" />
+        {/* Title + Gauge skeleton */}
+        <div className="flex items-start justify-between gap-3 mb-4">
+          <div className="space-y-2 flex-1">
+            <div className="h-4 w-full rounded bg-[#261711]" />
+            <div className="h-4 w-3/4 rounded bg-[#261711]" />
+          </div>
+          <div className="w-[60px] h-[40px] rounded-lg bg-[#1f1510] shrink-0" />
         </div>
       </div>
 
-      {/* Probabilities bar skeleton */}
-      <div className="space-y-2 my-2">
-        <div className="flex justify-between">
-          <div className="h-3 w-12 rounded bg-[#1f1510]" />
-          <div className="h-3 w-12 rounded bg-[#1f1510]" />
-        </div>
-        <div className="h-2 w-full rounded-full bg-[#1f1510]" />
-      </div>
-
-      {/* Footer skeleton */}
-      <div className="pt-3 border-t border-[#7c2d12]/20 flex items-center justify-between">
+      {/* Footer skeleton with two buttons */}
+      <div className="pt-3 border-t border-[#7c2d12]/20 space-y-3">
         <div className="h-3.5 w-24 rounded bg-[#1f1510]" />
-        <div className="h-6 w-16 rounded-full bg-[#261711]" />
+        <div className="grid grid-cols-2 gap-2.5">
+          <div className="h-10 rounded-xl bg-[#1f1510]" />
+          <div className="h-10 rounded-xl bg-[#1f1510]" />
+        </div>
       </div>
     </div>
   );

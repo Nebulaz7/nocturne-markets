@@ -20,7 +20,7 @@ export type CategoryType =
   | "Others"
   | "Blitz";
 export type SortType = "trending" | "pot" | "odds-high" | "odds-low" | "ending";
-export type StatusFilterType = "all" | "open" | "blitz" | "settled";
+export type StatusFilterType = "all" | "open" | "blitz";
 
 const CATEGORIES: { label: string; value: CategoryType }[] = [
   { label: "All Markets", value: "All" },
@@ -112,7 +112,15 @@ function MarketContent({ initialMarkets = [] }: MarketProps) {
 
   // Filter & Sort Pipeline
   const filteredMarkets = useMemo(() => {
-    let result = [...markets];
+    const now = Math.floor(Date.now() / 1000);
+
+    // 0. Exclude ended or settled markets from the markets list/grid
+    let result = markets.filter((m) => {
+      if (m.status === "SETTLED" || m.status === "CLOSED") return false;
+      if (m.outcome !== null && m.outcome !== undefined) return false;
+      if (m.close_time && m.close_time <= now) return false;
+      return true;
+    });
 
     // 1. Category Filter
     if (activeCategory === "Blitz") {
@@ -135,10 +143,6 @@ function MarketContent({ initialMarkets = [] }: MarketProps) {
       );
     } else if (statusFilter === "blitz") {
       result = result.filter((m) => m.id?.startsWith("blitz-"));
-    } else if (statusFilter === "settled") {
-      result = result.filter(
-        (m) => m.status === "SETTLED" || m.status === "CLOSED",
-      );
     }
 
     // 3. Search Query Filter
@@ -185,10 +189,18 @@ function MarketContent({ initialMarkets = [] }: MarketProps) {
 
   const hasMore = displayCount < filteredMarkets.length;
 
-  // Category counts
+  // Category counts (counting active non-ended, non-settled markets only)
   const categoryCounts = useMemo(() => {
+    const now = Math.floor(Date.now() / 1000);
+    const activeMarkets = markets.filter((m) => {
+      if (m.status === "SETTLED" || m.status === "CLOSED") return false;
+      if (m.outcome !== null && m.outcome !== undefined) return false;
+      if (m.close_time && m.close_time <= now) return false;
+      return true;
+    });
+
     const counts: Record<string, number> = {
-      All: markets.length,
+      All: activeMarkets.length,
       Politics: 0,
       Crypto: 0,
       Sports: 0,
@@ -196,7 +208,7 @@ function MarketContent({ initialMarkets = [] }: MarketProps) {
       Blitz: 0,
     };
 
-    markets.forEach((m) => {
+    activeMarkets.forEach((m) => {
       if (m.id?.startsWith("blitz-")) counts.Blitz++;
       const cat = m.category || "Others";
       if (counts[cat] !== undefined) {
@@ -329,10 +341,9 @@ function MarketContent({ initialMarkets = [] }: MarketProps) {
                 }}
                 className="w-full appearance-none px-3.5 py-2 rounded-xl bg-[#0e0a08] border border-[#7c2d12]/40 text-xs font-mono text-[#fef3c7] outline-none focus:border-[#fb923c] cursor-pointer"
               >
-                <option value="all">Status: All</option>
+                <option value="all">Status: All Active</option>
                 <option value="open">Status: Live Pools</option>
                 <option value="blitz">Status: 5m Blitz Only</option>
-                <option value="settled">Status: Settled</option>
               </select>
               <SlidersHorizontal className="w-3.5 h-3.5 text-[#fef3c7]/40 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
             </div>

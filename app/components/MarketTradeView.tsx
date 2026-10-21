@@ -34,6 +34,20 @@ export function MarketTradeView({ market }: MarketTradeViewProps) {
     setModalOpen(true);
   };
 
+  React.useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const side = params.get("side");
+      if (side) {
+        const upper = side.toUpperCase();
+        if (upper === "YES" || upper === "NO") {
+          setSelectedSide(upper as BetSide);
+          setModalOpen(true);
+        }
+      }
+    }
+  }, []);
+
   const closeDateStr = new Date(market.close_time * 1000).toLocaleString();
   const isOpenForTrading = market.status === "OPEN";
 
