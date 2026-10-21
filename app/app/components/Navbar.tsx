@@ -279,13 +279,15 @@ export default function Navbar() {
               </svg>
             </button>
 
-            {/* Public Merkle Audit Trigger (Desktop only - hidden on mobile/tablet requiring hamburger) */}
-            <Link
-              href="/audit"
-              className="hidden md:inline-flex btn-monad-base btn-void h-8 px-3 rounded-full text-[11px]"
-            >
-              <span>Audit Proofs</span>
-            </Link>
+            {/* Public Merkle Audit Trigger (Desktop only - strictly hidden on smaller screens requiring hamburger) */}
+            <div className="hidden md:flex items-center">
+              <Link
+                href="/audit"
+                className="btn-monad-base btn-void h-8 px-3 rounded-full text-[11px]"
+              >
+                <span>Audit Proofs</span>
+              </Link>
+            </div>
 
             {/* Private Local Vault CTA */}
             <button

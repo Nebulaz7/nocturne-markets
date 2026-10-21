@@ -22,10 +22,20 @@ const FALLBACK_TICKER_ITEMS = [
   { id: "eth-10k", title: "ETH > $10K", yes: 42, change: -2 },
   { id: "us-recession-2026", title: "US Recession 2026", yes: 19, change: 1 },
   { id: "blitz-btc-demo", title: "5m BTC Blitz Demo", yes: 54, change: 4 },
-  { id: "sol-eth-flippening", title: "SOL > ETH Flippening", yes: 9, change: 2 },
+  {
+    id: "sol-eth-flippening",
+    title: "SOL > ETH Flippening",
+    yes: 9,
+    change: 2,
+  },
   { id: "openai-ipo-2026", title: "OpenAI IPO 2026", yes: 38, change: 0 },
   { id: "eu-ai-act-fine", title: "EU AI Act Fine", yes: 24, change: -1 },
-  { id: "arctic-ice-record", title: "Arctic Ice Record 2026", yes: 33, change: -1 },
+  {
+    id: "arctic-ice-record",
+    title: "Arctic Ice Record 2026",
+    yes: 33,
+    change: -1,
+  },
 ];
 
 const HERO_CARD_IMAGES = {
@@ -38,15 +48,17 @@ const HERO_CARD_IMAGES = {
 
 function cleanTickerTitle(title: string): string {
   if (!title) return "Market Outcome";
-  return title
-    // Strip emojis
-    .replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/gu, "")
-    // Clean leading Blitz tags
-    .replace(/^⚡?\s*Blitz:\s*/i, "Blitz: ")
-    // Clean long tournament prefixes
-    .replace(/\s*-\s*More Markets:.*$/i, "")
-    .replace(/\s*\(.*\)$/g, "")
-    .trim();
+  return (
+    title
+      // Strip emojis
+      .replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/gu, "")
+      // Clean leading Blitz tags
+      .replace(/^⚡?\s*Blitz:\s*/i, "Blitz: ")
+      // Clean long tournament prefixes
+      .replace(/\s*-\s*More Markets:.*$/i, "")
+      .replace(/\s*\(.*\)$/g, "")
+      .trim()
+  );
 }
 
 interface LiveTickerItem {
@@ -178,7 +190,7 @@ export default function Hero({ initialMarkets = [] }: HeroProps) {
           : 0.5;
       const yes = Math.max(1, Math.min(99, Math.round(rawPrice * 100)));
       const diff = rawPrice - 0.5;
-      const change = Math.round(diff * 10) || ((idx % 3) - 1);
+      const change = Math.round(diff * 10) || (idx % 3) - 1;
 
       return {
         id: m.id || m.slug || `market-${idx}`,

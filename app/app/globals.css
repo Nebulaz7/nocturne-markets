@@ -46,146 +46,148 @@ h1, h2, h3, h4, h5, h6 {
    Theme: Rust (#7c2d12) | Ember (#fb923c) | Cream (#fef3c7)
    ======================================================== */
 
-.btn-monad-base {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.375rem;
-  white-space: nowrap;
-  text-transform: uppercase;
-  font-family: var(--font-mono);
-  letter-spacing: 0.025em;
-  font-size: 0.75rem;
-  font-weight: 600;
-  border-radius: 4px;
-  cursor: pointer;
-  user-select: none;
-  outline: none;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.btn-monad-base > * {
-  position: relative;
-  z-index: 10;
-}
-
-.btn-monad-base:active {
-  transform: scale(0.97);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .btn-monad-base:active {
-    transform: none;
+@layer components {
+  .btn-monad-base {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.375rem;
+    white-space: nowrap;
+    text-transform: uppercase;
+    font-family: var(--font-mono);
+    letter-spacing: 0.025em;
+    font-size: 0.75rem;
+    font-weight: 600;
+    border-radius: 4px;
+    cursor: pointer;
+    user-select: none;
+    outline: none;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   }
-}
 
-.btn-monad-base:disabled {
-  pointer-events: none;
-  opacity: 0.5;
-}
+  .btn-monad-base > * {
+    position: relative;
+    z-index: 10;
+  }
 
-/* 1. Radiant Ember Primary Button (#fb923c) */
-.btn-ember,
-.btn-monad-primary {
-  color: #431407;
-  background: radial-gradient(50% 50% at 50% 50%, #fb923c00 0%, #ffffff38 100%), #fb923c;
-  box-shadow: 0 1px 2px #00000066, inset 0 1px 0.5px #ffffffb3, inset 0 -1px 0.5px #7c2d1280, 0 0 0 1px #ea580c;
-  font-weight: 700;
-}
+  .btn-monad-base:active {
+    transform: scale(0.97);
+  }
 
-.btn-ember::before,
-.btn-monad-primary::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  pointer-events: none;
-  opacity: 0;
-  background: radial-gradient(50% 50%, #fed7aae6 0%, #ffffffcc 100%);
-  transition: opacity 0.35s ease-out;
-  box-shadow: 0 1px 3px #00000066, inset 0 1px 0.8px #ffffff, inset 0 -1px 0.8px #ffedd5, 0 0 0 1px #fb923c;
-}
+  @media (prefers-reduced-motion: reduce) {
+    .btn-monad-base:active {
+      transform: none;
+    }
+  }
 
-.btn-ember:hover::before,
-.btn-monad-primary:hover::before {
-  opacity: 1;
-}
+  .btn-monad-base:disabled {
+    pointer-events: none;
+    opacity: 0.5;
+  }
 
-/* 2. Deep Rust Button (#7c2d12) */
-.btn-rust {
-  color: #fef3c7;
-  background: radial-gradient(50% 50% at 50% 50%, #7c2d1200 0%, #fb923c33 100%), #7c2d12;
-  box-shadow: 0 1px 2px #00000080, inset 0 1px 0.5px #fb923c66, inset 0 -1px 0.5px #431407, 0 0 0 1px #9a3412;
-}
+  /* 1. Radiant Ember Primary Button (#fb923c) */
+  .btn-ember,
+  .btn-monad-primary {
+    color: #431407;
+    background: radial-gradient(50% 50% at 50% 50%, #fb923c00 0%, #ffffff38 100%), #fb923c;
+    box-shadow: 0 1px 2px #00000066, inset 0 1px 0.5px #ffffffb3, inset 0 -1px 0.5px #7c2d1280, 0 0 0 1px #ea580c;
+    font-weight: 700;
+  }
 
-.btn-rust::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  pointer-events: none;
-  opacity: 0;
-  background: radial-gradient(50% 50%, #9a3412cc 0%, #fb923c66 100%);
-  transition: opacity 0.35s ease-out;
-  box-shadow: 0 1px 3px #00000080, inset 0 1px 0.8px #fed7aa80, inset 0 -1px 0.8px #431407, 0 0 0 1px #ea580c;
-}
+  .btn-ember::before,
+  .btn-monad-primary::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    opacity: 0;
+    background: radial-gradient(50% 50%, #fed7aae6 0%, #ffffffcc 100%);
+    transition: opacity 0.35s ease-out;
+    box-shadow: 0 1px 3px #00000066, inset 0 1px 0.8px #ffffff, inset 0 -1px 0.8px #ffedd5, 0 0 0 1px #fb923c;
+  }
 
-.btn-rust:hover::before {
-  opacity: 1;
-}
+  .btn-ember:hover::before,
+  .btn-monad-primary:hover::before {
+    opacity: 1;
+  }
 
-/* 3. Sunlight Cream Ceramic Button (#fef3c7) */
-.btn-cream,
-.btn-monad-secondary {
-  color: #7c2d12;
-  background: radial-gradient(50% 50% at 50% 50%, #fffbeb66 0%, #fde68a1a 100%), #fef3c7;
-  box-shadow: 0 1px 2px #0000004d, inset 0 1px #ffffff, inset 0 -1px #fde68a, 0 0 0 1px #7c2d1233;
-  font-weight: 700;
-}
+  /* 2. Deep Rust Button (#7c2d12) */
+  .btn-rust {
+    color: #fef3c7;
+    background: radial-gradient(50% 50% at 50% 50%, #7c2d1200 0%, #fb923c33 100%), #7c2d12;
+    box-shadow: 0 1px 2px #00000080, inset 0 1px 0.5px #fb923c66, inset 0 -1px 0.5px #431407, 0 0 0 1px #9a3412;
+  }
 
-.btn-cream::before,
-.btn-monad-secondary::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  pointer-events: none;
-  opacity: 0;
-  background: radial-gradient(50% 50%, #ffffff 0%, #fef3c7cc 100%);
-  transition: opacity 0.35s ease-out;
-  box-shadow: 0 1px 3px #0000004d, inset 0 1px #ffffff, inset 0 -1px #fed7aa, 0 0 0 1px #7c2d124d;
-}
+  .btn-rust::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    opacity: 0;
+    background: radial-gradient(50% 50%, #9a3412cc 0%, #fb923c66 100%);
+    transition: opacity 0.35s ease-out;
+    box-shadow: 0 1px 3px #00000080, inset 0 1px 0.8px #fed7aa80, inset 0 -1px 0.8px #431407, 0 0 0 1px #ea580c;
+  }
 
-.btn-cream:hover::before,
-.btn-monad-secondary:hover::before {
-  opacity: 1;
-}
+  .btn-rust:hover::before {
+    opacity: 1;
+  }
 
-/* 4. Dark Obsidian Void Button with Rust/Ember Specular Edge */
-.btn-void,
-.btn-monad-void {
-  color: #fef3c7;
-  background: radial-gradient(50% 50% at 50% 50%, #1c141066 0%, #fb923c0d 100%), #0d0a08;
-  box-shadow: 0 1px 2px #00000099, inset 0 1px 0.5px #ffffff26, inset 0 -1px 0.5px #7c2d1240, 0 0 0 1px #27201c;
-}
+  /* 3. Sunlight Cream Ceramic Button (#fef3c7) */
+  .btn-cream,
+  .btn-monad-secondary {
+    color: #7c2d12;
+    background: radial-gradient(50% 50% at 50% 50%, #fffbeb66 0%, #fde68a1a 100%), #fef3c7;
+    box-shadow: 0 1px 2px #0000004d, inset 0 1px #ffffff, inset 0 -1px #fde68a, 0 0 0 1px #7c2d1233;
+    font-weight: 700;
+  }
 
-.btn-void::before,
-.btn-monad-void::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  pointer-events: none;
-  opacity: 0;
-  background: radial-gradient(50% 50%, #291a13a8 0%, #7c2d1233 100%);
-  transition: opacity 0.35s ease-out;
-  box-shadow: 0 1px 2px #00000099, inset 0 1px 0.5px #fb923c40, inset 0 -1px 0.5px #7c2d1266, 0 0 0 1px #7c2d12;
-}
+  .btn-cream::before,
+  .btn-monad-secondary::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    opacity: 0;
+    background: radial-gradient(50% 50%, #ffffff 0%, #fef3c7cc 100%);
+    transition: opacity 0.35s ease-out;
+    box-shadow: 0 1px 3px #0000004d, inset 0 1px #ffffff, inset 0 -1px #fed7aa, 0 0 0 1px #7c2d124d;
+  }
 
-.btn-void:hover::before,
-.btn-monad-void:hover::before {
-  opacity: 1;
+  .btn-cream:hover::before,
+  .btn-monad-secondary:hover::before {
+    opacity: 1;
+  }
+
+  /* 4. Dark Obsidian Void Button with Rust/Ember Specular Edge */
+  .btn-void,
+  .btn-monad-void {
+    color: #fef3c7;
+    background: radial-gradient(50% 50% at 50% 50%, #1c141066 0%, #fb923c0d 100%), #0d0a08;
+    box-shadow: 0 1px 2px #00000099, inset 0 1px 0.5px #ffffff26, inset 0 -1px 0.5px #7c2d1240, 0 0 0 1px #27201c;
+  }
+
+  .btn-void::before,
+  .btn-monad-void::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    opacity: 0;
+    background: radial-gradient(50% 50%, #291a13a8 0%, #7c2d1233 100%);
+    transition: opacity 0.35s ease-out;
+    box-shadow: 0 1px 2px #00000099, inset 0 1px 0.5px #fb923c40, inset 0 -1px 0.5px #7c2d1266, 0 0 0 1px #7c2d12;
+  }
+
+  .btn-void:hover::before,
+  .btn-monad-void:hover::before {
+    opacity: 1;
+  }
 }
 
 /* ========================================================
