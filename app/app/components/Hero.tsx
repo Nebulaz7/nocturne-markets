@@ -107,12 +107,138 @@ function RightBlendLayer({
   );
 }
 
+function HeroLoading() {
+  return (
+    <section className="relative overflow-hidden bg-[#090706] text-[#fef3c7]">
+      {/* Ambient background glow layers matching Nocturne Warm Ember identity */}
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_-10%,rgba(234,88,12,0.14),transparent)] pointer-events-none" />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_40%_60%_at_85%_50%,rgba(124,45,18,0.10),transparent)] pointer-events-none" />
+
+      <div className="mx-auto max-w-7xl px-3 sm:px-6 lg:px-8 pt-6 sm:pt-8 pb-3">
+        {/* Hero banner skeleton grid */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 h-auto md:h-80">
+          {/* Main banner skeleton */}
+          <div className="md:col-span-2 relative rounded-2xl overflow-hidden min-h-[260px] md:min-h-0 border border-[#7c2d12]/30 bg-[#120d0a] p-6 sm:p-8 flex flex-col justify-between">
+            {/* Top content skeleton */}
+            <div className="space-y-4 max-w-lg z-10">
+              <div className="h-8 sm:h-10 w-4/5 rounded-xl bg-[#22140d] animate-pulse" />
+              <div className="space-y-2">
+                <div className="h-4 w-full rounded bg-[#1a0f0a] animate-pulse" />
+                <div className="h-4 w-5/6 rounded bg-[#1a0f0a] animate-pulse" />
+              </div>
+            </div>
+
+            {/* Bottom action buttons skeleton */}
+            <div className="flex items-center gap-3 pt-6 z-10">
+              <div className="h-9 w-36 rounded-full bg-[#2a140b] animate-pulse" />
+              <div className="h-9 w-40 rounded-full bg-[#1a0f0a] animate-pulse" />
+            </div>
+
+            {/* Centered Nocturne Oracle Spinner animation */}
+            <div className="absolute right-8 top-1/2 -translate-y-1/2 flex flex-col items-center justify-center pointer-events-none hidden sm:flex">
+              <div className="relative flex items-center justify-center">
+                <div className="w-20 h-20 rounded-full border-2 border-[#7c2d12]/30 border-t-[#fb923c] animate-spin" />
+                <div className="absolute w-14 h-14 rounded-full border border-[#ea580c]/30 border-b-[#fb923c] animate-spin [animation-direction:reverse] [animation-duration:2s]" />
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <Shield className="w-6 h-6 text-[#fb923c] animate-pulse" />
+                </div>
+              </div>
+              <span className="text-[10px] font-mono font-bold tracking-widest text-[#fb923c]/70 uppercase mt-2.5 animate-pulse">
+                Loading Markets
+              </span>
+            </div>
+          </div>
+
+          {/* Two stacked side cards skeleton */}
+          <div className="flex flex-col gap-4 h-full">
+            {/* Card 1 Skeleton */}
+            <div className="flex-1 relative rounded-2xl overflow-hidden min-h-[130px] border border-[#7c2d12]/30 bg-[#120d0a] p-4 sm:p-5 flex flex-col justify-between">
+              <div className="space-y-2 z-10">
+                <div className="h-3 w-20 rounded bg-[#22140d] animate-pulse" />
+                <div className="h-5 w-32 rounded bg-[#22140d] animate-pulse" />
+              </div>
+              <div className="h-7 w-24 rounded-full bg-[#1a0f0a] animate-pulse z-10" />
+            </div>
+
+            {/* Card 2 Skeleton */}
+            <div className="flex-1 relative rounded-2xl overflow-hidden min-h-[130px] border border-[#7c2d12]/30 bg-[#120d0a] p-4 sm:p-5 flex flex-col justify-between">
+              <div className="space-y-2 z-10">
+                <div className="h-3 w-24 rounded bg-[#22140d] animate-pulse" />
+                <div className="h-5 w-36 rounded bg-[#22140d] animate-pulse" />
+              </div>
+              <div className="h-7 w-24 rounded-full bg-[#1a0f0a] animate-pulse z-10" />
+            </div>
+          </div>
+        </div>
+
+        {/* Platform stats bar skeleton */}
+        <div className="mt-4 pt-3 border-t border-[#7c2d12]/20 flex flex-wrap items-center justify-between gap-y-2 gap-x-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="h-3.5 w-24 rounded bg-[#1a0f0a] animate-pulse" />
+          ))}
+        </div>
+
+        {/* Ticker bar skeleton */}
+        <div className="mt-3 h-9 rounded-xl bg-[#120d0a] border border-[#7c2d12]/30 flex items-center px-4 overflow-hidden relative">
+          <div className="h-3.5 w-14 rounded bg-[#22140d] animate-pulse" />
+          <div className="ml-4 h-3 w-48 rounded bg-[#1a0f0a] animate-pulse" />
+          <div className="ml-8 h-3 w-40 rounded bg-[#1a0f0a] animate-pulse" />
+          <div className="ml-8 h-3 w-36 rounded bg-[#1a0f0a] animate-pulse hidden sm:block" />
+        </div>
+      </div>
+    </section>
+  );
+}
+
 interface HeroProps {
   initialMarkets?: any[];
 }
 
 export default function Hero({ initialMarkets = [] }: HeroProps) {
   const [markets, setMarkets] = useState<any[]>(initialMarkets);
+  const [isReady, setIsReady] = useState(false);
+
+  // Preload hero graphics and ensure smooth load before displaying
+  useEffect(() => {
+    let mounted = true;
+
+    // Minimum display time for seamless loading feel (avoids micro-flash)
+    const minLoadTime = new Promise((resolve) => setTimeout(resolve, 350));
+
+    // Preload hero card images in parallel
+    const imagesPromise = Promise.all(
+      [
+        HERO_CARD_IMAGES.main,
+        HERO_CARD_IMAGES.crypto,
+        HERO_CARD_IMAGES.portfolio,
+      ].map(
+        (src) =>
+          new Promise<void>((resolve) => {
+            const img = new Image();
+            img.src = src;
+            if (img.complete) resolve();
+            else {
+              img.onload = () => resolve();
+              img.onerror = () => resolve(); // don't block if network blocks an image
+            }
+          }),
+      ),
+    );
+
+    // Safety timeout: max 1200ms
+    const safetyTimeout = new Promise((resolve) => setTimeout(resolve, 1200));
+
+    Promise.race([
+      Promise.all([imagesPromise, minLoadTime]),
+      safetyTimeout,
+    ]).then(() => {
+      if (mounted) setIsReady(true);
+    });
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   // Sync initial markets if passed from server component
   useEffect(() => {
@@ -237,8 +363,17 @@ export default function Hero({ initialMarkets = [] }: HeroProps) {
     }
   };
 
+  if (!isReady) {
+    return <HeroLoading />;
+  }
+
   return (
-    <section className="relative overflow-hidden bg-[#090706] text-[#fef3c7]">
+    <motion.section
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.45, ease: "easeOut" }}
+      className="relative overflow-hidden bg-[#090706] text-[#fef3c7]"
+    >
       {/* Ambient background glow layers matching Nocturne Warm Ember identity */}
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_-10%,rgba(234,88,12,0.14),transparent)] pointer-events-none" />
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_40%_60%_at_85%_50%,rgba(124,45,18,0.10),transparent)] pointer-events-none" />
@@ -539,6 +674,6 @@ export default function Hero({ initialMarkets = [] }: HeroProps) {
           </motion.div>
         </div>
       </div>
-    </section>
+    </motion.section>
   );
 }
