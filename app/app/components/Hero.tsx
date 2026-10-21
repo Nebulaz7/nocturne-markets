@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import {
@@ -15,26 +15,17 @@ import {
   ArrowDown,
 } from "lucide-react";
 
-// Platform stats matching Nocturne Markets architectural invariants
-const PLATFORM_STATS = [
-  { label: "Active Pools", value: "12" },
-  { label: "Protocol Fee", value: "2% on Profit" },
-  { label: "Resolution", value: "Polymarket Gamma" },
-  { label: "Timelock Beacon", value: "drand Quicknet" },
-  { label: "Privacy Invariant", value: "Zero-POST (100%)" },
-];
-
-// Live prediction ticker data (Clean text, no emojis)
-const TICKER_ITEMS = [
-  { title: "Fed Rate Cut Q2", yes: 68, change: 1 },
-  { title: "BTC $150K in 2026", yes: 31, change: 3 },
-  { title: "ETH > $10K", yes: 42, change: -2 },
-  { title: "US Recession 2026", yes: 19, change: 1 },
-  { title: "5m BTC Blitz Demo", yes: 54, change: 4 },
-  { title: "SOL > ETH Flippening", yes: 9, change: 2 },
-  { title: "OpenAI IPO 2026", yes: 38, change: 0 },
-  { title: "EU AI Act Fine", yes: 24, change: -1 },
-  { title: "Arctic Ice Record 2026", yes: 33, change: -1 },
+// Fallback high-signal ticker items if coordinator is initializing (No emojis)
+const FALLBACK_TICKER_ITEMS = [
+  { id: "fed-rate-cut-q2", title: "Fed Rate Cut Q2", yes: 68, change: 1 },
+  { id: "btc-150k-2026", title: "BTC $150K in 2026", yes: 31, change: 3 },
+  { id: "eth-10k", title: "ETH > $10K", yes: 42, change: -2 },
+  { id: "us-recession-2026", title: "US Recession 2026", yes: 19, change: 1 },
+  { id: "blitz-btc-demo", title: "5m BTC Blitz Demo", yes: 54, change: 4 },
+  { id: "sol-eth-flippening", title: "SOL > ETH Flippening", yes: 9, change: 2 },
+  { id: "openai-ipo-2026", title: "OpenAI IPO 2026", yes: 38, change: 0 },
+  { id: "eu-ai-act-fine", title: "EU AI Act Fine", yes: 24, change: -1 },
+  { id: "arctic-ice-record", title: "Arctic Ice Record 2026", yes: 33, change: -1 },
 ];
 
 const HERO_CARD_IMAGES = {
@@ -44,6 +35,26 @@ const HERO_CARD_IMAGES = {
   portfolio:
     "https://images.unsplash.com/photo-1642790106117-e829e14a795f?auto=format&fit=crop&w=1200&q=80",
 } as const;
+
+function cleanTickerTitle(title: string): string {
+  if (!title) return "Market Outcome";
+  return title
+    // Strip emojis
+    .replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/gu, "")
+    // Clean leading Blitz tags
+    .replace(/^⚡?\s*Blitz:\s*/i, "Blitz: ")
+    // Clean long tournament prefixes
+    .replace(/\s*-\s*More Markets:.*$/i, "")
+    .replace(/\s*\(.*\)$/g, "")
+    .trim();
+}
+
+interface LiveTickerItem {
+  id: string;
+  title: string;
+  yes: number;
+  change: number;
+}
 
 function RightBlendLayer({
   imageUrl,
@@ -84,7 +95,113 @@ function RightBlendLayer({
   );
 }
 
-export default function Hero() {
+interface HeroProps {
+  initialMarkets?: any[];
+}
+
+export default function Hero({ initialMarkets = [] }: HeroProps) {
+  const [markets, setMarkets] = useState<any[]>(initialMarkets);
+
+  // Sync initial markets if passed from server component
+  useEffect(() => {
+    if (initialMarkets && initialMarkets.length > 0) {
+      setMarkets(initialMarkets);
+    }
+  }, [initialMarkets]);
+
+  // Live polling: refreshes market data every 15 seconds from coordinator
+  useEffect(() => {
+    let mounted = true;
+    const coordinatorUrl =
+      process.env.NEXT_PUBLIC_COORDINATOR_URL ||
+      process.env.COORDINATOR_URL ||
+      "http://127.0.0.1:3000";
+
+    const fetchLiveMarkets = async () => {
+      try {
+        const res = await fetch(`${coordinatorUrl}/api/markets`, {
+          headers: { Accept: "application/json" },
+        });
+        if (!res.ok) return;
+        const data = await res.json();
+        if (mounted && Array.isArray(data.markets) && data.markets.length > 0) {
+          setMarkets(data.markets);
+        }
+      } catch {
+        // Keep current state on transient failure
+      }
+    };
+
+    if (markets.length === 0) {
+      fetchLiveMarkets();
+    }
+
+    const interval = setInterval(fetchLiveMarkets, 15000);
+    return () => {
+      mounted = false;
+      clearInterval(interval);
+    };
+  }, []);
+
+  // Format live markets into clean, high-signal ticker items
+  const tickerItems = useMemo<LiveTickerItem[]>(() => {
+    if (!markets || markets.length === 0) {
+      return FALLBACK_TICKER_ITEMS;
+    }
+
+    // 1. Pick blitz demo markets
+    const blitz = markets.filter(
+      (m) => m.id?.startsWith("blitz-") || m.slug?.startsWith("blitz-"),
+    );
+
+    // 2. Pick active markets with valid reference probabilities
+    const regular = markets.filter(
+      (m) =>
+        !m.id?.startsWith("blitz-") &&
+        !m.slug?.startsWith("blitz-") &&
+        m.ref_yes_price !== null &&
+        m.ref_yes_price !== undefined &&
+        m.ref_yes_price > 0.05 &&
+        m.ref_yes_price < 0.95,
+    );
+
+    const pool = [...blitz.slice(0, 3), ...regular.slice(0, 14)];
+
+    if (pool.length === 0) {
+      return FALLBACK_TICKER_ITEMS;
+    }
+
+    return pool.map((m, idx) => {
+      const rawPrice =
+        m.ref_yes_price !== null && m.ref_yes_price !== undefined
+          ? m.ref_yes_price
+          : 0.5;
+      const yes = Math.max(1, Math.min(99, Math.round(rawPrice * 100)));
+      const diff = rawPrice - 0.5;
+      const change = Math.round(diff * 10) || ((idx % 3) - 1);
+
+      return {
+        id: m.id || m.slug || `market-${idx}`,
+        title: cleanTickerTitle(m.title || m.question || "Live Market"),
+        yes,
+        change,
+      };
+    });
+  }, [markets]);
+
+  const activePoolCount = markets.length > 0 ? markets.length : 12;
+
+  const platformStats = useMemo(
+    () => [
+      { label: "Active Pools", value: activePoolCount.toLocaleString() },
+      { label: "Protocol Fee", value: "2% on Profit" },
+      { label: "Resolution", value: "Polymarket Gamma" },
+      { label: "Timelock Beacon", value: "drand Quicknet" },
+      { label: "Privacy Invariant", value: "Zero-POST (100%)" },
+    ],
+    [activePoolCount],
+  );
+
   const openVault = (e: React.MouseEvent) => {
     e.preventDefault();
     if (typeof window !== "undefined") {
@@ -104,14 +221,6 @@ export default function Hero() {
       {/* Ambient background glow layers matching Nocturne Warm Ember identity */}
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_-10%,rgba(234,88,12,0.14),transparent)] pointer-events-none" />
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_40%_60%_at_85%_50%,rgba(124,45,18,0.10),transparent)] pointer-events-none" />
-      {/* <div
-        className="absolute inset-0 opacity-[0.025] pointer-events-none"
-        style={{
-          backgroundImage:
-            "linear-gradient(rgba(254,243,199,1) 1px, transparent 1px), linear-gradient(90deg, rgba(254,243,199,1) 1px, transparent 1px)",
-          backgroundSize: "48px 48px",
-        }}
-      /> */}
 
       <div className="mx-auto max-w-7xl px-3 sm:px-6 lg:px-8 pt-6 sm:pt-8 pb-3">
         {/* Hero banner grid */}
@@ -119,7 +228,7 @@ export default function Hero() {
           {/* Big primary banner (col-span-2) */}
           <Link
             href="/#markets"
-            className="md:col-span-2 relative group rounded-2xl overflow-hidden cursor-pointer block h-full min-h-[260px] md:min-h-0 border border-[#7c2d12]/40 hover:border-[#fb923c]/70 transition-all duration-300 shadow-[0_4px_30px_rgba(0,0,0,0.5)]"
+            className="md:col-span-2 relative group rounded-2xl overflow-hidden cursor-pointer block h-full min-h-[260px] md:min-h-0 border border-[#7c2d12]/40 transition-all duration-300 shadow-[0_4px_30px_rgba(0,0,0,0.5)]"
           >
             {/* Deep Obsidian Rust Background */}
             <div className="absolute inset-0 bg-linear-to-br from-[#2a1209]/95 via-[#1a0c06] to-[#090706] transition-transform duration-700 group-hover:scale-[1.01]" />
@@ -171,9 +280,10 @@ export default function Hero() {
                   transition={{ duration: 0.4, delay: 0.12 }}
                   className="text-[#fef3c7]/75 text-xs sm:text-sm md:text-base leading-relaxed font-sans"
                 >
-                  Mirroring Polymarket events with shielded Zcash parimutuel
-                  pools. Time-sealed to the drand Quicknet beacon with zero IP
-                  write leaks.
+                  Bet on real-world Polymarket events using private Zcash. Your
+                  position stays locked until the market closes, your wallet
+                  stays hidden, no sign-ins, no wallet tracking, and winners
+                  split the pool.
                 </motion.p>
               </div>
 
@@ -228,7 +338,7 @@ export default function Hero() {
             {/* Card 1: 5-Minute Blitz / Crypto */}
             <Link
               href="/?cat=blitz"
-              className="flex-1 relative rounded-2xl overflow-hidden group cursor-pointer border border-[#7c2d12]/40 hover:border-[#fb923c]/60 block min-h-[130px] transition-all duration-300 shadow-md"
+              className="flex-1 relative rounded-2xl overflow-hidden group cursor-pointer border border-[#7c2d12]/40 block min-h-[130px] transition-all duration-300 shadow-md"
             >
               <div className="absolute inset-0 bg-linear-to-br from-[#301308] to-[#0c0806] transition-transform duration-500 group-hover:scale-[1.02]" />
               <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_left,rgba(251,146,60,0.22),transparent_70%)]" />
@@ -265,7 +375,7 @@ export default function Hero() {
             {/* Card 2: Shielded Private Vault / Portfolio */}
             <div
               onClick={openVault}
-              className="flex-1 relative rounded-2xl overflow-hidden group cursor-pointer border border-[#7c2d12]/40 hover:border-[#ea580c]/60 block min-h-[130px] transition-all duration-300 shadow-md"
+              className="flex-1 relative rounded-2xl overflow-hidden group cursor-pointer border border-[#7c2d12]/40 block min-h-[130px] transition-all duration-300 shadow-md"
             >
               <div className="absolute inset-0 bg-linear-to-br from-[#1c120c] to-[#090706] transition-transform duration-500 group-hover:scale-[1.02]" />
               <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(254,243,199,0.1),transparent_65%)]" />
@@ -311,9 +421,9 @@ export default function Hero() {
           </div>
         </div>
 
-        {/* Platform stats strip */}
+        {/* Platform stats strip (Live active pool count) */}
         <div className="mt-4 flex items-center justify-between overflow-x-auto no-scrollbar gap-4 sm:gap-6 border-t border-b border-[#7c2d12]/30 py-3 text-xs font-mono">
-          {PLATFORM_STATS.map((stat, i) => (
+          {platformStats.map((stat, i) => (
             <div
               key={stat.label}
               className="flex items-baseline gap-2 shrink-0"
@@ -324,7 +434,7 @@ export default function Hero() {
               <span className="text-[11px] text-[#fef3c7]/50 font-sans">
                 {stat.label}
               </span>
-              {i < PLATFORM_STATS.length - 1 && (
+              {i < platformStats.length - 1 && (
                 <span className="ml-3 sm:ml-4 text-[#7c2d12]/50 select-none">
                   |
                 </span>
@@ -333,7 +443,7 @@ export default function Hero() {
           ))}
         </div>
 
-        {/* Live market ticker (Smooth continuous marquee, no emojis) */}
+        {/* Live market ticker (Smooth continuous marquee with live coordinator data, no emojis) */}
         <div className="mt-3 relative overflow-hidden rounded-xl bg-[#120d0a] border border-[#7c2d12]/40 h-9 flex items-center select-none">
           {/* Subtle edge fade overlays */}
           <div className="absolute left-0 z-10 h-full w-20 bg-linear-to-r from-[#120d0a] to-transparent pointer-events-none" />
@@ -352,15 +462,24 @@ export default function Hero() {
           <motion.div
             className="flex items-center gap-7 pl-20 pr-4"
             animate={{ x: ["0%", "-50%"] }}
-            transition={{ duration: 42, repeat: Infinity, ease: "linear" }}
+            transition={{
+              duration: Math.max(30, tickerItems.length * 3.5),
+              repeat: Infinity,
+              ease: "linear",
+            }}
             style={{ willChange: "transform" }}
           >
-            {[...TICKER_ITEMS, ...TICKER_ITEMS].map((item, i) => (
-              <span
-                key={i}
-                className="flex items-center gap-2 text-xs font-mono whitespace-nowrap"
+            {[...tickerItems, ...tickerItems].map((item, i) => (
+              <Link
+                key={`${item.id}-${i}`}
+                href={
+                  item.id.startsWith("blitz-")
+                    ? "/?cat=blitz"
+                    : `/market/${item.id}`
+                }
+                className="flex items-center gap-2 text-xs font-mono whitespace-nowrap group/ticker hover:text-[#fb923c] transition-colors"
               >
-                <span className="text-[#fef3c7]/80 font-sans font-medium text-xs">
+                <span className="text-[#fef3c7]/80 group-hover/ticker:text-[#fef3c7] font-sans font-medium text-xs">
                   {item.title}
                 </span>
                 <span
@@ -370,7 +489,7 @@ export default function Hero() {
                 >
                   {item.yes}¢ YES
                 </span>
-                {item.change !== 0 && (
+                {item.change !== 0 ? (
                   <span
                     className={`inline-flex items-center text-[10px] font-mono font-semibold ${
                       item.change > 0 ? "text-emerald-400" : "text-amber-500"
@@ -386,11 +505,15 @@ export default function Hero() {
                     )}
                     {Math.abs(item.change)}%
                   </span>
+                ) : (
+                  <span className="text-[10px] font-mono text-[#fef3c7]/40">
+                    0%
+                  </span>
                 )}
                 <span className="text-[#7c2d12]/50 text-sm leading-none pl-1">
                   •
                 </span>
-              </span>
+              </Link>
             ))}
           </motion.div>
         </div>

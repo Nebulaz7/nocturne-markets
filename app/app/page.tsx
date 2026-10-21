@@ -32,7 +32,7 @@ export default async function HomePage() {
     <>
       <div className="min-h-screen bg-black text-zinc-100 flex flex-col font-sans selection:bg-cyan-500 selection:text-black">
         <Navbar />
-        <Hero />
+        <Hero initialMarkets={markets} />
       </div>
     </>
   );

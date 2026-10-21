@@ -279,10 +279,10 @@ export default function Navbar() {
               </svg>
             </button>
 
-            {/* Public Merkle Audit Trigger (Desktop/Tablet) */}
+            {/* Public Merkle Audit Trigger (Desktop only - hidden on mobile/tablet requiring hamburger) */}
             <Link
               href="/audit"
-              className="hidden sm:inline-flex btn-monad-base btn-void h-8 px-3 rounded-full text-[11px]"
+              className="hidden md:inline-flex btn-monad-base btn-void h-8 px-3 rounded-full text-[11px]"
             >
               <span>Audit Proofs</span>
             </Link>
@@ -351,7 +351,7 @@ export default function Navbar() {
               href="/?cat=blitz"
               className="text-[#fb923c] font-bold hover:text-[#fed7aa] transition-colors shrink-0 flex items-center gap-1"
             >
-              <span>🔥 5m Blitz</span>
+              <span>5m Blitz</span>
             </Link>
             <Link
               href="/?cat=crypto"
@@ -517,29 +517,21 @@ export default function Navbar() {
                 </Link>
               </div>
 
-              {/* 3. Mobile Action Buttons (Vault & Audit) */}
-              <div className="p-4 grid grid-cols-2 gap-3">
+              {/* 3. Mobile Action Button (Vault only - Audit Proofs hidden on mobile) */}
+              <div className="p-4">
                 <button
                   type="button"
                   onClick={() => {
                     setIsMobileMenuOpen(false);
                     setDrawerOpen(true);
                   }}
-                  className="btn-monad-base btn-ember h-10 px-3 rounded-xl text-xs font-mono font-bold flex items-center justify-center gap-2 w-full"
+                  className="btn-monad-base btn-ember h-10 px-4 rounded-xl text-xs font-mono font-bold flex items-center justify-center gap-2 w-full cursor-pointer"
                 >
                   <span>Private Vault</span>
                   <span className="px-1.5 py-0.2 rounded-full bg-[#431407] text-[#fb923c] border border-[#ea580c] text-[10px] font-mono font-bold">
                     {vaultCount}
                   </span>
                 </button>
-
-                <Link
-                  href="/#markets"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className="btn-monad-base btn-void h-10 px-3 rounded-xl text-xs font-mono font-bold flex items-center justify-center w-full"
-                >
-                  <span>Audit Proofs</span>
-                </Link>
               </div>
 
               {/* 4. Trending Categories Quick Grid */}
@@ -553,7 +545,7 @@ export default function Navbar() {
                     onClick={() => setIsMobileMenuOpen(false)}
                     className="p-2 rounded-lg bg-[#140e0b] border border-[#7c2d12]/30 text-[#fb923c] font-bold hover:border-[#fb923c]/50 transition-colors flex items-center gap-1.5"
                   >
-                    <span>🔥 5m Blitz</span>
+                    <span>5m Blitz</span>
                   </Link>
                   <Link
                     href="/?cat=crypto"
