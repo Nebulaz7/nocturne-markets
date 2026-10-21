@@ -265,7 +265,7 @@ export default function Hero({ initialMarkets = [] }: HeroProps) {
                 }}
                 animate={{ rotate: [0, 360] }}
                 transition={{
-                  duration: 28 + i * 14,
+                  duration: 40 + i * 20,
                   repeat: Infinity,
                   ease: "linear",
                 }}
@@ -294,8 +294,8 @@ export default function Hero({ initialMarkets = [] }: HeroProps) {
                 >
                   Bet on real-world Polymarket events using private Zcash. Your
                   position stays locked until the market closes, your wallet
-                  stays hidden, no sign-ins, no wallet tracking, and winners
-                  split the pool.
+                  stays hidden no sign-ins, no wallet tracking and winners split
+                  the pool.
                 </motion.p>
               </div>
 
