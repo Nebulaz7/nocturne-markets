@@ -362,43 +362,37 @@ export default function Navbar() {
               Crypto
             </Link>
             <Link
-              href="/?cat=macro"
+              href="/?cat=others"
               className="text-[#fef3c7]/70 hover:text-[#fb923c] transition-colors shrink-0"
             >
               Macro & Fed
             </Link>
             <Link
-              href="/?cat=elections"
+              href="/?cat=politics"
               className="text-[#fef3c7]/70 hover:text-[#fb923c] transition-colors shrink-0"
             >
-              Elections
+              Politics
             </Link>
             <Link
-              href="/?cat=tech"
+              href="/?cat=others"
               className="text-[#fef3c7]/70 hover:text-[#fb923c] transition-colors shrink-0"
             >
               Tech & AI
             </Link>
             <Link
-              href="/?cat=geopolitics"
+              href="/?cat=others"
               className="text-[#fef3c7]/70 hover:text-[#fb923c] transition-colors shrink-0"
             >
               Geopolitics
             </Link>
             <Link
-              href="/?cat=culture"
+              href="/?cat=others"
               className="text-[#fef3c7]/70 hover:text-[#fb923c] transition-colors shrink-0"
             >
               Culture
             </Link>
             <Link
-              href="/?cat=commodities"
-              className="text-[#fef3c7]/70 hover:text-[#fb923c] transition-colors shrink-0"
-            >
-              Commodities
-            </Link>
-            <Link
-              href="/?cat=science"
+              href="/?cat=others"
               className="text-[#fef3c7]/70 hover:text-[#fb923c] transition-colors shrink-0"
             >
               Science

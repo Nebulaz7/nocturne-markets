@@ -2,6 +2,7 @@ import Navbar from "./components/Navbar";
 import Hero from "./components/Hero";
 import Market from "./components/Market";
 import type { MarketSummary } from "@/lib/polymarket_url";
+import Footer from "./components/Footer";
 
 export const dynamic = "force-dynamic";
 
@@ -68,6 +69,7 @@ export default async function HomePage() {
           </div>
         </div>
       </section> */}
+      <Footer />
     </div>
   );
 }

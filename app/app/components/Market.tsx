@@ -416,10 +416,7 @@ function MarketContent({ initialMarkets = [] }: MarketProps) {
                 onClick={() => setDisplayCount((prev) => prev + 18)}
                 className="btn-monad-base btn-void px-6 py-2.5 rounded-full text-xs font-mono font-bold text-[#fef3c7] border border-[#7c2d12]/50 hover:border-[#fb923c] hover:text-[#fb923c] shadow-lg cursor-pointer transition-all"
               >
-                <span>
-                  Show More Markets ({filteredMarkets.length - displayCount}{" "}
-                  remaining)
-                </span>
+                <span>Show More</span>
               </button>
               <span className="text-[11px] font-mono text-[#fef3c7]/40">
                 Displaying {visibleMarkets.length} of {filteredMarkets.length}{" "}
