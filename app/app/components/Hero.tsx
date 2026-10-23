@@ -174,7 +174,10 @@ function HeroLoading() {
         {/* Platform stats bar skeleton */}
         <div className="mt-4 pt-3 border-t border-[#7c2d12]/20 flex flex-wrap items-center justify-between gap-y-2 gap-x-4">
           {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="h-3.5 w-24 rounded bg-[#1a0f0a] animate-pulse" />
+            <div
+              key={i}
+              className="h-3.5 w-24 rounded bg-[#1a0f0a] animate-pulse"
+            />
           ))}
         </div>
 
@@ -451,7 +454,7 @@ export default function Hero({ initialMarkets = [] }: HeroProps) {
                 className="flex items-end justify-between pt-4"
               >
                 <div className="flex items-center gap-3 flex-wrap">
-                  <span className="btn-monad-base btn-ember px-5 py-2.5 rounded-full text-xs font-mono font-bold flex items-center gap-2 shadow-lg group/btn cursor-pointer">
+                  <span className="btn-monad-base btn-ember px-5 py-2.5 text-xs font-mono font-bold flex items-center gap-2 shadow-lg group/btn cursor-pointer">
                     <span>Browse Markets</span>
                     <ChevronRight
                       className="w-4 h-4 group-hover/btn:translate-x-0.5 transition-transform"
@@ -460,7 +463,7 @@ export default function Hero({ initialMarkets = [] }: HeroProps) {
                   </span>
                   <Link
                     href="/docs"
-                    className="btn-monad-base btn-void px-4 py-2.5 rounded-full text-xs font-mono flex items-center gap-1.5 text-[#fef3c7]/80 hover:text-[#fb923c] border border-[#7c2d12]/60 hover:border-[#fb923c]/60 transition-all cursor-pointer"
+                    className="btn-monad-base btn-void px-4 py-2.5 text-xs font-mono flex items-center gap-1.5 text-[#fef3c7]/80 hover:text-[#fb923c] border border-[#7c2d12]/60 hover:border-[#fb923c]/60 transition-all cursor-pointer"
                   >
                     <Lock
                       className="w-3.5 h-3.5 text-[#fb923c]"
@@ -517,7 +520,7 @@ export default function Hero({ initialMarkets = [] }: HeroProps) {
                   </p>
                 </div>
                 <div className="flex justify-between items-end pt-2">
-                  <span className="btn-monad-base btn-void text-[11px] font-mono px-3 py-1.5 rounded-full text-[#fef3c7] border border-[#7c2d12]/50 hover:border-[#fb923c] transition-colors flex items-center gap-1">
+                  <span className="btn-monad-base btn-void text-[11px] font-mono px-3 py-1.5 text-[#fef3c7] border border-[#7c2d12]/50 hover:border-[#fb923c] transition-colors flex items-center gap-1">
                     <span>Trade Blitz</span>
                     <ArrowUpRight className="w-3 h-3 text-[#fb923c]" />
                   </span>
@@ -556,7 +559,7 @@ export default function Hero({ initialMarkets = [] }: HeroProps) {
                 <div className="flex justify-between items-end pt-2">
                   <button
                     type="button"
-                    className="btn-monad-base btn-void text-[11px] font-mono px-3 py-1.5 rounded-full text-[#fef3c7] border border-[#7c2d12]/50 hover:border-[#fb923c] transition-colors flex items-center gap-1 cursor-pointer"
+                    className="btn-monad-base btn-void text-[11px] font-mono px-3 py-1.5 text-[#fef3c7] border border-[#7c2d12]/50 hover:border-[#fb923c] transition-colors flex items-center gap-1 cursor-pointer"
                   >
                     <span>Open Vault</span>
                     <ArrowUpRight className="w-3 h-3 text-[#fb923c]" />

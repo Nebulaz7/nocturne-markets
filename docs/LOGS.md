@@ -321,7 +321,48 @@ Before crossing into Phase 2, we upgraded our core Zcash memo and settlement arc
 
 ---
 
-## 15. Active Focus & Immediate Next Actions
+---
+
+## 15. Phase 3 Step 3 Completed: Multi-Outcome Event Pairing, Hero Preloader & Themed Footer (Oct 21–23, 2026)
+
+### Achievements & Architecture
+
+1. **Multi-Outcome Event Discovery & Pairing (`Market.tsx` & `MarketCard.tsx`)**:
+   - **Problem**: The Coordinator indexes both single-outcome and multi-outcome Polymarket events (over 681 multi-outcome events across 13,500+ records). Previously, each submarket was rendered as a standalone card, resulting in 3 to 10 duplicate cards for a single overarching event (e.g. separate cards for every date of "Anthropic IPO by __?" or every match outcome).
+   - **Discovery & Grouping Pipeline**:
+     - Grouping logic implemented in [`app/app/components/Market.tsx`](file:///C:/Users/PC/desktop/coding/nocture-markets/app/app/components/Market.tsx) via `groupedCards` memo.
+     - Non-blitz markets sharing a common `event_slug` are automatically grouped into a single unified card entry `{ primary, submarkets }`.
+     - 5-minute Blitz demo markets (`blitz-btc-...`) maintain standalone single cards due to their high-frequency round-specific expiration cycles.
+     - Standalone binary markets with a single question continue to render as single cards.
+   - **Grouped Event Card UI (`MarketCard.tsx`)**:
+     - Implemented Polymarket / Kalshi multi-outcome card layout matching production standards:
+       - Displays the overarching event question/title (e.g. `"Anthropic IPO by __?"` or `"Olympique de Marseille vs. Olympiakós SFP"`).
+       - Event avatar / initials badge on the top left.
+       - Clean outcome rows displaying `cleanOutcomeName` (extracted from `group_item_title` or title suffix), individual probability percentage (e.g. `87%`), and flat Yes/No trade buttons.
+       - Submarkets are automatically sorted by probability descending, displaying top 3 outcomes with an interactive expand/collapse toggle for events with > 3 outcomes.
+       - Combined parimutuel pot calculation summing pools across all submarket options.
+     - **Direct Deep-Linking**:
+       - Clicking **Yes** on an outcome row calls `router.push('/market/' + submarket.id + '?side=YES')`.
+       - Clicking **No** calls `router.push('/market/' + submarket.id + '?side=NO')`.
+       - [`app/components/MarketTradeView.tsx`](file:///C:/Users/PC/desktop/coding/nocture-markets/app/components/MarketTradeView.tsx) automatically reads the `?side=` parameter on arrival and pre-selects the chosen side on the trade slip.
+
+2. **Single-Outcome Card Polish**:
+   - Single-outcome binary cards display a semi-circular SVG arc gauge showing live probability (`XX% chance`) with dynamic stroke dashoffset and colored indicator dot.
+   - Trade buttons styled with flat high-contrast utility colors: solid dark forest green (`bg-[#12281c]` / `text-[#22c55e]`) for YES, solid dark burgundy (`bg-[#361212]` / `text-[#f87171]`) for NO, with zero glow, shadow, or gradient.
+   - Removed settled and ended markets from active listings, category counts, and hero ticker.
+
+3. **Hero Preloader & Hydration Shield (`Hero.tsx`)**:
+   - Implemented `HeroLoading` skeleton with an animated Nocturne Oracle Spinner (concentric rotating ember rings and glowing shield).
+   - Preloads external hero card images concurrently with a 350ms minimum smoothing window and 1200ms safety timeout to completely eliminate unhydrated layout shifts and marquee jumping on first load.
+
+4. **Kalshi-Style Themed Footer (`Footer.tsx`)**:
+   - Built a comprehensive footer following Kalshi's structure and Nocturne's Warm Ember / Obsidian theme.
+   - Features brand tagline (*"Public prices. Private people."*), active `Zero-POST Invariant` badge, social channels (X, GitHub, Discord, Docs), structured navigation (Markets, Architecture, Ecosystem), copyright, and non-custodial cryptographic risk disclaimer.
+   - Removed unnecessary corporate brokerage links (broker hours, institutional sales, HR).
+
+---
+
+## 16. Active Focus & Immediate Next Actions
 
 ### Next Priority: Phase 4 — Production VM Daemon & Remote Deployment (Days 14 - 15)
 

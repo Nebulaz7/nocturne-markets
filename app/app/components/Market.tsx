@@ -182,12 +182,60 @@ function MarketContent({ initialMarkets = [] }: MarketProps) {
     return result;
   }, [markets, activeCategory, statusFilter, searchQuery, sortBy]);
 
-  // Sliced markets for pagination / view more
-  const visibleMarkets = useMemo(() => {
-    return filteredMarkets.slice(0, displayCount);
-  }, [filteredMarkets, displayCount]);
+  // Group non-blitz markets sharing the same event_slug into paired multi-outcome cards
+  const groupedCards = useMemo(() => {
+    const eventGroups = new Map<string, MarketItem[]>();
 
-  const hasMore = displayCount < filteredMarkets.length;
+    // Step 1: Bucket by event_slug
+    for (const m of filteredMarkets) {
+      const isBlitz =
+        m.id?.startsWith("blitz-") || m.slug?.startsWith("blitz-");
+      if (!isBlitz && m.event_slug && m.event_slug !== "blitz-market") {
+        const list = eventGroups.get(m.event_slug) || [];
+        list.push(m);
+        eventGroups.set(m.event_slug, list);
+      }
+    }
+
+    // Step 2: Build card sequence preserving ranking order
+    const processedEvents = new Set<string>();
+    const result: { primary: MarketItem; submarkets?: MarketItem[] }[] = [];
+
+    for (const m of filteredMarkets) {
+      const isBlitz =
+        m.id?.startsWith("blitz-") || m.slug?.startsWith("blitz-");
+      if (isBlitz) {
+        result.push({ primary: m });
+        continue;
+      }
+
+      if (m.event_slug && m.event_slug !== "blitz-market") {
+        if (processedEvents.has(m.event_slug)) continue;
+        processedEvents.add(m.event_slug);
+
+        const submarkets = eventGroups.get(m.event_slug) || [m];
+        if (submarkets.length > 1) {
+          result.push({
+            primary: submarkets[0],
+            submarkets,
+          });
+        } else {
+          result.push({ primary: m });
+        }
+      } else {
+        result.push({ primary: m });
+      }
+    }
+
+    return result;
+  }, [filteredMarkets]);
+
+  // Sliced cards for pagination / view more
+  const visibleCards = useMemo(() => {
+    return groupedCards.slice(0, displayCount);
+  }, [groupedCards, displayCount]);
+
+  const hasMore = displayCount < groupedCards.length;
 
   // Category counts (counting active non-ended, non-settled markets only)
   const categoryCounts = useMemo(() => {
@@ -377,7 +425,7 @@ function MarketContent({ initialMarkets = [] }: MarketProps) {
             <MarketCardSkeleton key={i} />
           ))}
         </div>
-      ) : visibleMarkets.length === 0 ? (
+      ) : visibleCards.length === 0 ? (
         // Empty State
         <div className="text-center py-16 px-4 rounded-3xl bg-[#120d0a]/60 border border-[#7c2d12]/30 flex flex-col items-center justify-center">
           <div className="w-12 h-12 rounded-full bg-[#1e130e] border border-[#7c2d12]/50 flex items-center justify-center text-[#fb923c] mb-3">
@@ -401,10 +449,18 @@ function MarketContent({ initialMarkets = [] }: MarketProps) {
         </div>
       ) : (
         <>
-          {/* Real Interactive Market Cards Grid */}
+          {/* Real Interactive Market Cards Grid (Single & Grouped Events) */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
-            {visibleMarkets.map((market) => (
-              <MarketCard key={market.id} market={market} />
+            {visibleCards.map(({ primary, submarkets }) => (
+              <MarketCard
+                key={
+                  submarkets && submarkets.length > 1
+                    ? `event-${primary.event_slug}`
+                    : primary.id
+                }
+                market={primary}
+                submarkets={submarkets}
+              />
             ))}
           </div>
 
@@ -414,13 +470,13 @@ function MarketContent({ initialMarkets = [] }: MarketProps) {
               <button
                 type="button"
                 onClick={() => setDisplayCount((prev) => prev + 18)}
-                className="btn-monad-base btn-void px-6 py-2.5 rounded-full text-xs font-mono font-bold text-[#fef3c7] border border-[#7c2d12]/50 hover:border-[#fb923c] hover:text-[#fb923c] shadow-lg cursor-pointer transition-all"
+                className="btn-monad-base btn-void px-6 py-2.5 text-xs font-mono font-bold text-[#fef3c7] border border-[#7c2d12]/50 hover:border-[#fb923c] hover:text-[#fb923c] shadow-lg cursor-pointer transition-all"
               >
                 <span>Show More</span>
               </button>
               <span className="text-[11px] font-mono text-[#fef3c7]/40">
-                Displaying {visibleMarkets.length} of {filteredMarkets.length}{" "}
-                matches
+                Displaying {visibleCards.length} of {groupedCards.length} events
+                &amp; pools
               </span>
             </div>
           )}

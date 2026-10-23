@@ -283,7 +283,7 @@ export default function Navbar() {
             <div className="hidden md:flex items-center">
               <Link
                 href="/audit"
-                className="btn-monad-base btn-void h-8 px-3 rounded-full text-[11px]"
+                className="btn-monad-base btn-void h-8 px-3 text-[11px]"
               >
                 <span>Audit Proofs</span>
               </Link>
@@ -296,7 +296,7 @@ export default function Navbar() {
                 setIsMobileMenuOpen(false);
                 setDrawerOpen(true);
               }}
-              className="btn-monad-base btn-ember h-8 sm:h-8.5 px-3 sm:px-4 rounded-full text-xs font-mono font-bold flex items-center gap-1.5 sm:gap-2"
+              className="btn-monad-base btn-ember h-8 sm:h-8.5 px-3 sm:px-4 text-xs font-mono font-bold flex items-center gap-1.5 sm:gap-2"
               title="View your locally stored shielded receipts"
             >
               <span className="flex items-center gap-1.5">

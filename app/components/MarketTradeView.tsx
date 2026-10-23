@@ -68,7 +68,7 @@ export function MarketTradeView({ market }: MarketTradeViewProps) {
             onClick={() => setAuditOpen(true)}
             className="px-3 py-1 rounded-full bg-zinc-900 border border-zinc-700 hover:border-cyan-500/50 text-xs font-mono text-zinc-300 hover:text-cyan-300 transition-colors flex items-center gap-1.5"
           >
-            <span>🔍 Public Audit & Proofs</span>
+            <span>Public Audit & Proofs</span>
           </button>
 
           <button
@@ -76,7 +76,7 @@ export function MarketTradeView({ market }: MarketTradeViewProps) {
             onClick={() => setDrawerOpen(true)}
             className="px-3 py-1 rounded-full bg-zinc-900 border border-zinc-700 hover:border-zinc-500 text-xs font-mono text-zinc-300 hover:text-white transition-colors flex items-center gap-1.5"
           >
-            <span>💼 My Private Bets</span>
+            <span>My Private Bets</span>
           </button>
 
           <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-950/80 border border-cyan-500/30 text-cyan-400 text-xs font-mono">
@@ -92,11 +92,12 @@ export function MarketTradeView({ market }: MarketTradeViewProps) {
           <span className="text-xs font-mono uppercase px-2 py-0.5 rounded bg-zinc-900 border border-zinc-800 text-zinc-400">
             ID: {market.id}
           </span>
-          {market.ref_yes_price !== null && market.ref_yes_price !== undefined && (
-            <span className="text-xs font-mono px-2 py-0.5 rounded bg-zinc-900 border border-zinc-800 text-zinc-300">
-              Polymarket Ref: {(market.ref_yes_price * 100).toFixed(1)}¢ YES
-            </span>
-          )}
+          {market.ref_yes_price !== null &&
+            market.ref_yes_price !== undefined && (
+              <span className="text-xs font-mono px-2 py-0.5 rounded bg-zinc-900 border border-zinc-800 text-zinc-300">
+                Polymarket Ref: {(market.ref_yes_price * 100).toFixed(1)}¢ YES
+              </span>
+            )}
         </div>
 
         <h1 className="text-2xl md:text-3xl font-bold text-white tracking-tight leading-tight mb-4">
@@ -214,9 +215,9 @@ export function MarketTradeView({ market }: MarketTradeViewProps) {
           Zero-POST Shielded Architecture
         </h2>
         <p className="text-xs text-zinc-400 max-w-md mx-auto">
-          Scan with Zashi or YWallet. Bets are sealed with timelock encryption and
-          return addresses are boxed with X25519 directly to the Coordinator. Zero
-          HTTP write requests sent from your device.
+          Scan with Zashi or YWallet. Bets are sealed with timelock encryption
+          and return addresses are boxed with X25519 directly to the
+          Coordinator. Zero HTTP write requests sent from your device.
         </p>
       </div>
 
@@ -229,10 +230,7 @@ export function MarketTradeView({ market }: MarketTradeViewProps) {
       />
 
       {/* My Bets Drawer */}
-      <MyBetsDrawer
-        isOpen={drawerOpen}
-        onClose={() => setDrawerOpen(false)}
-      />
+      <MyBetsDrawer isOpen={drawerOpen} onClose={() => setDrawerOpen(false)} />
 
       {/* Public Audit Drawer */}
       <AuditDrawer
