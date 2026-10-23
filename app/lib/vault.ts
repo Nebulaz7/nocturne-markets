@@ -81,3 +81,44 @@ export function deleteBetReceipt(id: string): void {
     console.warn("[Vault] Failed to delete receipt from localStorage:", err);
   }
 }
+
+/**
+ * Exports all local vault receipts as a JSON string for offline backup.
+ */
+export function exportVaultJson(): string {
+  const receipts = getBetReceipts();
+  return JSON.stringify(receipts, null, 2);
+}
+
+/**
+ * Imports bet receipts from a JSON backup string into the local vault.
+ */
+export function importVaultJson(jsonStr: string): number {
+  if (typeof window === "undefined") return 0;
+  try {
+    const parsed = JSON.parse(jsonStr);
+    if (!Array.isArray(parsed)) return 0;
+    const current = getBetReceipts();
+    const existingIds = new Set(current.map((r) => r.id || r.commitment));
+    const newItems: PreparedBetReceipt[] = parsed.filter(
+      (r: any) => r && (r.id || r.commitment) && !existingIds.has(r.id || r.commitment)
+    );
+    const merged = [...newItems, ...current];
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
+    window.dispatchEvent(new Event("nocturne-vault-updated"));
+    return newItems.length;
+  } catch (err) {
+    console.warn("[Vault] Failed to import vault JSON:", err);
+    return 0;
+  }
+}
+
+/**
+ * Clears all receipts from the local vault.
+ */
+export function clearVault(): void {
+  if (typeof window === "undefined") return;
+  localStorage.removeItem(STORAGE_KEY);
+  window.dispatchEvent(new Event("nocturne-vault-updated"));
+}
+

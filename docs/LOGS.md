@@ -441,7 +441,37 @@ Implemented real Polymarket prediction title image/icon retrieval and progressiv
 
 ---
 
-## 18. Active Focus & Immediate Next Actions
+---
+
+## 18. Private Vault Modernization, Dedicated Page & Warm Ember Obsidian Theme Upgrade
+
+### Summary of Completed Work
+Upgraded the Private Vault experience across the application, adhering strictly to the Nocturne Warm Ember / Obsidian aesthetic, eliminating emoji and secondary text clutter, and letting the structured layout do the explaining:
+
+1. **Private Vault Sidebar / Drawer ([`app/components/MyBetsDrawer.tsx`](file:///c:/Users/PC/Desktop/Coding/nocture-markets/app/components/MyBetsDrawer.tsx))**:
+   - Replaced generic zinc/cyan styling with the Warm Ember Obsidian identity (`#090706` deep base, `#0e0a08` card surface, `#7c2d12` rust borders, `#fb923c` radiant ember accent, `#fef3c7` cream text).
+   - **Zero Emoji Compliance**: Removed all emoji artifacts (`🔒`, `🔍`, `✔`) in favor of clean Lucide vector icons (`Shield`, `Check`, `QrCode`, `Download`, `Upload`).
+   - **Layout-Driven Minimalism**: Removed paragraphs of secondary disclaimers and verbose labels ("Client-side vault only", "Zero server knowledge", etc.).
+   - **High-Signal Metrics Strip**: Prominently displays `Total Staked (ZEC)`, `Active Bets`, and `Settled Bets` directly below the header.
+   - **Interactive Filtering & Search**: Instant tab filtering (`All`, `Active`, `Settled`) with real-time receipt text search by title, ID, or commitment hash.
+   - **Collapsible QR & Memo Slip**: Integrated inline collapsible payment slip (`QRCodeSVG` + 1-click URI/Memo copy) for easily broadcasting unsubmitted bets in Zashi or Zingo.
+   - **Offline Backup & Restoration**: Added 1-click `Export Vault` (.json file download) and `Import Vault` (file picker merge) to [vault.ts](file:///c:/Users/PC/Desktop/Coding/nocture-markets/app/lib/vault.ts).
+
+2. **Dedicated Full-Screen Vault Dashboard ([`app/app/vault/page.tsx`](file:///c:/Users/PC/Desktop/Coding/nocture-markets/app/app/vault/page.tsx))**:
+   - Created full-page `/vault` route wrapped in `Navbar` and `Footer` with a responsive 2-column grid.
+   - Added alias route for [`app/app/portfolio/page.tsx`](file:///c:/Users/PC/Desktop/Coding/nocture-markets/app/app/portfolio/page.tsx) so both `/vault` and `/portfolio` resolve seamlessly without 404s.
+
+3. **Merkle Audit Drawer Theme Alignment ([`app/components/AuditDrawer.tsx`](file:///c:/Users/PC/Desktop/Coding/nocture-markets/app/components/AuditDrawer.tsx))**:
+   - Modernized the public cryptographic inclusion verifier with the same Warm Ember Obsidian design tokens.
+   - Preserved in-browser WebCrypto SHA-256 Merkle root verification and step-by-step path inspection.
+
+4. **Verification & Testing**:
+   - `pnpm --dir app exec tsc --noEmit` exited cleanly with code `0`.
+   - `pnpm test` executed all 6 unit and integration test suites with 100% pass rate.
+
+---
+
+## 19. Active Focus & Immediate Next Actions
 
 ### Next Priority: Phase 4 — Production VM Daemon & Remote Deployment (Days 14 - 15)
 
@@ -455,4 +485,5 @@ Implemented real Polymarket prediction title image/icon retrieval and progressiv
    - Final threat model whitepaper / leak audit (`docs/LEAK_AUDIT.md`).
    - 5-minute Blitz testnet demo run for ZECATHON judges.
    - Demo video recording and submission text.
+
 
