@@ -6,9 +6,9 @@
   --foreground: #fef3c7;
 
   /* Nocturne Warm Ember Brand Identity */
-  --theme-rust: #7c2d12;     /* Deep Rust / Burnt Amber */
-  --theme-ember: #fb923c;    /* Radiant Warm Orange (Primary) */
-  --theme-cream: #fef3c7;    /* Warm Sunlight Cream (Text & Surface) */
+  --theme-rust: #7c2d12; /* Deep Rust / Burnt Amber */
+  --theme-ember: #fb923c; /* Radiant Warm Orange (Primary) */
+  --theme-cream: #fef3c7; /* Warm Sunlight Cream (Text & Surface) */
 
   --font-sans: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
   --font-heading: var(--font-heading), ui-sans-serif, system-ui, sans-serif;
@@ -32,7 +32,12 @@ body {
   font-family: var(--font-sans);
 }
 
-h1, h2, h3, h4, h5, h6 {
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
   font-family: var(--font-heading);
 }
 
@@ -90,8 +95,13 @@ h1, h2, h3, h4, h5, h6 {
   .btn-ember,
   .btn-monad-primary {
     color: #431407;
-    background: radial-gradient(50% 50% at 50% 50%, #fb923c00 0%, #ffffff38 100%), #fb923c;
-    box-shadow: 0 1px 2px #00000066, inset 0 1px 0.5px #ffffffb3, inset 0 -1px 0.5px #7c2d1280, 0 0 0 1px #ea580c;
+    background:
+      radial-gradient(50% 50% at 50% 50%, #fb923c00 0%, #ffffff38 100%), #fb923c;
+    box-shadow:
+      0 1px 2px #00000066,
+      inset 0 1px 0.5px #ffffffb3,
+      inset 0 -1px 0.5px #7c2d1280,
+      0 0 0 1px #ea580c;
     font-weight: 700;
   }
 
@@ -105,7 +115,11 @@ h1, h2, h3, h4, h5, h6 {
     opacity: 0;
     background: radial-gradient(50% 50%, #fed7aae6 0%, #ffffffcc 100%);
     transition: opacity 0.35s ease-out;
-    box-shadow: 0 1px 3px #00000066, inset 0 1px 0.8px #ffffff, inset 0 -1px 0.8px #ffedd5, 0 0 0 1px #fb923c;
+    box-shadow:
+      0 1px 3px #00000066,
+      inset 0 1px 0.8px #ffffff,
+      inset 0 -1px 0.8px #ffedd5,
+      0 0 0 1px #fb923c;
   }
 
   .btn-ember:hover::before,
@@ -116,8 +130,13 @@ h1, h2, h3, h4, h5, h6 {
   /* 2. Deep Rust Button (#7c2d12) */
   .btn-rust {
     color: #fef3c7;
-    background: radial-gradient(50% 50% at 50% 50%, #7c2d1200 0%, #fb923c33 100%), #7c2d12;
-    box-shadow: 0 1px 2px #00000080, inset 0 1px 0.5px #fb923c66, inset 0 -1px 0.5px #431407, 0 0 0 1px #9a3412;
+    background:
+      radial-gradient(50% 50% at 50% 50%, #7c2d1200 0%, #fb923c33 100%), #7c2d12;
+    box-shadow:
+      0 1px 2px #00000080,
+      inset 0 1px 0.5px #fb923c66,
+      inset 0 -1px 0.5px #431407,
+      0 0 0 1px #9a3412;
   }
 
   .btn-rust::before {
@@ -129,7 +148,11 @@ h1, h2, h3, h4, h5, h6 {
     opacity: 0;
     background: radial-gradient(50% 50%, #9a3412cc 0%, #fb923c66 100%);
     transition: opacity 0.35s ease-out;
-    box-shadow: 0 1px 3px #00000080, inset 0 1px 0.8px #fed7aa80, inset 0 -1px 0.8px #431407, 0 0 0 1px #ea580c;
+    box-shadow:
+      0 1px 3px #00000080,
+      inset 0 1px 0.8px #fed7aa80,
+      inset 0 -1px 0.8px #431407,
+      0 0 0 1px #ea580c;
   }
 
   .btn-rust:hover::before {
@@ -140,8 +163,13 @@ h1, h2, h3, h4, h5, h6 {
   .btn-cream,
   .btn-monad-secondary {
     color: #7c2d12;
-    background: radial-gradient(50% 50% at 50% 50%, #fffbeb66 0%, #fde68a1a 100%), #fef3c7;
-    box-shadow: 0 1px 2px #0000004d, inset 0 1px #ffffff, inset 0 -1px #fde68a, 0 0 0 1px #7c2d1233;
+    background:
+      radial-gradient(50% 50% at 50% 50%, #fffbeb66 0%, #fde68a1a 100%), #fef3c7;
+    box-shadow:
+      0 1px 2px #0000004d,
+      inset 0 1px #ffffff,
+      inset 0 -1px #fde68a,
+      0 0 0 1px #7c2d1233;
     font-weight: 700;
   }
 
@@ -155,7 +183,11 @@ h1, h2, h3, h4, h5, h6 {
     opacity: 0;
     background: radial-gradient(50% 50%, #ffffff 0%, #fef3c7cc 100%);
     transition: opacity 0.35s ease-out;
-    box-shadow: 0 1px 3px #0000004d, inset 0 1px #ffffff, inset 0 -1px #fed7aa, 0 0 0 1px #7c2d124d;
+    box-shadow:
+      0 1px 3px #0000004d,
+      inset 0 1px #ffffff,
+      inset 0 -1px #fed7aa,
+      0 0 0 1px #7c2d124d;
   }
 
   .btn-cream:hover::before,
@@ -167,8 +199,13 @@ h1, h2, h3, h4, h5, h6 {
   .btn-void,
   .btn-monad-void {
     color: #fef3c7;
-    background: radial-gradient(50% 50% at 50% 50%, #1c141066 0%, #fb923c0d 100%), #0d0a08;
-    box-shadow: 0 1px 2px #00000099, inset 0 1px 0.5px #ffffff26, inset 0 -1px 0.5px #7c2d1240, 0 0 0 1px #27201c;
+    background:
+      radial-gradient(50% 50% at 50% 50%, #1c141066 0%, #fb923c0d 100%), #0d0a08;
+    box-shadow:
+      0 1px 2px #00000099,
+      inset 0 1px 0.5px #ffffff26,
+      inset 0 -1px 0.5px #7c2d1240,
+      0 0 0 1px #27201c;
   }
 
   .btn-void::before,
@@ -181,7 +218,11 @@ h1, h2, h3, h4, h5, h6 {
     opacity: 0;
     background: radial-gradient(50% 50%, #291a13a8 0%, #7c2d1233 100%);
     transition: opacity 0.35s ease-out;
-    box-shadow: 0 1px 2px #00000099, inset 0 1px 0.5px #fb923c40, inset 0 -1px 0.5px #7c2d1266, 0 0 0 1px #7c2d12;
+    box-shadow:
+      0 1px 2px #00000099,
+      inset 0 1px 0.5px #fb923c40,
+      inset 0 -1px 0.5px #7c2d1266,
+      0 0 0 1px #7c2d12;
   }
 
   .btn-void:hover::before,
@@ -214,4 +255,23 @@ h1, h2, h3, h4, h5, h6 {
 
 .animate-menu-slide-down {
   animation: slideDownFade 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #c9cccf;
+  border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #959799;
 }
