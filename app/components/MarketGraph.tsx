@@ -259,11 +259,11 @@ export function MarketGraph({
                 Chance Yes
               </span>
             </div>
-            <p className="text-xs font-mono text-[#fef3c7]/40 mt-0.5">
-              {hoverIndex !== null
-                ? new Date(activePoint.t * 1000).toLocaleString()
-                : "Live Implied Probability"}
-            </p>
+            {hoverIndex !== null && (
+              <p className="text-xs font-mono text-[#fef3c7]/40 mt-0.5">
+                {new Date(activePoint.t * 1000).toLocaleString()}
+              </p>
+            )}
           </div>
         )}
 
@@ -429,15 +429,6 @@ export function MarketGraph({
             </div>
           </div>
         )}
-      </div>
-
-      {/* Chart Footer Meta Bar */}
-      <div className="mt-3 pt-3 border-t border-[#7c2d12]/20 flex items-center justify-between text-[11px] font-mono text-[#fef3c7]/50">
-        <div className="flex items-center gap-1.5">
-          <Clock className="w-3.5 h-3.5 text-[#fb923c]/60" />
-          <span>Polymarket CLOB Cached Feed (5m TTL)</span>
-        </div>
-        <span>Zero-POST Confidential Execution</span>
       </div>
     </div>
   );

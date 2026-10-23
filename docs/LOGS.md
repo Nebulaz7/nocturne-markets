@@ -328,7 +328,7 @@ Before crossing into Phase 2, we upgraded our core Zcash memo and settlement arc
 ### Achievements & Architecture
 
 1. **Multi-Outcome Event Discovery & Pairing (`Market.tsx` & `MarketCard.tsx`)**:
-   - **Problem**: The Coordinator indexes both single-outcome and multi-outcome Polymarket events (over 681 multi-outcome events across 13,500+ records). Previously, each submarket was rendered as a standalone card, resulting in 3 to 10 duplicate cards for a single overarching event (e.g. separate cards for every date of "Anthropic IPO by __?" or every match outcome).
+   - **Problem**: The Coordinator indexes both single-outcome and multi-outcome Polymarket events (over 681 multi-outcome events across 13,500+ records). Previously, each submarket was rendered as a standalone card, resulting in 3 to 10 duplicate cards for a single overarching event (e.g. separate cards for every date of "Anthropic IPO by \_\_?" or every match outcome).
    - **Discovery & Grouping Pipeline**:
      - Grouping logic implemented in [`app/app/components/Market.tsx`](file:///C:/Users/PC/desktop/coding/nocture-markets/app/app/components/Market.tsx) via `groupedCards` memo.
      - Non-blitz markets sharing a common `event_slug` are automatically grouped into a single unified card entry `{ primary, submarkets }`.
@@ -357,7 +357,7 @@ Before crossing into Phase 2, we upgraded our core Zcash memo and settlement arc
 
 4. **Kalshi-Style Themed Footer (`Footer.tsx`)**:
    - Built a comprehensive footer following Kalshi's structure and Nocturne's Warm Ember / Obsidian theme.
-   - Features brand tagline (*"Public prices. Private people."*), active `Zero-POST Invariant` badge, social channels (X, GitHub, Discord, Docs), structured navigation (Markets, Architecture, Ecosystem), copyright, and non-custodial cryptographic risk disclaimer.
+   - Features brand tagline (_"Public prices. Private people."_), active `Zero-POST Invariant` badge, social channels (X, GitHub, Discord, Docs), structured navigation (Markets, Architecture, Ecosystem), copyright, and non-custodial cryptographic risk disclaimer.
    - Removed unnecessary corporate brokerage links (broker hours, institutional sales, HR).
 
 ---
@@ -384,7 +384,7 @@ Before crossing into Phase 2, we upgraded our core Zcash memo and settlement arc
    - **Cache & Fallback**: Proxies through coordinator `/api/markets/:id/history` (5m TTL cache) with organic spline smoothing when upstream feeds have limited ticks.
 
 3. **Multi-Outcome Event Table ([`app/components/MultiOutcomeTable.tsx`](file:///C:/Users/PC/desktop/coding/nocture-markets/app/components/MultiOutcomeTable.tsx))**:
-   - For multi-bracket events (e.g. "Anthropic IPO by __?", soccer 3-way matches), displays all outcome options sorted descending by probability.
+   - For multi-bracket events (e.g. "Anthropic IPO by \_\_?", soccer 3-way matches), displays all outcome options sorted descending by probability.
    - Each row presents: clean outcome title, pot / volume metrics, probability percentage in bold font (`<1%`, `9%`, `54%`, `74%`, `87%`), and flat **Buy Yes [price]¢** / **Buy No [price]¢** buttons.
    - **Active State Synchronization**: Clicking any row or button instantly highlights the active option with solid flat green (`#15803d`) or solid flat red (`#b91c1c`) and updates the persistent Bet Slip on the right in real time.
    - Collapsible "View resolved" accordion for settled sub-brackets.
@@ -423,4 +423,3 @@ Before crossing into Phase 2, we upgraded our core Zcash memo and settlement arc
    - Final threat model whitepaper / leak audit (`docs/LEAK_AUDIT.md`).
    - 5-minute Blitz testnet demo run for ZECATHON judges.
    - Demo video recording and submission text.
-

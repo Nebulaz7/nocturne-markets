@@ -55,17 +55,8 @@ export function MultiOutcomeTable({
   });
 
   return (
-    <div className="w-full rounded-2xl bg-[#0e0a08] border border-[#7c2d12]/30 p-5 sm:p-6 mb-6">
-      <div className="flex items-center justify-between mb-4 pb-3 border-b border-[#7c2d12]/20">
-        <h3 className="text-sm font-heading font-bold text-[#fef3c7] uppercase tracking-wider">
-          Market Outcomes ({submarkets.length})
-        </h3>
-        <span className="text-xs font-mono text-[#fef3c7]/50">
-          Select an outcome to trade
-        </span>
-      </div>
-
-      <div className="space-y-2.5">
+    <div className="w-full rounded-2xl bg-[#0e0a08] border border-[#7c2d12]/30 p-4 sm:p-5 mb-6">
+      <div className="space-y-2">
         {sorted.map((sm) => {
           const rawPrice = sm.ref_yes_price ?? 0.5;
           const yesPct = Math.max(1, Math.min(99, Math.round(rawPrice * 100)));

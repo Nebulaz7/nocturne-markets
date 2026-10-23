@@ -253,23 +253,12 @@ export function MarketTradeView({
               </div>
             </div>
 
-            {/* Quick Stats Strip */}
-            <div className="flex items-center gap-6 text-xs font-mono text-[#fef3c7]/60 pt-2 border-t border-[#7c2d12]/20">
-              <div>
-                <span className="text-[#fef3c7]/40">Total Shielded Pot: </span>
-                <strong className="text-[#fef3c7] font-bold">
-                  {totalEventPot > 0 ? `${totalEventPot.toFixed(2)} ZEC` : "0.00 ZEC"}
-                </strong>
-              </div>
-
-              <div>
-                <span className="text-[#fef3c7]/40">Type: </span>
-                <span className="text-[#fef3c7]">
-                  {isMultiOutcome
-                    ? `${submarkets.length} Outcomes Parimutuel`
-                    : "Binary Parimutuel"}
-                </span>
-              </div>
+            {/* Stats Strip */}
+            <div className="flex items-center gap-3 text-xs font-mono text-[#fef3c7]/60 pt-2 border-t border-[#7c2d12]/20">
+              <span className="text-[#fef3c7] font-semibold">
+                {totalEventPot > 0 ? `${totalEventPot.toFixed(2)} ZEC Pot` : "0.00 ZEC Pot"}
+              </span>
+              {timeRemaining && <span>· {timeRemaining}</span>}
             </div>
           </div>
 
@@ -326,6 +315,12 @@ export function MarketTradeView({
               ref_yes_price: activeSubmarket.ref_yes_price,
               status: market.status,
               category: market.category,
+              total_pot_zec:
+                activeSubmarket.total_pot_zec ?? market.total_pot_zec ?? 0,
+              yes_pot_zec:
+                (activeSubmarket as any).yes_pot_zec ?? market.yes_pot_zec ?? 0,
+              no_pot_zec:
+                (activeSubmarket as any).no_pot_zec ?? market.no_pot_zec ?? 0,
             }}
             submarketTitle={
               isMultiOutcome ? activeSubmarket.title : undefined
@@ -333,36 +328,8 @@ export function MarketTradeView({
             selectedSide={selectedSide}
             onSideChange={(side) => setSelectedSide(side)}
             relatedMarkets={relatedMarkets}
-            onSelectRelated={(marketId) => {
-              // Navigates via Link
-            }}
           />
         </div>
-      </div>
-
-      {/* Zero-POST Security Bottom Card */}
-      <div className="mt-12 p-6 rounded-2xl bg-[#0e0a08] border border-[#7c2d12]/30 flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-[#1c120c] border border-[#7c2d12]/50 flex items-center justify-center text-[#fb923c] shrink-0">
-            <Shield className="w-5 h-5" />
-          </div>
-          <div>
-            <h4 className="text-sm font-heading font-bold text-[#fef3c7]">
-              Zero-POST Cryptographic Guarantee
-            </h4>
-            <p className="text-xs text-[#fef3c7]/60 mt-0.5">
-              Bets sealed via drand Quicknet timelock encryption. Zero HTTP requests reveal your bet choices or return address.
-            </p>
-          </div>
-        </div>
-
-        <button
-          type="button"
-          onClick={() => setAuditOpen(true)}
-          className="py-2 px-4 rounded-xl bg-[#1c120c] hover:bg-[#27150d] border border-[#7c2d12]/40 text-xs font-mono font-bold text-[#fb923c] transition-colors cursor-pointer shrink-0"
-        >
-          View Cryptographic Proofs
-        </button>
       </div>
 
       {/* Drawers */}
