@@ -409,7 +409,39 @@ Before crossing into Phase 2, we upgraded our core Zcash memo and settlement arc
 
 ---
 
-## 17. Active Focus & Immediate Next Actions
+## 17. Polymarket Prediction Title Images Pipeline & Progressive Lazy Loading
+
+### Summary of Completed Work
+Implemented real Polymarket prediction title image/icon retrieval and progressive lazy loading across the application, optimizing performance and eliminating layout shifts:
+
+1. **Database Schema & Ingestion Pipeline**:
+   - Updated `coordinator/src/db/schema.ts` and `coordinator/src/db/index.ts` to add `image` and `icon` columns to the `markets` table with automated schema migration.
+   - Updated `coordinator/src/jobs/polymarketSync.ts` to extract `m.image`, `m.icon`, `evt.image`, and `evt.icon` from Polymarket Gamma API responses and persist them during live market synchronization.
+   - Configured browser-compatible `User-Agent` and `Accept` headers to ensure uninterrupted communication with Cloudflare-shielded Polymarket endpoints.
+   - Backfilled real AWS S3 Polymarket prediction images and icons into `nocturne-data/nocturne.sqlite` across indexed markets.
+
+2. **Progressive Lazy-Loading Avatar Component ([`app/components/MarketAvatar.tsx`](file:///c:/Users/PC/Desktop/Coding/nocture-markets/app/components/MarketAvatar.tsx))**:
+   - Engineered `<MarketAvatar />` using browser `IntersectionObserver` with `rootMargin: "150px"`.
+   - **Zero Network Waste**: Does NOT initiate network image requests until the market card or outcome item enters (or approaches) the user's viewport.
+   - **Zero Cumulative Layout Shift (CLS)**: Enforces rigid container dimension envelopes (`sm`: 20x20px, `md`: 36x36px, `lg`: 48-56px).
+   - **Graceful Warm Ember Fallback**: Displays a 2-character initials/category emblem badge behind the image (`#150f0c` obsidian surface, `#7c2d12` rust border, `#fb923c` ember typography) until load completes or if network errors occur.
+   - Smooth CSS opacity transition (`opacity-0` to `opacity-100 transition-opacity duration-300`).
+
+3. **UI Integration & Layout De-Cluttering**:
+   - **Market Cards ([`app/app/components/MarketCard.tsx`](file:///c:/Users/PC/Desktop/Coding/nocture-markets/app/app/components/MarketCard.tsx))**: Integrated `<MarketAvatar />` into both multi-outcome paired event card headers and single-market cards. Added outcome row icons for submarket brackets.
+   - **Trade View Header ([`app/components/MarketTradeView.tsx`](file:///c:/Users/PC/Desktop/Coding/nocture-markets/app/components/MarketTradeView.tsx))**: Replaced static letter badges with high-resolution progressive `<MarketAvatar size="lg" />`.
+   - **Multi-Outcome Table ([`app/components/MultiOutcomeTable.tsx`](file:///c:/Users/PC/Desktop/Coding/nocture-markets/app/components/MultiOutcomeTable.tsx))**: Added lazy-loaded outcome avatars next to option titles.
+   - **Bet Slip ([`app/components/MarketBetSlip.tsx`](file:///c:/Users/PC/Desktop/Coding/nocture-markets/app/components/MarketBetSlip.tsx))**: Added outcome/market avatars in the bet slip header and related markets drawer.
+   - **Minimalist Layout**: Removed redundant secondary text labels, disclaimers, and verbose descriptions to let the layout explain itself cleanly.
+
+4. **Verification & Test Status**:
+   - `pnpm --dir app exec tsc --noEmit` exited cleanly with code `0`.
+   - All 6 unit and integration test suites passed (`100% PASS` across Merkle engine, Bet Builder, Polymarket URL parser, SQLite DB, Fastify Coordinator, and Market API).
+   - Zero emojis maintained across all code and documentation.
+
+---
+
+## 18. Active Focus & Immediate Next Actions
 
 ### Next Priority: Phase 4 — Production VM Daemon & Remote Deployment (Days 14 - 15)
 
@@ -423,3 +455,4 @@ Before crossing into Phase 2, we upgraded our core Zcash memo and settlement arc
    - Final threat model whitepaper / leak audit (`docs/LEAK_AUDIT.md`).
    - 5-minute Blitz testnet demo run for ZECATHON judges.
    - Demo video recording and submission text.
+

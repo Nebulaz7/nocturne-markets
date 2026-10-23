@@ -44,6 +44,8 @@ export class CoordinatorDatabase {
     if (!colNames.has("yes_token_id")) this.db.exec("ALTER TABLE markets ADD COLUMN yes_token_id TEXT;");
     if (!colNames.has("no_token_id")) this.db.exec("ALTER TABLE markets ADD COLUMN no_token_id TEXT;");
     if (!colNames.has("category")) this.db.exec("ALTER TABLE markets ADD COLUMN category TEXT NOT NULL DEFAULT 'Others';");
+    if (!colNames.has("image")) this.db.exec("ALTER TABLE markets ADD COLUMN image TEXT;");
+    if (!colNames.has("icon")) this.db.exec("ALTER TABLE markets ADD COLUMN icon TEXT;");
     this.db.exec("CREATE INDEX IF NOT EXISTS idx_markets_event_slug ON markets(event_slug);");
     this.db.exec("CREATE INDEX IF NOT EXISTS idx_markets_market_slug ON markets(market_slug);");
     this.db.exec("CREATE INDEX IF NOT EXISTS idx_markets_condition_id ON markets(condition_id);");
@@ -70,6 +72,8 @@ export class CoordinatorDatabase {
     yes_token_id?: string | null;
     no_token_id?: string | null;
     category?: string | null;
+    image?: string | null;
+    icon?: string | null;
     close_time: number;
     drand_round: number;
     pot_address: string;
@@ -81,9 +85,9 @@ export class CoordinatorDatabase {
       INSERT INTO markets (
         id, polymarket_id, title, slug, event_slug, market_slug, condition_id,
         question, group_item_title, ref_yes_price, yes_token_id, no_token_id, category,
-        close_time, drand_round, status, outcome, pot_address, pot_uvk, merkle_root,
+        image, icon, close_time, drand_round, status, outcome, pot_address, pot_uvk, merkle_root,
         total_pot_zats, yes_pot_zats, no_pot_zats, created_at, updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'OPEN', NULL, ?, ?, NULL, 0, 0, 0, ?, ?)
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'OPEN', NULL, ?, ?, NULL, 0, 0, 0, ?, ?)
     `);
 
     stmt.run(
@@ -100,6 +104,8 @@ export class CoordinatorDatabase {
       params.yes_token_id ?? null,
       params.no_token_id ?? null,
       category,
+      params.image ?? null,
+      params.icon ?? null,
       params.close_time,
       params.drand_round,
       params.pot_address,
@@ -157,6 +163,8 @@ export class CoordinatorDatabase {
       yes_token_id?: string | null;
       no_token_id?: string | null;
       category?: string | null;
+      image?: string | null;
+      icon?: string | null;
     }
   ): void {
     const now = Math.floor(Date.now() / 1000);
@@ -165,10 +173,20 @@ export class CoordinatorDatabase {
       SET yes_token_id = COALESCE(?, yes_token_id),
           no_token_id = COALESCE(?, no_token_id),
           category = COALESCE(?, category),
+          image = COALESCE(?, image),
+          icon = COALESCE(?, icon),
           updated_at = ?
       WHERE id = ?
     `);
-    stmt.run(params.yes_token_id ?? null, params.no_token_id ?? null, params.category ?? null, now, id);
+    stmt.run(
+      params.yes_token_id ?? null,
+      params.no_token_id ?? null,
+      params.category ?? null,
+      params.image ?? null,
+      params.icon ?? null,
+      now,
+      id
+    );
   }
 
   public listMarkets(filter?: { status?: MarketStatus; category?: string }): MarketRecord[] {

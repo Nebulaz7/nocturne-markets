@@ -15,6 +15,7 @@ import {
   type PreparedBetReceipt,
 } from "@/lib/bet_builder";
 import { saveBetReceipt } from "@/lib/vault";
+import MarketAvatar from "./MarketAvatar";
 
 export interface MarketBetSlipProps {
   market: {
@@ -27,6 +28,8 @@ export interface MarketBetSlipProps {
     ref_yes_price?: number | null;
     status: string;
     category?: string | null;
+    image?: string | null;
+    icon?: string | null;
     total_pot_zec?: number;
     yes_pot_zec?: number;
     no_pot_zec?: number;
@@ -40,6 +43,8 @@ export interface MarketBetSlipProps {
     event_slug?: string;
     title: string;
     category?: string;
+    image?: string | null;
+    icon?: string | null;
     ref_yes_price?: number | null;
   }>;
 }
@@ -188,7 +193,13 @@ export function MarketBetSlip({
       <div className="w-full rounded-2xl bg-[#0e0a08] border border-[#7c2d12]/40 p-5 shadow-2xl overflow-hidden">
         {/* Header: Clean Title & Active Side */}
         <div className="flex items-center justify-between gap-3 pb-3 mb-4 border-b border-[#7c2d12]/20">
-          <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2.5 flex-1 min-w-0">
+            <MarketAvatar
+              src={market.icon || market.image}
+              title={submarketTitle || market.title}
+              category={market.category}
+              size="sm"
+            />
             <h2 className="text-sm font-heading font-bold text-[#fef3c7] truncate">
               {submarketTitle || market.title}
             </h2>
@@ -437,9 +448,17 @@ export function MarketBetSlip({
                   href={`/market/${targetSlug}`}
                   className="flex items-center justify-between gap-2.5 p-2 rounded-xl hover:bg-[#1c120c] transition-all group"
                 >
-                  <span className="text-xs font-sans text-[#fef3c7]/75 group-hover:text-[#fef3c7] line-clamp-1 flex-1">
-                    {rel.title}
-                  </span>
+                  <div className="flex items-center gap-2 flex-1 min-w-0">
+                    <MarketAvatar
+                      src={rel.icon || rel.image}
+                      title={rel.title}
+                      category={rel.category}
+                      size="sm"
+                    />
+                    <span className="text-xs font-sans text-[#fef3c7]/75 group-hover:text-[#fef3c7] line-clamp-1">
+                      {rel.title}
+                    </span>
+                  </div>
                   <span className="text-xs font-mono font-bold text-[#fef3c7] shrink-0">
                     {relPct}%
                   </span>

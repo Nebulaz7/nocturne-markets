@@ -24,6 +24,9 @@ export interface MarketSummary {
   status: string;
   total_pot_zats?: number;
   close_time?: number;
+  image?: string | null;
+  icon?: string | null;
+  category?: string | null;
 }
 
 export type PolymarketMatchType = "SINGLE_MARKET" | "MULTI_MARKET" | "NOT_FOUND";

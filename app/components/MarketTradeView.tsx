@@ -19,6 +19,8 @@ import { MyBetsDrawer } from "./MyBetsDrawer";
 import { AuditDrawer } from "./AuditDrawer";
 import type { BetSide } from "@/lib/bet_builder";
 
+import MarketAvatar from "./MarketAvatar";
+
 export interface MarketTradeViewProps {
   market: {
     id: string;
@@ -30,6 +32,8 @@ export interface MarketTradeViewProps {
     group_item_title?: string | null;
     status: string;
     category?: string | null;
+    image?: string | null;
+    icon?: string | null;
     close_time: number;
     drand_round: string | number;
     pot_address: string;
@@ -224,9 +228,12 @@ export function MarketTradeView({
           {/* Event Header Card */}
           <div className="mb-6">
             <div className="flex items-start gap-3 sm:gap-4 mb-3">
-              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-[#1c120c] border border-[#7c2d12]/50 text-[#fb923c] font-heading font-extrabold text-sm sm:text-base flex items-center justify-center shrink-0 tracking-wider">
-                {eventBadge}
-              </div>
+              <MarketAvatar
+                src={market.icon || market.image}
+                title={eventTitle}
+                category={market.category}
+                size="lg"
+              />
 
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-1.5 flex-wrap">

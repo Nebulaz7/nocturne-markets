@@ -15,6 +15,8 @@ export interface PolymarketMarket {
   groupItemTitle?: string;
   active?: boolean;
   closed?: boolean;
+  image?: string;
+  icon?: string;
 }
 
 export interface PolymarketEvent {
@@ -26,6 +28,8 @@ export interface PolymarketEvent {
   endDate?: string;
   closed?: boolean;
   active?: boolean;
+  image?: string;
+  icon?: string;
   markets?: PolymarketMarket[];
 }
 
@@ -131,7 +135,10 @@ export async function syncPolymarketMarketsOnce(
       const url = `${POLYMARKET_GAMMA_API}/events?active=true&closed=false&order=volume24hr&ascending=false&limit=100&offset=${offset}`;
 
       const res = await fetch(url, {
-        headers: { "User-Agent": "NocturneMarkets/0.2.0" },
+        headers: {
+          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+          "Accept": "application/json",
+        },
         signal: AbortSignal.timeout(15000),
       });
 
@@ -198,6 +205,8 @@ export async function syncPolymarketMarketsOnce(
           } catch {}
 
           const normalizedCat = normalizeCategory(evt.category, evt.tags, evt.title);
+          const marketImage = m.image || evt.image || null;
+          const marketIcon = m.icon || m.image || evt.icon || evt.image || null;
 
           const existing = db.getMarket(m.id);
           if (existing) {
@@ -208,6 +217,8 @@ export async function syncPolymarketMarketsOnce(
               yes_token_id: yesTokenId,
               no_token_id: noTokenId,
               category: normalizedCat,
+              image: marketImage,
+              icon: marketIcon,
             });
             continue;
           }
@@ -234,6 +245,8 @@ export async function syncPolymarketMarketsOnce(
             close_time: closeTimeSec,
             drand_round: drandRound,
             pot_address: potAddress,
+            image: marketImage,
+            icon: marketIcon,
           });
 
           synced++;

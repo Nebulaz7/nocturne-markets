@@ -3,11 +3,12 @@
 import React, { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Shield, Zap, Clock } from "lucide-react";
+import MarketAvatar from "../../components/MarketAvatar";
 
 export interface MarketItem {
   id: string;
   title: string;
-  category?: string;
+  category?: string | null;
   ref_yes_price?: number | null;
   total_pot_zec?: number;
   total_pot_zats?: number;
@@ -20,6 +21,8 @@ export interface MarketItem {
   group_item_title?: string | null;
   question?: string | null;
   slug?: string | null;
+  image?: string | null;
+  icon?: string | null;
 }
 
 interface MarketCardProps {
@@ -58,7 +61,7 @@ function cleanOutcomeName(item: MarketItem): string {
 }
 
 // Extract a 2-character avatar initials/tag for the event badge
-function getEventBadge(title: string, category?: string): string {
+function getEventBadge(title: string, category?: string | null): string {
   const words = title.trim().split(/\s+/);
   if (words.length >= 2) {
     return (words[0][0] + words[1][0]).toUpperCase();
@@ -197,10 +200,13 @@ export default function MarketCard({ market, submarkets }: MarketCardProps) {
           </div>
 
           {/* Event Title with Icon Badge (matching Polymarket / Kalshi multi-card) */}
-          <div className="flex items-start gap-2.5 mb-3.5 z-10 relative">
-            {/* <div className="w-8 h-8 rounded-lg bg-[#1c120c] border border-[#7c2d12]/40 text-[#fb923c] font-heading font-bold text-xs flex items-center justify-center shrink-0 tracking-wider">
-              {badge}
-            </div> */}
+          <div className="flex items-start gap-3 mb-3.5 z-10 relative">
+            <MarketAvatar
+              src={market.icon || market.image}
+              title={eventTitle}
+              category={market.category}
+              size="md"
+            />
             <h3 className="text-sm sm:text-base font-heading font-semibold text-[#fef3c7] line-clamp-2 leading-snug group-hover:text-[#fed7aa] transition-colors flex-1 pt-0.5">
               {eventTitle}
             </h3>
@@ -230,9 +236,19 @@ export default function MarketCard({ market, submarkets }: MarketCardProps) {
                 className="flex items-center justify-between gap-2.5 px-3 py-2 rounded-xl bg-[#140e0b]/90 hover:bg-[#1a120e] border border-[#7c2d12]/30 hover:border-[#fb923c]/40 transition-all cursor-pointer group/row"
               >
                 {/* Outcome Title */}
-                <span className="text-xs sm:text-sm font-sans font-medium text-[#fef3c7]/90 truncate flex-1 group-hover/row:text-[#fef3c7]">
-                  {outcomeName}
-                </span>
+                <div className="flex items-center gap-2 truncate flex-1 min-w-0">
+                  {(sm.icon || sm.image) && (
+                    <MarketAvatar
+                      src={sm.icon || sm.image}
+                      title={outcomeName}
+                      category={market.category}
+                      size="sm"
+                    />
+                  )}
+                  <span className="text-xs sm:text-sm font-sans font-medium text-[#fef3c7]/90 truncate group-hover/row:text-[#fef3c7]">
+                    {outcomeName}
+                  </span>
+                </div>
 
                 {/* Probability % */}
                 <span className="text-xs sm:text-sm font-bold font-mono text-[#fef3c7] shrink-0 min-w-[36px] text-right">
@@ -363,9 +379,17 @@ export default function MarketCard({ market, submarkets }: MarketCardProps) {
 
         {/* Market Title & Semi-Circular Chance Gauge */}
         <div className="flex items-start justify-between gap-3 mb-4 z-10 relative">
-          <h3 className="text-sm sm:text-base font-heading font-semibold text-[#fef3c7] line-clamp-2 leading-snug group-hover:text-[#fed7aa] transition-colors flex-1">
-            {market.title}
-          </h3>
+          <div className="flex items-start gap-2.5 flex-1 min-w-0">
+            <MarketAvatar
+              src={market.icon || market.image}
+              title={market.title}
+              category={market.category}
+              size="md"
+            />
+            <h3 className="text-sm sm:text-base font-heading font-semibold text-[#fef3c7] line-clamp-2 leading-snug group-hover:text-[#fed7aa] transition-colors flex-1 pt-0.5">
+              {market.title}
+            </h3>
+          </div>
 
           {/* Arc Gauge for Probability */}
           <div className="relative shrink-0 w-[68px] h-[46px] flex items-center justify-center select-none pt-1">

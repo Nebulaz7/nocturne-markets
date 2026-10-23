@@ -22,6 +22,8 @@ export interface MarketRecord {
   yes_token_id?: string | null;
   no_token_id?: string | null;
   category?: string;
+  image?: string | null;
+  icon?: string | null;
   close_time: number; // Unix seconds
   drand_round: number;
   status: MarketStatus;
@@ -84,6 +86,8 @@ CREATE TABLE IF NOT EXISTS markets (
   yes_token_id TEXT,
   no_token_id TEXT,
   category TEXT NOT NULL DEFAULT 'Others',
+  image TEXT,
+  icon TEXT,
   close_time INTEGER NOT NULL,
   drand_round INTEGER NOT NULL,
   status TEXT NOT NULL DEFAULT 'OPEN',

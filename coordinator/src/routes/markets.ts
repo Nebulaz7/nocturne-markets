@@ -44,6 +44,8 @@ function formatMarketResponse(m: MarketRecord, db: CoordinatorDatabase) {
     yes_token_id: m.yes_token_id ?? null,
     no_token_id: m.no_token_id ?? null,
     category: m.category || "Others",
+    image: m.image || null,
+    icon: m.icon || null,
     close_time: m.close_time,
     drand_round: m.drand_round,
     status: m.status,

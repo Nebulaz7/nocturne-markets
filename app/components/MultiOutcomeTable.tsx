@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { ChevronDown, ChevronUp } from "lucide-react";
+import MarketAvatar from "./MarketAvatar";
 
 export interface SubmarketItem {
   id: string;
@@ -15,6 +16,8 @@ export interface SubmarketItem {
   pot_address?: string;
   coordinator_public_key?: string;
   drand_round?: string | number;
+  image?: string | null;
+  icon?: string | null;
 }
 
 export interface MultiOutcomeTableProps {
@@ -81,17 +84,24 @@ export function MultiOutcomeTable({
               }`}
             >
               {/* Outcome Title & Pot Subtext */}
-              <div className="flex-1 min-w-0 pr-2">
-                <span
-                  className={`text-sm sm:text-base font-sans font-semibold block truncate ${
-                    isRowActive ? "text-[#fef3c7]" : "text-[#fef3c7]/90"
-                  }`}
-                >
-                  {outcomeName}
-                </span>
-                <span className="text-[11px] font-mono text-[#fef3c7]/40 block mt-0.5">
-                  {potZec > 0 ? `${potZec.toFixed(2)} ZEC Pot` : "Parimutuel Pool"}
-                </span>
+              <div className="flex items-center gap-3 flex-1 min-w-0 pr-2">
+                <MarketAvatar
+                  src={sm.icon || sm.image}
+                  title={outcomeName}
+                  size="md"
+                />
+                <div className="flex-1 min-w-0">
+                  <span
+                    className={`text-sm sm:text-base font-sans font-semibold block truncate ${
+                      isRowActive ? "text-[#fef3c7]" : "text-[#fef3c7]/90"
+                    }`}
+                  >
+                    {outcomeName}
+                  </span>
+                  <span className="text-[11px] font-mono text-[#fef3c7]/40 block mt-0.5">
+                    {potZec > 0 ? `${potZec.toFixed(2)} ZEC Pot` : "Parimutuel Pool"}
+                  </span>
+                </div>
               </div>
 
               {/* Percentage Probability */}
