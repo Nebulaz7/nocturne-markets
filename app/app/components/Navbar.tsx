@@ -154,7 +154,7 @@ export default function Navbar() {
                   <span className="relative inline-flex rounded-full h-2 w-2 bg-[#ea580c]"></span>
                 </span>
                 <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-[#431407] text-[#fb923c] border border-[#ea580c]/60 font-mono font-bold">
-                  12
+                  10+
                 </span>
               </Link>
 
