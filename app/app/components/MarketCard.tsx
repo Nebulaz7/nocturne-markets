@@ -106,17 +106,30 @@ export default function MarketCard({ market, submarkets }: MarketCardProps) {
   const gaugeColor = yesPercent >= 50 ? "#22c55e" : "#ef4444";
 
   const handleCardClick = (targetId?: string) => {
-    router.push(`/market/${targetId || market.id}`);
+    if (isMultiOutcome && market.event_slug && market.event_slug !== "blitz-market") {
+      const query = targetId ? `?sub=${targetId}` : "";
+      router.push(`/event/${market.event_slug}${query}`);
+    } else {
+      router.push(`/market/${targetId || market.slug || market.id}`);
+    }
   };
 
   const handleTradeYes = (e: React.MouseEvent, targetId?: string) => {
     e.stopPropagation();
-    router.push(`/market/${targetId || market.id}?side=YES`);
+    if (isMultiOutcome && market.event_slug && market.event_slug !== "blitz-market") {
+      router.push(`/event/${market.event_slug}?side=YES&sub=${targetId || market.id}`);
+    } else {
+      router.push(`/market/${targetId || market.slug || market.id}?side=YES`);
+    }
   };
 
   const handleTradeNo = (e: React.MouseEvent, targetId?: string) => {
     e.stopPropagation();
-    router.push(`/market/${targetId || market.id}?side=NO`);
+    if (isMultiOutcome && market.event_slug && market.event_slug !== "blitz-market") {
+      router.push(`/event/${market.event_slug}?side=NO&sub=${targetId || market.id}`);
+    } else {
+      router.push(`/market/${targetId || market.slug || market.id}?side=NO`);
+    }
   };
 
   // ========================================================

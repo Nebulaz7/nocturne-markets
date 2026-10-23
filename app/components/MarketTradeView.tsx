@@ -1,8 +1,20 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { BetSlipModal } from "./BetSlipModal";
+import {
+  ArrowLeft,
+  Share2,
+  Check,
+  Shield,
+  Clock,
+  Sparkles,
+  Lock,
+} from "lucide-react";
+import { MarketGraph } from "./MarketGraph";
+import { MultiOutcomeTable, type SubmarketItem } from "./MultiOutcomeTable";
+import { MarketRulesContext } from "./MarketRulesContext";
+import { MarketBetSlip } from "./MarketBetSlip";
 import { MyBetsDrawer } from "./MyBetsDrawer";
 import { AuditDrawer } from "./AuditDrawer";
 import type { BetSide } from "@/lib/bet_builder";
@@ -11,7 +23,13 @@ export interface MarketTradeViewProps {
   market: {
     id: string;
     title: string;
+    slug?: string;
+    event_slug?: string | null;
+    market_slug?: string | null;
+    question?: string | null;
+    group_item_title?: string | null;
     status: string;
+    category?: string | null;
     close_time: number;
     drand_round: string | number;
     pot_address: string;
@@ -20,21 +38,59 @@ export interface MarketTradeViewProps {
     yes_pot_zec: number;
     no_pot_zec: number;
     ref_yes_price?: number | null;
+    condition_id?: string;
   };
+  submarkets?: SubmarketItem[];
+  relatedMarkets?: Array<{
+    id: string;
+    slug?: string;
+    event_slug?: string;
+    title: string;
+    category?: string;
+    ref_yes_price?: number | null;
+  }>;
 }
 
-export function MarketTradeView({ market }: MarketTradeViewProps) {
-  const [modalOpen, setModalOpen] = useState(false);
+// Clean event title parser (removes outcome suffixes like ': Draw')
+function cleanEventTitle(title: string, question?: string | null): string {
+  if (question && question.trim().length > 5) {
+    return question.trim();
+  }
+  const colonIdx = title.indexOf(": ");
+  if (colonIdx > 0) {
+    return title
+      .slice(0, colonIdx)
+      .replace(/\s*-\s*More Markets$/i, "")
+      .trim();
+  }
+  return title.replace(/\s*-\s*More Markets$/i, "").trim();
+}
+
+// Get 2-letter badge emblem
+function getEventBadge(title: string, category?: string | null): string {
+  if (category?.toLowerCase() === "crypto") return "₿";
+  const words = title.replace(/[^a-zA-Z0-9\s]/g, "").trim().split(/\s+/);
+  if (words.length >= 2 && words[0] && words[1]) {
+    return (words[0][0] + words[1][0]).toUpperCase();
+  }
+  return title.slice(0, 2).toUpperCase() || "NM";
+}
+
+export function MarketTradeView({
+  market,
+  submarkets = [],
+  relatedMarkets = [],
+}: MarketTradeViewProps) {
+  const [selectedSubmarketId, setSelectedSubmarketId] = useState<string>(
+    market.id
+  );
   const [selectedSide, setSelectedSide] = useState<BetSide>("YES");
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [auditOpen, setAuditOpen] = useState(false);
+  const [copiedLink, setCopiedLink] = useState(false);
 
-  const openBetModal = (side: BetSide) => {
-    setSelectedSide(side);
-    setModalOpen(true);
-  };
-
-  React.useEffect(() => {
+  // Check URL query parameters for ?side=YES/NO and ?sub=ID
+  useEffect(() => {
     if (typeof window !== "undefined") {
       const params = new URLSearchParams(window.location.search);
       const side = params.get("side");
@@ -42,202 +98,280 @@ export function MarketTradeView({ market }: MarketTradeViewProps) {
         const upper = side.toUpperCase();
         if (upper === "YES" || upper === "NO") {
           setSelectedSide(upper as BetSide);
-          setModalOpen(true);
         }
+      }
+
+      const subId = params.get("sub");
+      if (subId) {
+        setSelectedSubmarketId(subId);
       }
     }
   }, []);
 
-  const closeDateStr = new Date(market.close_time * 1000).toLocaleString();
-  const isOpenForTrading = market.status === "OPEN";
+  // Determine active target submarket
+  const activeSubmarket =
+    submarkets.find((s) => s.id === selectedSubmarketId) || market;
+
+  const isMultiOutcome = submarkets.length > 1;
+  const isBlitz =
+    market.id.startsWith("blitz-") ||
+    market.title.toLowerCase().includes("blitz");
+
+  const eventTitle = isMultiOutcome
+    ? cleanEventTitle(market.title, market.question)
+    : market.title;
+
+  const eventBadge = getEventBadge(eventTitle, market.category);
+
+  // Combined pot across all submarkets
+  const totalEventPot = isMultiOutcome
+    ? submarkets.reduce((sum, s) => sum + (s.total_pot_zec ?? 0), 0)
+    : market.total_pot_zec ?? 0;
+
+  // Format close time
+  const formatTimeRemaining = (closeTime?: number) => {
+    if (!closeTime) return null;
+    const now = Math.floor(Date.now() / 1000);
+    const diff = closeTime - now;
+    if (diff <= 0) return "Closed";
+    if (diff < 3600) return `${Math.ceil(diff / 60)}m left`;
+    if (diff < 86400) return `${Math.floor(diff / 3600)}h left`;
+    return `${Math.floor(diff / 86400)}d left`;
+  };
+
+  const timeRemaining = formatTimeRemaining(market.close_time);
+
+  // Copy share URL
+  const handleShare = async () => {
+    if (typeof window === "undefined") return;
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      setCopiedLink(true);
+      setTimeout(() => setCopiedLink(false), 2500);
+    } catch {
+      // Fallback
+    }
+  };
 
   return (
-    <div className="w-full max-w-3xl font-sans">
-      {/* Top Navigation */}
-      <div className="flex items-center justify-between mb-8">
-        <Link
-          href="/"
-          className="flex items-center gap-2 text-sm text-zinc-400 hover:text-white transition-colors"
-        >
-          <span>← Back to Markets</span>
-        </Link>
-
+    <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 font-sans">
+      {/* Top Navigation & Utility Breadcrumb Bar */}
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-6 pb-4 border-b border-[#7c2d12]/20">
         <div className="flex items-center gap-3">
+          <Link
+            href="/#markets"
+            className="flex items-center gap-1.5 text-xs font-mono text-[#fef3c7]/60 hover:text-[#fb923c] transition-colors"
+          >
+            <ArrowLeft className="w-3.5 h-3.5" />
+            <span>Markets</span>
+          </Link>
+
+          <span className="text-[#7c2d12]">/</span>
+
+          <span className="text-xs font-mono font-semibold text-[#fb923c]">
+            {market.category || "General"}
+          </span>
+        </div>
+
+        {/* Action badges: Share, Audit, My Bets */}
+        <div className="flex items-center gap-2.5">
+          <button
+            type="button"
+            onClick={handleShare}
+            className="py-1 px-2.5 rounded-lg bg-[#140e0b] hover:bg-[#1c120c] border border-[#7c2d12]/40 text-xs font-mono text-[#fef3c7]/80 hover:text-[#fb923c] flex items-center gap-1.5 transition-colors cursor-pointer"
+          >
+            {copiedLink ? (
+              <>
+                <Check className="w-3.5 h-3.5 text-emerald-400" />
+                <span>Link Copied!</span>
+              </>
+            ) : (
+              <>
+                <Share2 className="w-3.5 h-3.5 text-[#fb923c]" />
+                <span>Share</span>
+              </>
+            )}
+          </button>
+
           <button
             type="button"
             onClick={() => setAuditOpen(true)}
-            className="px-3 py-1 rounded-full bg-zinc-900 border border-zinc-700 hover:border-cyan-500/50 text-xs font-mono text-zinc-300 hover:text-cyan-300 transition-colors flex items-center gap-1.5"
+            className="py-1 px-3 rounded-lg bg-[#140e0b] hover:bg-[#1c120c] border border-[#7c2d12]/40 text-xs font-mono text-[#fef3c7]/80 hover:text-[#fb923c] flex items-center gap-1.5 transition-colors cursor-pointer"
           >
-            <span>Public Audit & Proofs</span>
+            <span>Audit Proofs</span>
           </button>
 
           <button
             type="button"
             onClick={() => setDrawerOpen(true)}
-            className="px-3 py-1 rounded-full bg-zinc-900 border border-zinc-700 hover:border-zinc-500 text-xs font-mono text-zinc-300 hover:text-white transition-colors flex items-center gap-1.5"
+            className="py-1 px-3 rounded-lg bg-[#1c120c] hover:bg-[#27150d] border border-[#fb923c]/40 text-xs font-mono font-bold text-[#fb923c] flex items-center gap-1.5 transition-colors cursor-pointer"
           >
             <span>My Private Bets</span>
           </button>
-
-          <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-950/80 border border-cyan-500/30 text-cyan-400 text-xs font-mono">
-            <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse"></span>
-            <span>SHIELDED POOL: {market.status}</span>
-          </div>
         </div>
       </div>
 
-      {/* Main Market Card */}
-      <div className="bg-zinc-950 border border-zinc-800 rounded-2xl p-6 md:p-8 shadow-2xl mb-6">
-        <div className="flex items-center gap-2 mb-3">
-          <span className="text-xs font-mono uppercase px-2 py-0.5 rounded bg-zinc-900 border border-zinc-800 text-zinc-400">
-            ID: {market.id}
-          </span>
-          {market.ref_yes_price !== null &&
-            market.ref_yes_price !== undefined && (
-              <span className="text-xs font-mono px-2 py-0.5 rounded bg-zinc-900 border border-zinc-800 text-zinc-300">
-                Polymarket Ref: {(market.ref_yes_price * 100).toFixed(1)}¢ YES
-              </span>
-            )}
-        </div>
-
-        <h1 className="text-2xl md:text-3xl font-bold text-white tracking-tight leading-tight mb-4">
-          {market.title}
-        </h1>
-
-        {/* Pot Metrics */}
-        <div className="grid grid-cols-3 gap-3 my-6">
-          <div className="p-4 rounded-xl bg-zinc-900/60 border border-zinc-800">
-            <span className="text-xs font-mono text-zinc-500 block mb-1">
-              TOTAL POT
-            </span>
-            <span className="text-lg md:text-xl font-bold font-mono text-white">
-              {market.total_pot_zec.toFixed(4)}{" "}
-              <span className="text-xs text-zinc-400 font-normal">ZEC</span>
-            </span>
-          </div>
-
-          <div className="p-4 rounded-xl bg-emerald-950/30 border border-emerald-500/20">
-            <span className="text-xs font-mono text-emerald-400 block mb-1">
-              YES POT
-            </span>
-            <span className="text-lg md:text-xl font-bold font-mono text-emerald-300">
-              {market.yes_pot_zec.toFixed(4)}{" "}
-              <span className="text-xs text-emerald-500 font-normal">ZEC</span>
-            </span>
-          </div>
-
-          <div className="p-4 rounded-xl bg-rose-950/30 border border-rose-500/20">
-            <span className="text-xs font-mono text-rose-400 block mb-1">
-              NO POT
-            </span>
-            <span className="text-lg md:text-xl font-bold font-mono text-rose-300">
-              {market.no_pot_zec.toFixed(4)}{" "}
-              <span className="text-xs text-rose-500 font-normal">ZEC</span>
-            </span>
-          </div>
-        </div>
-
-        {/* Action Trade Buttons */}
-        {isOpenForTrading ? (
-          <div className="grid grid-cols-2 gap-4 my-6">
-            <button
-              type="button"
-              onClick={() => openBetModal("YES")}
-              className="py-4 px-6 rounded-xl bg-emerald-950/40 hover:bg-emerald-900/60 border border-emerald-500/40 hover:border-emerald-400 text-emerald-300 font-bold text-base transition-all flex flex-col items-center justify-center gap-1 shadow-lg shadow-emerald-950/20"
-            >
-              <div className="flex items-center gap-2">
-                <span>Trade Private YES</span>
-                <span>🛡️</span>
+      {/* ========================================================
+          MAIN 2-COLUMN POLYMARKET LAYOUT
+          Left: 7-8 cols on lg (Header, Graph, Outcomes, Rules)
+          Right: 4-5 cols on lg (Persistent Bet Slip)
+          ======================================================== */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        {/* ========================================================
+            LEFT COLUMN: Event Overview, Graph, Outcomes & Rules
+            ======================================================== */}
+        <div className="lg:col-span-8 flex flex-col">
+          {/* Event Header Card */}
+          <div className="mb-6">
+            <div className="flex items-start gap-3 sm:gap-4 mb-3">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-[#1c120c] border border-[#7c2d12]/50 text-[#fb923c] font-heading font-extrabold text-sm sm:text-base flex items-center justify-center shrink-0 tracking-wider">
+                {eventBadge}
               </div>
-              <span className="text-xs font-mono font-normal text-emerald-400/80">
-                Sealed Timelock Bet
-              </span>
-            </button>
 
-            <button
-              type="button"
-              onClick={() => openBetModal("NO")}
-              className="py-4 px-6 rounded-xl bg-rose-950/40 hover:bg-rose-900/60 border border-rose-500/40 hover:border-rose-400 text-rose-300 font-bold text-base transition-all flex flex-col items-center justify-center gap-1 shadow-lg shadow-rose-950/20"
-            >
-              <div className="flex items-center gap-2">
-                <span>Trade Private NO</span>
-                <span>🛡️</span>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-1.5 flex-wrap">
+                  <span className="text-[10px] font-mono font-bold uppercase px-2 py-0.5 rounded bg-[#160f0c] text-[#fb923c] border border-[#7c2d12]/40">
+                    {market.category || "General"}
+                  </span>
+
+                  {timeRemaining && (
+                    <span className="inline-flex items-center gap-1 text-[11px] font-mono text-[#fef3c7]/50">
+                      <Clock className="w-3 h-3 text-[#fef3c7]/40" />
+                      <span>{timeRemaining}</span>
+                    </span>
+                  )}
+
+                  <span className="inline-flex items-center gap-1 text-[11px] font-mono font-bold text-emerald-400">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                    <span>LIVE</span>
+                  </span>
+                </div>
+
+                <h1 className="text-xl sm:text-2xl lg:text-3xl font-heading font-bold text-[#fef3c7] tracking-tight leading-tight">
+                  {eventTitle}
+                </h1>
               </div>
-              <span className="text-xs font-mono font-normal text-rose-400/80">
-                Sealed Timelock Bet
-              </span>
-            </button>
-          </div>
-        ) : (
-          <div className="p-4 my-6 rounded-xl bg-zinc-900 border border-zinc-800 text-center font-mono text-xs text-zinc-400">
-            Market is {market.status}. Betting is closed for this pool.
-          </div>
-        )}
+            </div>
 
-        {/* Technical & Audit Parameters */}
-        <div className="p-4 rounded-xl bg-zinc-900/40 border border-zinc-800/80 space-y-2 text-xs font-mono text-zinc-400">
-          <div className="flex justify-between">
-            <span>Closing Time:</span>
-            <span className="text-zinc-200">{closeDateStr}</span>
-          </div>
-          <div className="flex justify-between">
-            <span>drand Quicknet Round:</span>
-            <span className="text-zinc-200">#{market.drand_round}</span>
-          </div>
-          <div className="flex justify-between">
-            <span>Settlement Coordinator Key:</span>
-            <span className="text-zinc-400 truncate max-w-[200px]">
-              {market.coordinator_public_key?.slice(0, 16)}...
-            </span>
-          </div>
-          <div className="flex justify-between">
-            <span>Pot Unified Address:</span>
-            <span className="text-cyan-400 truncate max-w-[240px]">
-              {market.pot_address}
-            </span>
+            {/* Quick Stats Strip */}
+            <div className="flex items-center gap-6 text-xs font-mono text-[#fef3c7]/60 pt-2 border-t border-[#7c2d12]/20">
+              <div>
+                <span className="text-[#fef3c7]/40">Total Shielded Pot: </span>
+                <strong className="text-[#fef3c7] font-bold">
+                  {totalEventPot > 0 ? `${totalEventPot.toFixed(2)} ZEC` : "0.00 ZEC"}
+                </strong>
+              </div>
+
+              <div>
+                <span className="text-[#fef3c7]/40">Type: </span>
+                <span className="text-[#fef3c7]">
+                  {isMultiOutcome
+                    ? `${submarkets.length} Outcomes Parimutuel`
+                    : "Binary Parimutuel"}
+                </span>
+              </div>
+            </div>
           </div>
 
-          <div className="pt-2 border-t border-zinc-800 flex justify-end">
-            <button
-              type="button"
-              onClick={() => setAuditOpen(true)}
-              className="text-xs font-mono text-cyan-400 hover:text-cyan-300 hover:underline flex items-center gap-1"
-            >
-              <span>Inspect Merkle Root & Inclusion Proofs →</span>
-            </button>
-          </div>
+          {/* Interactive Graph (Chart) */}
+          <MarketGraph
+            marketId={activeSubmarket.id}
+            marketTitle={activeSubmarket.title}
+            refYesPrice={activeSubmarket.ref_yes_price}
+            isBlitz={isBlitz}
+            closeTime={market.close_time}
+          />
+
+          {/* Multi-Outcome Options Table (When event has multiple outcomes) */}
+          {isMultiOutcome && (
+            <MultiOutcomeTable
+              submarkets={submarkets}
+              activeSubmarketId={selectedSubmarketId}
+              activeSide={selectedSide}
+              onSelect={(subId, side) => {
+                setSelectedSubmarketId(subId);
+                setSelectedSide(side);
+              }}
+            />
+          )}
+
+          {/* Collapsible Rules & Market Context Section */}
+          <MarketRulesContext
+            marketTitle={market.title}
+            question={market.question}
+            closeTime={market.close_time}
+            drandRound={market.drand_round}
+            potAddress={market.pot_address}
+            coordinatorPublicKey={market.coordinator_public_key}
+            conditionId={market.condition_id}
+            onOpenAudit={() => setAuditOpen(true)}
+          />
+        </div>
+
+        {/* ========================================================
+            RIGHT COLUMN: The Persistent Bet Slip / Trading Panel
+            ======================================================== */}
+        <div className="lg:col-span-4 lg:sticky lg:top-24">
+          <MarketBetSlip
+            market={{
+              id: activeSubmarket.id,
+              title: eventTitle,
+              event_slug: market.event_slug,
+              pot_address: activeSubmarket.pot_address || market.pot_address,
+              coordinator_public_key:
+                activeSubmarket.coordinator_public_key ||
+                market.coordinator_public_key,
+              drand_round:
+                activeSubmarket.drand_round || market.drand_round,
+              ref_yes_price: activeSubmarket.ref_yes_price,
+              status: market.status,
+              category: market.category,
+            }}
+            submarketTitle={
+              isMultiOutcome ? activeSubmarket.title : undefined
+            }
+            selectedSide={selectedSide}
+            onSideChange={(side) => setSelectedSide(side)}
+            relatedMarkets={relatedMarkets}
+            onSelectRelated={(marketId) => {
+              // Navigates via Link
+            }}
+          />
         </div>
       </div>
 
-      {/* Zero-POST Security Callout */}
-      <div className="bg-gradient-to-r from-zinc-950 to-zinc-900 border border-cyan-500/20 rounded-2xl p-6 text-center shadow-xl">
-        <h2 className="text-sm font-bold text-white mb-1">
-          Zero-POST Shielded Architecture
-        </h2>
-        <p className="text-xs text-zinc-400 max-w-md mx-auto">
-          Scan with Zashi or YWallet. Bets are sealed with timelock encryption
-          and return addresses are boxed with X25519 directly to the
-          Coordinator. Zero HTTP write requests sent from your device.
-        </p>
+      {/* Zero-POST Security Bottom Card */}
+      <div className="mt-12 p-6 rounded-2xl bg-[#0e0a08] border border-[#7c2d12]/30 flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-[#1c120c] border border-[#7c2d12]/50 flex items-center justify-center text-[#fb923c] shrink-0">
+            <Shield className="w-5 h-5" />
+          </div>
+          <div>
+            <h4 className="text-sm font-heading font-bold text-[#fef3c7]">
+              Zero-POST Cryptographic Guarantee
+            </h4>
+            <p className="text-xs text-[#fef3c7]/60 mt-0.5">
+              Bets sealed via drand Quicknet timelock encryption. Zero HTTP requests reveal your bet choices or return address.
+            </p>
+          </div>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => setAuditOpen(true)}
+          className="py-2 px-4 rounded-xl bg-[#1c120c] hover:bg-[#27150d] border border-[#7c2d12]/40 text-xs font-mono font-bold text-[#fb923c] transition-colors cursor-pointer shrink-0"
+        >
+          View Cryptographic Proofs
+        </button>
       </div>
 
-      {/* Bet Slip Modal */}
-      <BetSlipModal
-        isOpen={modalOpen}
-        onClose={() => setModalOpen(false)}
-        market={market}
-        initialSide={selectedSide}
-      />
-
-      {/* My Bets Drawer */}
+      {/* Drawers */}
       <MyBetsDrawer isOpen={drawerOpen} onClose={() => setDrawerOpen(false)} />
-
-      {/* Public Audit Drawer */}
       <AuditDrawer
         isOpen={auditOpen}
         onClose={() => setAuditOpen(false)}
-        marketId={market.id}
-        marketTitle={market.title}
+        marketId={activeSubmarket.id}
+        marketTitle={activeSubmarket.title}
       />
     </div>
   );

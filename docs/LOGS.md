@@ -362,7 +362,54 @@ Before crossing into Phase 2, we upgraded our core Zcash memo and settlement arc
 
 ---
 
-## 16. Active Focus & Immediate Next Actions
+## 16. Phase 3 Step 4 Completed: Polymarket-Style Trading View, Interactive SVG Chart, Multi-Outcome Table & Persistent Bet Slip (Oct 23, 2026)
+
+### Achievements & Architecture
+
+1. **Polymarket Slug-Style Routing (`/event/[...slug]` & `/market/[id]`)**:
+   - **Dual Routing Architecture**:
+     - Supported both canonical `/event/[...slug]` and `/market/[id]` routes. Slugs, event slugs, and numerical IDs resolve seamlessly via Coordinator's in-memory SQLite matcher (`SELECT * FROM markets WHERE LOWER(market_slug) = ? OR LOWER(event_slug) = ? OR LOWER(slug) = ? OR id = ?`).
+     - Added [`app/app/event/[...slug]/page.tsx`](file:///C:/Users/PC/desktop/coding/nocture-markets/app/app/event/[...slug]/page.tsx) to match Polymarket's event-level URLs (e.g. `/event/anthropic-ipo-by`, `/event/uel-olm-oly-2026-10-15`).
+     - Updated [`app/app/market/[id]/page.tsx`](file:///C:/Users/PC/desktop/coding/nocture-markets/app/app/market/[id]/page.tsx) with automatic sibling submarket discovery (`/api/markets?event_slug=...`), related category markets fetching, and full `Navbar` / `Footer` wrapper.
+     - Updated [`app/app/components/MarketCard.tsx`](file:///C:/Users/PC/desktop/coding/nocture-markets/app/app/components/MarketCard.tsx) to deep-link directly using `market.event_slug` or `market.slug`.
+
+2. **Interactive SVG Price / Probability Graph ([`app/components/MarketGraph.tsx`](file:///C:/Users/PC/desktop/coding/nocture-markets/app/components/MarketGraph.tsx))**:
+   - Built a lightweight, zero-dependency SVG interactive chart matching Polymarket and Kalshi chart aesthetics in the Nocturne Warm Ember identity.
+   - **Timeframe Selector**: Supports `5M`, `15M`, `1H`, `1D` for high-frequency Blitz markets, and `1D`, `1W`, `1M`, `ALL` for standard binary markets.
+   - **Interactive Crosshair & Hover Tooltip**: Mouse tracker traces the curve with vertical guide line, glowing indicator dot, and floating tooltip displaying exact timestamp and probability / price.
+   - **High-Frequency Blitz Mode**:
+     - Displays "Price To Beat" ($81,277.75) vs "Current Spot" ($81,127.00 ▼ $151).
+     - Live ticking countdown badge (`MM SS MIN SECS`) decrementing every second until Drand round beacon publish.
+     - Target dashed horizontal strike line across the canvas.
+   - **Cache & Fallback**: Proxies through coordinator `/api/markets/:id/history` (5m TTL cache) with organic spline smoothing when upstream feeds have limited ticks.
+
+3. **Multi-Outcome Event Table ([`app/components/MultiOutcomeTable.tsx`](file:///C:/Users/PC/desktop/coding/nocture-markets/app/components/MultiOutcomeTable.tsx))**:
+   - For multi-bracket events (e.g. "Anthropic IPO by __?", soccer 3-way matches), displays all outcome options sorted descending by probability.
+   - Each row presents: clean outcome title, pot / volume metrics, probability percentage in bold font (`<1%`, `9%`, `54%`, `74%`, `87%`), and flat **Buy Yes [price]¢** / **Buy No [price]¢** buttons.
+   - **Active State Synchronization**: Clicking any row or button instantly highlights the active option with solid flat green (`#15803d`) or solid flat red (`#b91c1c`) and updates the persistent Bet Slip on the right in real time.
+   - Collapsible "View resolved" accordion for settled sub-brackets.
+
+4. **Persistent Bet Slip & Payout Calculator ([`app/components/MarketBetSlip.tsx`](file:///C:/Users/PC/desktop/coding/nocture-markets/app/components/MarketBetSlip.tsx))**:
+   - Sticky desktop panel positioned on the right column (`lg:col-span-4 lg:sticky lg:top-24`).
+   - **Side Selection**: Flat solid green (**Yes [price]¢**) and red (**No [price]¢**) buttons with strictly no glow, shadow, or gradient.
+   - **Stake Amount Controls**: Large bold ZEC input with quick preset chip increments (`+0.05`, `+0.1`, `+0.5`, `+1.0`, `+5.0` ZEC) and Clear button.
+   - **Live "To Win" Calculator**: Dynamically calculates estimated return (`Stake / Price`) and payout multiplier in bright emerald (`#22c55e`).
+   - **Unified Return Address**: Input field for winning payout destination, pre-filled with demo testnet Orchard address (`utest1mepu...`) and auto-persisted to `localStorage.getItem("nocturne_return_ua")`.
+   - **Zero-POST Execution**: Clicking "Generate Shielded Bet" immediately invokes `prepareZeroPostBet` (`tlock-js` timelock encryption to Drand round + `tweetnacl` boxed return address), generating the QR code, Zashi deep-link, and 1-click copyable 500-byte encrypted memo.
+   - **Related Markets Sidebar**: Renders 3-4 related category markets below the slip with 1-click teleportation.
+
+5. **Tabbed Rules & Cryptographic Context ([`app/components/MarketRulesContext.tsx`](file:///C:/Users/PC/desktop/coding/nocture-markets/app/components/MarketRulesContext.tsx))**:
+   - Tabbed view for resolution rules, UMA Oracle settlement terms, closing timestamps, and Drand Quicknet round beacon #.
+   - Direct button triggering `AuditDrawer` to inspect Merkle roots and public inclusion proofs.
+
+6. **Design Identity Compliance**:
+   - Strict adherence to Warm Ember / Obsidian identity (`#090706` background, `#0e0a08` card surface, `#7c2d12` rust borders, `#fb923c` ember accent, `#fef3c7` cream text).
+   - Zero emojis across all components and documentation.
+   - Clean verification: `pnpm --dir app exec tsc --noEmit` exited with code `0`. `pnpm test:client` passed `100%`. Both `/market/:id` and `/event/:slug` returned HTTP 200.
+
+---
+
+## 17. Active Focus & Immediate Next Actions
 
 ### Next Priority: Phase 4 — Production VM Daemon & Remote Deployment (Days 14 - 15)
 
@@ -376,3 +423,4 @@ Before crossing into Phase 2, we upgraded our core Zcash memo and settlement arc
    - Final threat model whitepaper / leak audit (`docs/LEAK_AUDIT.md`).
    - 5-minute Blitz testnet demo run for ZECATHON judges.
    - Demo video recording and submission text.
+
