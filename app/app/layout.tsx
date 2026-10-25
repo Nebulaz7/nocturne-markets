@@ -23,6 +23,13 @@ const jetbrainsMono = JetBrains_Mono({
 export const metadata: Metadata = {
   title: "Nocturne Markets | Public Prices. Private People.",
   description: "Private prediction markets mirroring Polymarket with shielded Zcash parimutuel pools.",
+  icons: {
+    icon: [
+      { url: "/logo.png", type: "image/png" },
+    ],
+    shortcut: "/logo.png",
+    apple: "/logo.png",
+  },
 };
 
 export default function RootLayout({
