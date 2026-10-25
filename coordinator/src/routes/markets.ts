@@ -346,3 +346,4 @@ export const marketRoutes: FastifyPluginAsync<MarketRoutesOptions> = async (
     });
   });
 };
+

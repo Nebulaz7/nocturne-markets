@@ -74,7 +74,7 @@ export function AuditDrawer({
   const [verificationResult, setVerificationResult] =
     useState<MerkleProofResult | null>(null);
   const [verificationError, setVerificationError] = useState<string | null>(
-    null
+    null,
   );
   const [showPathDetails, setShowPathDetails] = useState(false);
 
@@ -98,7 +98,7 @@ export function AuditDrawer({
           commitment: m.commitment,
           side: m.side,
           amountZec: m.amountZec,
-        }))
+        })),
       );
     } catch {
       // Local vault access fallback
@@ -110,8 +110,8 @@ export function AuditDrawer({
       try {
         const res = await fetch(
           `${COORDINATOR_URL}/api/markets/${encodeURIComponent(
-            marketId
-          )}/audit`
+            marketId,
+          )}/audit`,
         );
         if (!res.ok) {
           throw new Error(`Coordinator returned HTTP ${res.status}`);
@@ -145,10 +145,7 @@ export function AuditDrawer({
     }
   };
 
-  const handleVerifyWithData = async (
-    comm: string,
-    auditData: AuditData
-  ) => {
+  const handleVerifyWithData = async (comm: string, auditData: AuditData) => {
     const trimmed = comm.trim();
     if (!trimmed || !auditData || auditData.commitments.length === 0) return;
 
@@ -160,12 +157,12 @@ export function AuditDrawer({
       const proof = await generateMerkleProof(
         allCommitments,
         trimmed,
-        expectedRoot
+        expectedRoot,
       );
 
       if (!proof) {
         setVerificationError(
-          `Commitment "${trimmed.slice(0, 12)}..." was not found in settled pool.`
+          `Commitment "${trimmed.slice(0, 12)}..." was not found in settled pool.`,
         );
         setVerificationResult(null);
       } else {
@@ -258,8 +255,8 @@ export function AuditDrawer({
                         audit.status === "SETTLED"
                           ? "bg-[#12281c] text-[#22c55e] border border-[#22c55e]/40"
                           : audit.status === "CLOSED"
-                          ? "bg-[#29170e] text-[#fb923c] border border-[#fb923c]/40"
-                          : "bg-[#160f0c] text-[#fb923c] border border-[#7c2d12]/40"
+                            ? "bg-[#29170e] text-[#fb923c] border border-[#fb923c]/40"
+                            : "bg-[#160f0c] text-[#fb923c] border border-[#7c2d12]/40"
                       }`}
                     >
                       {audit.status}
@@ -456,13 +453,17 @@ export function AuditDrawer({
 
                     <div className="text-[11px] text-[#fef3c7]/70 space-y-1 pt-2 border-t border-[#22c55e]/20">
                       <div className="flex justify-between gap-2">
-                        <span className="text-[#fef3c7]/40">Target Commitment:</span>
+                        <span className="text-[#fef3c7]/40">
+                          Target Commitment:
+                        </span>
                         <span className="text-[#22c55e] truncate max-w-[240px]">
                           {verificationResult.leaf}
                         </span>
                       </div>
                       <div className="flex justify-between gap-2">
-                        <span className="text-[#fef3c7]/40">Computed Root:</span>
+                        <span className="text-[#fef3c7]/40">
+                          Computed Root:
+                        </span>
                         <span className="text-[#fef3c7] truncate max-w-[240px]">
                           {verificationResult.computedRoot}
                         </span>
@@ -486,7 +487,8 @@ export function AuditDrawer({
                         <div className="mt-2 space-y-1.5 p-2.5 rounded-lg bg-[#0e0a08] border border-[#22c55e]/30 text-[10px]">
                           {verificationResult.steps.length === 0 ? (
                             <p className="text-[#fef3c7]/40">
-                              Single-leaf tree: Leaf hash is directly the Merkle root.
+                              Single-leaf tree: Leaf hash is directly the Merkle
+                              root.
                             </p>
                           ) : (
                             verificationResult.steps.map((step, idx) => (
@@ -544,9 +546,7 @@ export function AuditDrawer({
                             <tr
                               key={c.id || idx}
                               className={`transition-colors ${
-                                isTarget
-                                  ? "bg-[#24150e]"
-                                  : "hover:bg-[#140e0b]"
+                                isTarget ? "bg-[#24150e]" : "hover:bg-[#140e0b]"
                               }`}
                             >
                               <td className="p-2.5 text-[#fef3c7]/40">
@@ -570,8 +570,8 @@ export function AuditDrawer({
                                     c.decrypted_side === "YES"
                                       ? "bg-[#12281c] text-[#22c55e] border border-[#22c55e]/40"
                                       : c.decrypted_side === "NO"
-                                      ? "bg-[#361212] text-[#f87171] border border-[#f87171]/40"
-                                      : "bg-[#160f0c] text-[#fef3c7]/40 border border-[#7c2d12]/30"
+                                        ? "bg-[#361212] text-[#f87171] border border-[#f87171]/40"
+                                        : "bg-[#160f0c] text-[#fef3c7]/40 border border-[#7c2d12]/30"
                                   }`}
                                 >
                                   {c.decrypted_side}

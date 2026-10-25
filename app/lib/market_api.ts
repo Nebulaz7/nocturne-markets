@@ -12,7 +12,12 @@ import {
 import { generateMerkleProof, verifyMerkleProof } from "./merkle.ts";
 import type { MarketSummary } from "./polymarket_url.ts";
 
-export type CategoryFilter = "All" | "Politics" | "Crypto" | "Sports" | "Others";
+export type CategoryFilter =
+  | "All"
+  | "Politics"
+  | "Crypto"
+  | "Sports"
+  | "Others";
 export type HistoryInterval = "1d" | "1w" | "1m" | "max";
 
 export interface MarketHistoryPoint {
@@ -47,8 +52,7 @@ function getCoordinatorBaseUrl(customBaseUrl?: string): string {
   if (customBaseUrl) return customBaseUrl.replace(/\/+$/, "");
   if (typeof process !== "undefined" && process.env) {
     const envUrl =
-      process.env.NEXT_PUBLIC_COORDINATOR_URL ||
-      process.env.COORDINATOR_URL;
+      process.env.NEXT_PUBLIC_COORDINATOR_URL || process.env.COORDINATOR_URL;
     if (envUrl) return envUrl.replace(/\/+$/, "");
   }
   return "http://127.0.0.1:3000";
@@ -93,7 +97,7 @@ export async function fetchMarkets(params?: {
  * Fetches directory grouped strictly by Politics, Crypto, Sports, and Others.
  */
 export async function fetchMarketsDirectory(
-  baseUrl?: string
+  baseUrl?: string,
 ): Promise<MarketDirectoryResponse> {
   const root = getCoordinatorBaseUrl(baseUrl);
   const res = await fetch(`${root}/api/markets/directory`, {
@@ -114,7 +118,7 @@ export async function fetchMarketsDirectory(
 export async function fetchMarketHistory(
   marketId: string,
   interval: HistoryInterval = "1d",
-  baseUrl?: string
+  baseUrl?: string,
 ): Promise<MarketHistoryPoint[]> {
   const root = getCoordinatorBaseUrl(baseUrl);
   const url = `${root}/api/markets/${encodeURIComponent(marketId)}/history?interval=${interval}`;
@@ -137,7 +141,7 @@ export async function fetchMarketHistory(
  * 100% offline: zero HTTP requests sent to drand or external servers.
  */
 export async function generateAndSaveBetReceipt(
-  params: ZeroPostBetParams
+  params: ZeroPostBetParams,
 ): Promise<PreparedBetReceipt> {
   const receipt = await prepareZeroPostBet(params);
   saveBetReceipt(receipt);
@@ -150,7 +154,7 @@ export async function generateAndSaveBetReceipt(
  */
 export async function verifyLocalReceipts(
   marketId: string,
-  baseUrl?: string
+  baseUrl?: string,
 ): Promise<LocalReceiptAuditResult[]> {
   const receipts = getBetReceipts().filter((r) => r.marketId === marketId);
   if (receipts.length === 0) {
@@ -158,12 +162,17 @@ export async function verifyLocalReceipts(
   }
 
   const root = getCoordinatorBaseUrl(baseUrl);
-  const res = await fetch(`${root}/api/markets/${encodeURIComponent(marketId)}/audit`, {
-    headers: { Accept: "application/json" },
-  });
+  const res = await fetch(
+    `${root}/api/markets/${encodeURIComponent(marketId)}/audit`,
+    {
+      headers: { Accept: "application/json" },
+    },
+  );
 
   if (!res.ok) {
-    throw new Error(`Failed to fetch audit data for market ${marketId}: HTTP ${res.status}`);
+    throw new Error(
+      `Failed to fetch audit data for market ${marketId}: HTTP ${res.status}`,
+    );
   }
 
   const auditData = await res.json();
@@ -184,9 +193,17 @@ export async function verifyLocalReceipts(
     let computedRoot: string | undefined;
 
     if (foundInAudit && expectedRoot && auditCommitments.length > 0) {
-      const proof = await generateMerkleProof(auditCommitments, targetCommitment, expectedRoot);
+      const proof = await generateMerkleProof(
+        auditCommitments,
+        targetCommitment,
+        expectedRoot,
+      );
       if (proof) {
-        proofValid = await verifyMerkleProof(targetCommitment, proof.steps, expectedRoot);
+        proofValid = await verifyMerkleProof(
+          targetCommitment,
+          proof.steps,
+          expectedRoot,
+        );
         computedRoot = proof.computedRoot;
       }
     }
@@ -214,4 +231,38 @@ export async function verifyLocalReceipts(
   }
 
   return results;
+}
+/**
+ * Manually confirms an on-chain deposit to the coordinator database.
+ * Used during local development/testing to register real testnet deposits.
+ */
+export async function confirmManualBetDeposit(
+  params: {
+    marketId: string;
+    commitment: string;
+    amountZec?: number;
+    depositTxid?: string;
+  },
+  baseUrl?: string,
+): Promise<boolean> {
+  const base = getCoordinatorBaseUrl(baseUrl);
+  try {
+    const res = await fetch(`${base}/api/bets/confirm-manual`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        marketId: params.marketId,
+        commitment: params.commitment,
+        amountZec: params.amountZec ?? 0.05,
+        depositTxid: params.depositTxid,
+      }),
+    });
+    return res.ok;
+  } catch (err) {
+    console.error(
+      "[confirmManualBetDeposit] Failed to reach coordinator:",
+      err,
+    );
+    return false;
+  }
 }

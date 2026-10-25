@@ -183,7 +183,8 @@ export default function PrivateVaultPage() {
                   Private Vault
                 </h1>
                 <span className="text-xs font-mono text-[#fef3c7]/50 block mt-0.5">
-                  {receipts.length} Recorded Position{receipts.length === 1 ? "" : "s"}
+                  {receipts.length} Recorded Position
+                  {receipts.length === 1 ? "" : "s"}
                 </span>
               </div>
             </div>
@@ -359,7 +360,8 @@ export default function PrivateVaultPage() {
                           title="Click to copy full 64-char commitment"
                         >
                           <span>
-                            {r.commitment.slice(0, 12)}...{r.commitment.slice(-6)}
+                            {r.commitment.slice(0, 12)}...
+                            {r.commitment.slice(-6)}
                           </span>
                           {copiedKey === `${r.id}-comm` ? (
                             <Check className="w-3.5 h-3.5 text-[#22c55e]" />
@@ -389,7 +391,9 @@ export default function PrivateVaultPage() {
                         <div className="w-full flex items-center justify-between gap-2 pt-2 border-t border-[#7c2d12]/20 text-xs font-mono">
                           <button
                             type="button"
-                            onClick={() => copyText(r.paymentUri, `${r.id}-uri`)}
+                            onClick={() =>
+                              copyText(r.paymentUri, `${r.id}-uri`)
+                            }
                             className="flex items-center gap-1.5 text-[#fef3c7]/70 hover:text-[#fb923c] transition-colors cursor-pointer"
                           >
                             <Copy className="w-3 h-3" />
