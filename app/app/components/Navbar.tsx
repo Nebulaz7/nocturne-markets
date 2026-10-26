@@ -601,6 +601,14 @@ export default function Navbar() {
                   Protocol & Resources
                 </div>
                 <Link
+                  href="/audit"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="flex items-center justify-between p-2 rounded-lg text-[#fb923c] font-semibold hover:bg-[#201510] transition-colors"
+                >
+                  <span>Audit Explorer</span>
+                  <span className="text-[#fb923c]">→</span>
+                </Link>
+                <Link
                   href="/docs"
                   onClick={() => setIsMobileMenuOpen(false)}
                   className="flex items-center justify-between p-2 rounded-lg text-[#fef3c7]/80 hover:bg-[#201510] hover:text-[#fb923c] transition-colors"

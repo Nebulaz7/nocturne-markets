@@ -29,8 +29,12 @@ export class ZingoWalletBridge {
     }
   }
 
-  public execute(command: string, args: string[] = []): Promise<string> {
-    return this.client.execute(command, args);
+  public execute(
+    command: string,
+    args: string[] = [],
+    options?: { nosync?: boolean }
+  ): Promise<string> {
+    return this.client.execute(command, args, options);
   }
 
   public getPotAddress(): Promise<string> {

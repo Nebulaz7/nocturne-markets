@@ -123,23 +123,41 @@ export class ZingoClient {
   /**
    * Enqueues an execution task into the in-process FIFO mutex queue.
    */
-  public execute(command: string, args: string[] = []): Promise<string> {
+  public execute(
+    command: string,
+    args: string[] = [],
+    options?: { nosync?: boolean }
+  ): Promise<string> {
     return new Promise((resolve, reject) => {
       this.queue.push(async () => {
         let releaseLock: (() => void) | null = null;
         try {
           releaseLock = await this.fileMutex.acquire();
-          const result = await this.execCommandInternal(command, args, this.serverUrl);
+          const result = await this.execCommandInternal(
+            command,
+            args,
+            this.serverUrl,
+            options
+          );
           resolve(result);
         } catch (err: any) {
           // If connection failed to primary server, attempt backup server
           if (
             this.backupServerUrl &&
-            (err.message.includes("connection") || err.message.includes("timeout") || err.message.includes("Unavailable"))
+            (err.message.includes("connection") ||
+              err.message.includes("timeout") ||
+              err.message.includes("Unavailable"))
           ) {
-            console.warn(`[ZingoClient] Primary server failed, failing over to backup: ${this.backupServerUrl}`);
+            console.warn(
+              `[ZingoClient] Primary server failed, failing over to backup: ${this.backupServerUrl}`
+            );
             try {
-              const backupResult = await this.execCommandInternal(command, args, this.backupServerUrl);
+              const backupResult = await this.execCommandInternal(
+                command,
+                args,
+                this.backupServerUrl,
+                options
+              );
               resolve(backupResult);
               return;
             } catch (backupErr) {
@@ -180,7 +198,8 @@ export class ZingoClient {
   private execCommandInternal(
     command: string,
     args: string[],
-    serverUrl: string
+    serverUrl: string,
+    options?: { nosync?: boolean }
   ): Promise<string> {
     return new Promise((resolve, reject) => {
       const fullArgs = [
@@ -190,10 +209,16 @@ export class ZingoClient {
         serverUrl,
         "--data-dir",
         this.dataDir,
-        "--nosync",
-        command,
-        ...args,
       ];
+
+      // Pass --nosync unless nosync is explicitly false or command is "sync"
+      const shouldNoSync =
+        options?.nosync !== undefined ? options.nosync : command !== "sync";
+      if (shouldNoSync) {
+        fullArgs.push("--nosync");
+      }
+
+      fullArgs.push(command, ...args);
 
       execFile(
         this.cliPath,
@@ -235,8 +260,8 @@ export class ZingoClient {
   }
 
   public async sync(): Promise<string> {
-    // Non-blocking sync check
-    return this.execute("height");
+    // Triggers actual lightwallet sync scan on zingo-cli without --nosync
+    return this.execute("sync", ["status"], { nosync: false });
   }
 
   public async getBalance(): Promise<WalletBalance> {
@@ -246,16 +271,20 @@ export class ZingoClient {
       return match ? BigInt(match[1]) : 0n;
     };
 
-    const orchard = parseVal("confirmed_orchard_balance") || parseVal("total_orchard_balance");
-    const sapling = parseVal("confirmed_sapling_balance") || parseVal("total_sapling_balance");
+    const ironwood =
+      parseVal("confirmed_ironwood_balance") || parseVal("total_ironwood_balance");
+    const orchard =
+      parseVal("confirmed_orchard_balance") || parseVal("total_orchard_balance");
+    const sapling =
+      parseVal("confirmed_sapling_balance") || parseVal("total_sapling_balance");
     const transparent =
       parseVal("confirmed_transparent_balance") || parseVal("total_transparent_balance");
 
     return {
-      orchardBalanceZats: orchard,
+      orchardBalanceZats: orchard + ironwood,
       saplingBalanceZats: sapling,
       transparentBalanceZats: transparent,
-      totalBalanceZats: orchard + sapling + transparent,
+      totalBalanceZats: orchard + ironwood + sapling + transparent,
     };
   }
 
@@ -265,26 +294,45 @@ export class ZingoClient {
       const parsed = JSON.parse(output);
       const notes: IncomingNote[] = [];
 
-      const unspentOrchard = parsed.unspent_orchard_notes || [];
-      for (const n of unspentOrchard) {
-        notes.push({
-          txid: n.created_in_txid || "",
-          amountZats: BigInt(n.value || 0),
-          memo: n.memo || "",
-          blockHeight: n.created_in_block || 0,
-          pool: "orchard",
-        });
+      const processList = (list: any[], pool: "orchard" | "sapling") => {
+        if (!Array.isArray(list)) return;
+        for (const n of list) {
+          if (!n) continue;
+          const txid = n.txid || n.created_in_txid || "";
+          const amountZats = BigInt(n.value ?? n.amount ?? 0);
+          const memo = n.memo || "";
+          const blockMatch = (n.status || "").match(/block height (\d+)/i);
+          const blockHeight = blockMatch
+            ? parseInt(blockMatch[1], 10)
+            : n.created_in_block || 0;
+
+          notes.push({
+            txid,
+            amountZats,
+            memo,
+            blockHeight,
+            pool,
+          });
+        }
+      };
+
+      // Modern zingo-cli schema (ironwood_notes, orchard_notes, sapling_notes)
+      if (parsed.ironwood_notes?.note_summaries) {
+        processList(parsed.ironwood_notes.note_summaries, "orchard");
+      }
+      if (parsed.orchard_notes?.note_summaries) {
+        processList(parsed.orchard_notes.note_summaries, "orchard");
+      }
+      if (parsed.sapling_notes?.note_summaries) {
+        processList(parsed.sapling_notes.note_summaries, "sapling");
       }
 
-      const unspentSapling = parsed.unspent_sapling_notes || [];
-      for (const n of unspentSapling) {
-        notes.push({
-          txid: n.created_in_txid || "",
-          amountZats: BigInt(n.value || 0),
-          memo: n.memo || "",
-          blockHeight: n.created_in_block || 0,
-          pool: "sapling",
-        });
+      // Legacy zingo-cli schema
+      if (Array.isArray(parsed.unspent_orchard_notes)) {
+        processList(parsed.unspent_orchard_notes, "orchard");
+      }
+      if (Array.isArray(parsed.unspent_sapling_notes)) {
+        processList(parsed.unspent_sapling_notes, "sapling");
       }
 
       return notes;

@@ -144,7 +144,7 @@ export async function buildApp(
     const polySync = startPolymarketSync(
       db,
       COORDINATOR_CONFIG.potAddress,
-      options.syncIntervalMs ?? 60000,
+      options.syncIntervalMs ?? 300000,
     );
 
     const settlement = startSettlementWorker(

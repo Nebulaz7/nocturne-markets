@@ -124,7 +124,7 @@ export function normalizeCategory(
 export async function syncPolymarketMarketsOnce(
   db: CoordinatorDatabase,
   potAddress: string,
-  maxPages: number = 3
+  maxPages: number = 1
 ): Promise<number> {
   const now = Math.floor(Date.now() / 1000);
   let synced = 0;
@@ -376,15 +376,16 @@ export async function ensureActiveBlitzMarket(
 }
 
 /**
- * Starts the Polymarket sync job with recurring interval.
+ * Starts the Polymarket sync job with recurring interval and lightweight Blitz market seeder.
  */
 export function startPolymarketSync(
   db: CoordinatorDatabase,
   potAddress: string,
-  intervalMs: number = 60000
+  intervalMs: number = 300000
 ): { stop: () => void } {
   let isRunning = true;
   let timer: NodeJS.Timeout | null = null;
+  let blitzTimer: NodeJS.Timeout | null = null;
 
   async function syncLoop() {
     if (!isRunning) return;
@@ -399,12 +400,28 @@ export function startPolymarketSync(
     }
   }
 
+  // Fast background loop (every 30s) ensuring Blitz markets are continuously active
+  async function blitzLoop() {
+    if (!isRunning) return;
+    try {
+      await ensureActiveBlitzMarket(db, potAddress);
+    } catch (err: any) {
+      console.error("[PolymarketSync] Blitz loop error:", err.message);
+    } finally {
+      if (isRunning) {
+        blitzTimer = setTimeout(blitzLoop, 30000);
+      }
+    }
+  }
+
   syncLoop();
+  blitzTimer = setTimeout(blitzLoop, 30000);
 
   return {
     stop: () => {
       isRunning = false;
       if (timer) clearTimeout(timer);
+      if (blitzTimer) clearTimeout(blitzTimer);
     },
   };
 }

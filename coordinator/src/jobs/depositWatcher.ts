@@ -4,6 +4,7 @@ import {
   decodeBetMemoV2,
   decodeZip321Memo,
   normalizeMarketId,
+  computeMerkleRoot,
 } from "../../../packages/shared/src/memo.ts";
 
 export interface ShieldedPayoutRecipient {
@@ -109,6 +110,17 @@ export async function pollDepositsOnce(
       console.log(
         `[DepositWatcher] Verified Bet Recorded: ${betId} for Market ${market.id} (${Number(note.amountZats) / 100_000_000} ZEC)`
       );
+
+      // If market is already settled/closed, update its Merkle root to include newly indexed bets
+      if (
+        (market.status === "SETTLED" || market.status === "CLOSED") &&
+        (!market.merkle_root || market.merkle_root.startsWith("00000000"))
+      ) {
+        const marketBets = db.listBetsForMarket(market.id);
+        const updatedRoot = computeMerkleRoot(marketBets.map((b) => b.commitment));
+        db.updateMarketStatus(market.id, market.status, market.outcome, updatedRoot);
+        console.log(`[DepositWatcher] Updated Merkle Root for Settled Market ${market.id}: ${updatedRoot.slice(0, 16)}...`);
+      }
     } catch (err: any) {
       console.debug(`[DepositWatcher] Note ${note.txid} failed NOC2 parse: ${err.message}`);
     }

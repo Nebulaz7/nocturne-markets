@@ -117,11 +117,12 @@ export function AuditDrawer({
           throw new Error(`Coordinator returned HTTP ${res.status}`);
         }
         const data = await res.json();
-        setAudit(data);
+        const auditPayload = data.audit || data;
+        setAudit(auditPayload);
 
         // Auto-verify if initialCommitment provided
-        if (initialCommitment && data.commitments?.length > 0) {
-          handleVerifyWithData(initialCommitment, data);
+        if (initialCommitment && auditPayload.commitments?.length > 0) {
+          handleVerifyWithData(initialCommitment, auditPayload);
         }
       } catch (err: any) {
         setError(`Failed to fetch audit data: ${err.message}`);

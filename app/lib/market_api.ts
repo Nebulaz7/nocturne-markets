@@ -266,3 +266,52 @@ export async function confirmManualBetDeposit(
     return false;
   }
 }
+
+export interface AuditCommitmentItem {
+  id: string;
+  commitment: string;
+  amount_zats: number | null;
+  amount_zec: number | null;
+  decrypted_side: string;
+  deposit_txid: string | null;
+  block_height: number | null;
+}
+
+export interface MarketAuditPackage {
+  market_id: string;
+  title: string;
+  status: string;
+  outcome: string | null;
+  category: string;
+  drand_round: number | string;
+  merkle_root: string | null;
+  pot_address: string;
+  pot_uvk: string | null;
+  pots_sealed: boolean;
+  total_pot_zats: number | null;
+  yes_pot_zats: number | null;
+  no_pot_zats: number | null;
+  total_bets: number;
+  commitments: AuditCommitmentItem[];
+}
+
+/**
+ * Fetches the public Merkle audit package for a market from the coordinator.
+ */
+export async function fetchMarketAudit(
+  marketId: string,
+  baseUrl?: string
+): Promise<MarketAuditPackage> {
+  const root = getCoordinatorBaseUrl(baseUrl);
+  const res = await fetch(
+    `${root}/api/markets/${encodeURIComponent(marketId)}/audit`,
+    {
+      headers: { Accept: "application/json" },
+    }
+  );
+  if (!res.ok) {
+    throw new Error(`Failed to fetch audit: HTTP ${res.status}`);
+  }
+  const json = await res.json();
+  return json.audit || json;
+}
