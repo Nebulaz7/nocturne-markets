@@ -23,6 +23,7 @@ import {
   importVaultJson,
   type PreparedBetReceipt,
 } from "@/lib/vault";
+import { verifyLocalReceipts } from "@/lib/market_api";
 import { AuditDrawer } from "@/components/AuditDrawer";
 
 type VaultFilter = "ALL" | "ACTIVE" | "SETTLED";
@@ -51,7 +52,32 @@ export default function PrivateVaultPage() {
     const handleUpdate = () => loadReceipts();
     window.addEventListener("nocturne-vault-updated", handleUpdate);
     window.addEventListener("storage", handleUpdate);
+
+    let isMounted = true;
+    async function checkPendingReceipts() {
+      const current = getBetReceipts();
+      const pending = current.filter((r) => r.status === "PENDING_SCAN");
+      if (pending.length === 0) return;
+
+      const marketIds = Array.from(new Set(pending.map((r) => r.marketId)));
+      for (const mId of marketIds) {
+        try {
+          await verifyLocalReceipts(mId);
+        } catch {
+          // Graceful fallback if coordinator offline
+        }
+      }
+      if (isMounted) {
+        loadReceipts();
+      }
+    }
+
+    checkPendingReceipts();
+    const timer = setInterval(checkPendingReceipts, 3000);
+
     return () => {
+      isMounted = false;
+      clearInterval(timer);
       window.removeEventListener("nocturne-vault-updated", handleUpdate);
       window.removeEventListener("storage", handleUpdate);
     };

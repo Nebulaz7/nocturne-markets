@@ -23,6 +23,7 @@ import {
   clearVault,
   type PreparedBetReceipt,
 } from "@/lib/vault";
+import { verifyLocalReceipts } from "@/lib/market_api";
 import { AuditDrawer } from "./AuditDrawer";
 
 export interface MyBetsDrawerProps {
@@ -56,11 +57,37 @@ export function MyBetsDrawer({ isOpen, onClose }: MyBetsDrawerProps) {
     const handleUpdate = () => loadReceipts();
     window.addEventListener("nocturne-vault-updated", handleUpdate);
     window.addEventListener("storage", handleUpdate);
+
+    let isMounted = true;
+    async function checkPendingReceipts() {
+      if (!isOpen) return;
+      const current = getBetReceipts();
+      const pending = current.filter((r) => r.status === "PENDING_SCAN");
+      if (pending.length === 0) return;
+
+      const marketIds = Array.from(new Set(pending.map((r) => r.marketId)));
+      for (const mId of marketIds) {
+        try {
+          await verifyLocalReceipts(mId);
+        } catch {
+          // Fallback if coordinator offline
+        }
+      }
+      if (isMounted) {
+        loadReceipts();
+      }
+    }
+
+    checkPendingReceipts();
+    const timer = setInterval(checkPendingReceipts, 3000);
+
     return () => {
+      isMounted = false;
+      clearInterval(timer);
       window.removeEventListener("nocturne-vault-updated", handleUpdate);
       window.removeEventListener("storage", handleUpdate);
     };
-  }, []);
+  }, [isOpen]);
 
   // Filter & Search calculation
   const filteredReceipts = useMemo(() => {

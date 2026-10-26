@@ -14,7 +14,8 @@ import {
   type BetSide,
   type PreparedBetReceipt,
 } from "@/lib/bet_builder";
-import { saveBetReceipt } from "@/lib/vault";
+import { saveBetReceipt, getBetReceipt } from "@/lib/vault";
+import { verifyLocalReceipts } from "@/lib/market_api";
 import MarketAvatar from "./MarketAvatar";
 
 export interface MarketBetSlipProps {
@@ -187,6 +188,47 @@ export function MarketBetSlip({
     }
   };
 
+  // Live polling for instant payment confirmation & verification
+  useEffect(() => {
+    if (!receipt || receipt.status !== "PENDING_SCAN") return;
+    const activeReceipt = receipt;
+    let isMounted = true;
+
+    async function checkConfirmation() {
+      try {
+        const results = await verifyLocalReceipts(market.id);
+        const match = results.find(
+          (r) =>
+            r.commitment.toLowerCase() === activeReceipt.commitment.toLowerCase()
+        );
+        if (match && match.foundInAudit && isMounted) {
+          const updated = getBetReceipt(activeReceipt.id);
+          if (updated) {
+            setReceipt(updated);
+          } else {
+            setReceipt((prev) =>
+              prev
+                ? {
+                    ...prev,
+                    status:
+                      match.marketStatus === "SETTLED" ? "SETTLED" : "SEALED",
+                  }
+                : null
+            );
+          }
+        }
+      } catch {
+        // Fallback
+      }
+    }
+
+    const timer = setInterval(checkConfirmation, 3000);
+    return () => {
+      isMounted = false;
+      clearInterval(timer);
+    };
+  }, [receipt, market.id]);
+
   return (
     <div className="w-full flex flex-col gap-6">
       {/* Main Trading Panel */}
@@ -236,6 +278,23 @@ export function MarketBetSlip({
             </div>
 
             <div className="p-4 rounded-xl bg-[#140e0b] border border-[#7c2d12]/30 flex flex-col items-center justify-center">
+              <div className="w-full flex items-center justify-between pb-2 mb-2 border-b border-[#7c2d12]/20">
+                <span className="text-[10px] font-mono uppercase tracking-wider text-zinc-400">
+                  Payment Status
+                </span>
+                {receipt.status === "SEALED" || receipt.status === "SETTLED" ? (
+                  <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-[#12281c] text-[#22c55e] border border-emerald-500/30 flex items-center gap-1">
+                    <Check className="w-3 h-3 text-emerald-400" />
+                    CONFIRMED ON-CHAIN
+                  </span>
+                ) : (
+                  <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-amber-950/40 text-amber-400 border border-amber-500/30 flex items-center gap-1">
+                    <RefreshCw className="w-3 h-3 animate-spin text-amber-400" />
+                    SCANNING CHAIN...
+                  </span>
+                )}
+              </div>
+
               <div className="p-2.5 bg-white rounded-xl shadow-lg mb-2">
                 <QRCodeSVG
                   value={receipt.paymentUri}

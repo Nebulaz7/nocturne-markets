@@ -1,13 +1,14 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { QRCodeSVG } from "qrcode.react";
 import {
   prepareZeroPostBet,
   type BetSide,
   type PreparedBetReceipt,
 } from "@/lib/bet_builder";
-import { saveBetReceipt } from "@/lib/vault";
+import { saveBetReceipt, getBetReceipt } from "@/lib/vault";
+import { verifyLocalReceipts } from "@/lib/market_api";
 
 export interface BetSlipModalProps {
   isOpen: boolean;
@@ -95,6 +96,47 @@ export function BetSlipModal({
     setReceipt(null);
     setError(null);
   };
+
+  // Live polling for instant payment confirmation & verification
+  useEffect(() => {
+    if (!receipt || receipt.status !== "PENDING_SCAN") return;
+    const activeReceipt = receipt;
+    let isMounted = true;
+
+    async function checkConfirmation() {
+      try {
+        const results = await verifyLocalReceipts(market.id);
+        const match = results.find(
+          (r) =>
+            r.commitment.toLowerCase() === activeReceipt.commitment.toLowerCase()
+        );
+        if (match && match.foundInAudit && isMounted) {
+          const updated = getBetReceipt(activeReceipt.id);
+          if (updated) {
+            setReceipt(updated);
+          } else {
+            setReceipt((prev) =>
+              prev
+                ? {
+                    ...prev,
+                    status:
+                      match.marketStatus === "SETTLED" ? "SETTLED" : "SEALED",
+                  }
+                : null
+            );
+          }
+        }
+      } catch {
+        // Fallback
+      }
+    }
+
+    const timer = setInterval(checkConfirmation, 3000);
+    return () => {
+      isMounted = false;
+      clearInterval(timer);
+    };
+  }, [receipt, market.id]);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
@@ -264,7 +306,15 @@ export function BetSlipModal({
             /* STEP 2: Generated QR Code & Payment Instructions */
             <div className="space-y-4">
               <div className="p-3 rounded-xl bg-emerald-950/40 border border-emerald-500/30 text-emerald-300 text-xs flex items-center justify-between font-mono">
-                <span>🛡️ Bet Generated & Vaulted Locally</span>
+                {receipt.status === "SEALED" || receipt.status === "SETTLED" ? (
+                  <span className="text-emerald-400 font-bold uppercase tracking-wider">
+                    CONFIRMED ON-CHAIN & AUDITED
+                  </span>
+                ) : (
+                  <span className="text-amber-400 font-bold uppercase tracking-wider">
+                    SCANNING FOR DEPOSIT...
+                  </span>
+                )}
                 <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded bg-emerald-900/80 text-emerald-200">
                   Side: {receipt.side} ({receipt.amountZec} ZEC)
                 </span>
@@ -290,7 +340,7 @@ export function BetSlipModal({
                   onClick={() => copyToClipboard(receipt.paymentUri, "uri")}
                   className="py-2.5 px-3 rounded-xl bg-zinc-900 border border-zinc-700 hover:bg-zinc-800 text-xs font-mono text-zinc-200 flex items-center justify-center gap-1.5 transition-colors"
                 >
-                  {copiedType === "uri" ? "✔ Copied URI" : "📋 Copy Payment URI"}
+                  {copiedType === "uri" ? "Copied URI" : "Copy Payment URI"}
                 </button>
 
                 <button
@@ -298,7 +348,7 @@ export function BetSlipModal({
                   onClick={() => copyToClipboard(receipt.memoUtf8, "memo")}
                   className="py-2.5 px-3 rounded-xl bg-zinc-900 border border-zinc-700 hover:bg-zinc-800 text-xs font-mono text-zinc-200 flex items-center justify-center gap-1.5 transition-colors"
                 >
-                  {copiedType === "memo" ? "✔ Copied Memo" : "📋 Copy NOC2: Memo"}
+                  {copiedType === "memo" ? "Copied Memo" : "Copy NOC2: Memo"}
                 </button>
               </div>
 
