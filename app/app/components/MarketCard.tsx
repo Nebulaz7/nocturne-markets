@@ -76,6 +76,7 @@ export default function MarketCard({ market, submarkets }: MarketCardProps) {
   const router = useRouter();
   const cardRef = useRef<HTMLDivElement>(null);
   const [isExpanded, setIsExpanded] = useState(false);
+  const [isNavigating, setIsNavigating] = useState(false);
 
   const isMultiOutcome = Boolean(submarkets && submarkets.length > 1);
   const isBlitz = market.id?.startsWith("blitz-");
@@ -108,7 +109,15 @@ export default function MarketCard({ market, submarkets }: MarketCardProps) {
   const dotY = Number((34 - 26 * Math.sin(rad)).toFixed(2));
   const gaugeColor = yesPercent >= 50 ? "#22c55e" : "#ef4444";
 
+  const triggerLoader = () => {
+    setIsNavigating(true);
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new CustomEvent("nocturne-route-start"));
+    }
+  };
+
   const handleCardClick = (targetId?: string) => {
+    triggerLoader();
     if (isMultiOutcome && market.event_slug && market.event_slug !== "blitz-market") {
       const query = targetId ? `?sub=${targetId}` : "";
       router.push(`/event/${market.event_slug}${query}`);
@@ -119,6 +128,7 @@ export default function MarketCard({ market, submarkets }: MarketCardProps) {
 
   const handleTradeYes = (e: React.MouseEvent, targetId?: string) => {
     e.stopPropagation();
+    triggerLoader();
     if (isMultiOutcome && market.event_slug && market.event_slug !== "blitz-market") {
       router.push(`/event/${market.event_slug}?side=YES&sub=${targetId || market.id}`);
     } else {
@@ -128,6 +138,7 @@ export default function MarketCard({ market, submarkets }: MarketCardProps) {
 
   const handleTradeNo = (e: React.MouseEvent, targetId?: string) => {
     e.stopPropagation();
+    triggerLoader();
     if (isMultiOutcome && market.event_slug && market.event_slug !== "blitz-market") {
       router.push(`/event/${market.event_slug}?side=NO&sub=${targetId || market.id}`);
     } else {
@@ -308,6 +319,15 @@ export default function MarketCard({ market, submarkets }: MarketCardProps) {
             {submarkets.length} Outcomes · Parimutuel
           </span>
         </div>
+
+        {isNavigating && (
+          <div className="absolute inset-0 bg-[#0e0a08]/85 backdrop-blur-[2px] rounded-2xl z-30 flex flex-col items-center justify-center gap-2.5 transition-all">
+            <div className="w-6 h-6 border-2 border-[#fb923c] border-t-transparent rounded-full animate-spin" />
+            <span className="text-xs font-mono text-[#fb923c] font-semibold tracking-wide">
+              Loading Market...
+            </span>
+          </div>
+        )}
       </div>
     );
   }
@@ -468,6 +488,15 @@ export default function MarketCard({ market, submarkets }: MarketCardProps) {
           </button>
         </div>
       </div>
+
+      {isNavigating && (
+        <div className="absolute inset-0 bg-[#0e0a08]/85 backdrop-blur-[2px] rounded-2xl z-30 flex flex-col items-center justify-center gap-2.5 transition-all">
+          <div className="w-6 h-6 border-2 border-[#fb923c] border-t-transparent rounded-full animate-spin" />
+          <span className="text-xs font-mono text-[#fb923c] font-semibold tracking-wide">
+            Loading Market...
+          </span>
+        </div>
+      )}
     </div>
   );
 }
