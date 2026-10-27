@@ -332,8 +332,8 @@ function seedFallbackMarkets(db: CoordinatorDatabase, potAddress: string): numbe
 }
 
 /**
- * Ensures there is always an active 5-Minute ZEC Blitz Market for judges to test.
- * When the current blitz market expires, seeds a new rolling one.
+ * Ensures there is always an active 10-Minute Zcash (ZEC) Blitz Market for judges to test.
+ * When the current blitz market expires, seeds a new rolling 10-minute sponsored demo market.
  */
 export async function ensureActiveBlitzMarket(
   db: CoordinatorDatabase,
@@ -341,39 +341,47 @@ export async function ensureActiveBlitzMarket(
 ): Promise<string> {
   const now = Math.floor(Date.now() / 1000);
 
-  // Look for any OPEN blitz market
+  // Look for any OPEN blitz market that still has at least 15 seconds remaining
   const openMarkets = db.listMarkets({ status: "OPEN" });
-  const activeBlitz = openMarkets.find((m) => m.id.startsWith("blitz-") && m.close_time > now);
+  const activeBlitz = openMarkets.find(
+    (m) => m.id.startsWith("blitz-") && m.close_time > now + 15
+  );
 
   if (activeBlitz) {
     return activeBlitz.id;
   }
 
-  // Create fresh 5-Minute Blitz Market
-  const blitzId = `blitz-btc-${Date.now().toString().slice(-4)}`;
-  const closeTime = now + 300; // 5 minutes (300 seconds)
+  // Create fresh 10-Minute ZEC Blitz Market (600 seconds)
+  const blitzId = `blitz-zec-${Date.now().toString().slice(-4)}`;
+  const closeTime = now + 600; // Exactly 10 minutes
   const drandRound = Number(drandRoundForTimestamp(closeTime));
 
   const newMarket = db.createMarket({
     id: blitzId,
-    polymarket_id: "blitz-oracle",
-    title: "Blitz: Will BTC 1-min candle close above $65,000?",
-    slug: blitzId,
-    event_slug: "blitz-market",
+    polymarket_id: "blitz-zec-oracle",
+    title: "Blitz: Will ZEC/USD close higher in the next 10 minutes?",
+    slug: "blitz-zec",
+    event_slug: "blitz-zec",
     market_slug: blitzId,
-    condition_id: "0xblitzoracle",
-    question: "Will BTC 1-min candle close above $65,000?",
-    group_item_title: "1-min candle",
+    condition_id: "0xblitzzecoracle",
+    question: "Will ZEC/USD 10-min candle close above reference price?",
+    group_item_title: "10-min candle",
     ref_yes_price: 0.50,
     category: "Crypto",
     close_time: closeTime,
     drand_round: drandRound,
     pot_address: potAddress,
+    image: "https://z.cash/wp-content/uploads/2023/12/zcash-logo-round-black.png",
+    icon: "https://z.cash/wp-content/uploads/2023/12/zcash-logo-round-black.png",
   });
 
-  console.log(`[PolymarketSync] Fresh 5-Minute Blitz Market Seeded: ${newMarket.id} (Closes at ${new Date(closeTime * 1000).toLocaleTimeString()})`);
+  console.log(
+    `[BlitzManager] Fresh 10-Minute ZEC Blitz Market Seeded: ${newMarket.id} (Closes at ${new Date(closeTime * 1000).toLocaleTimeString()})`
+  );
   return newMarket.id;
 }
+
+export const ensureActiveZecBlitzMarket = ensureActiveBlitzMarket;
 
 /**
  * Starts the Polymarket sync job with recurring interval and lightweight Blitz market seeder.
@@ -400,22 +408,22 @@ export function startPolymarketSync(
     }
   }
 
-  // Fast background loop (every 30s) ensuring Blitz markets are continuously active
+  // Fast background loop (every 15s) ensuring Blitz markets are continuously active
   async function blitzLoop() {
     if (!isRunning) return;
     try {
       await ensureActiveBlitzMarket(db, potAddress);
     } catch (err: any) {
-      console.error("[PolymarketSync] Blitz loop error:", err.message);
+      console.error("[BlitzManager] Blitz loop error:", err.message);
     } finally {
       if (isRunning) {
-        blitzTimer = setTimeout(blitzLoop, 30000);
+        blitzTimer = setTimeout(blitzLoop, 15000);
       }
     }
   }
 
   syncLoop();
-  blitzTimer = setTimeout(blitzLoop, 30000);
+  blitzTimer = setTimeout(blitzLoop, 5000);
 
   return {
     stop: () => {

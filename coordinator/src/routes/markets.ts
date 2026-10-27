@@ -1,6 +1,7 @@
 import type { FastifyInstance, FastifyPluginAsync } from "fastify";
 import { CoordinatorDatabase, type MarketRecord } from "../db/index.ts";
 import { COORDINATOR_CONFIG } from "../config.ts";
+import { ensureActiveBlitzMarket } from "../jobs/polymarketSync.ts";
 
 export interface MarketRoutesOptions {
   db: CoordinatorDatabase;
@@ -67,15 +68,15 @@ function generateBlitzHistory(
   interval: string
 ): Array<{ t: number; yesPct: number; noPct: number }> {
   const now = Math.floor(Date.now() / 1000);
-  const startTime = market.close_time - 300;
+  const startTime = market.close_time - 600;
   const endTime = Math.min(now, market.close_time);
-  const step = 10;
+  const step = 15;
   const history: Array<{ t: number; yesPct: number; noPct: number }> = [];
 
   const basePrice = market.ref_yes_price ?? 0.5;
   for (let t = startTime; t <= endTime; t += step) {
-    const pseudo = Math.sin(t * 0.1) * 0.03 + Math.cos(t * 0.05) * 0.02;
-    const clampedPrice = Math.max(0.05, Math.min(0.95, basePrice + pseudo));
+    const pseudo = Math.sin(t * 0.05) * 0.04 + Math.cos(t * 0.02) * 0.03;
+    const clampedPrice = Math.max(0.1, Math.min(0.9, basePrice + pseudo));
     const yesPct = Number((clampedPrice * 100).toFixed(1));
     const noPct = Number((100 - yesPct).toFixed(1));
     history.push({ t, yesPct, noPct });
@@ -155,6 +156,40 @@ export const marketRoutes: FastifyPluginAsync<MarketRoutesOptions> = async (
         Others: { count: directory.Others.length, markets: directory.Others },
       },
       total: allMarkets.length,
+    });
+  });
+
+  /**
+   * GET /api/markets/blitz
+   * Dedicated demo endpoint returning the currently active 10-Minute ZEC Blitz market.
+   * Includes zero-POST encryption parameters, 1.52x payout multiplier, and seconds_left countdown.
+   */
+  fastify.get("/api/markets/blitz", async (req, reply) => {
+    const now = Math.floor(Date.now() / 1000);
+    const openMarkets = db.listMarkets({ status: "OPEN" });
+    let blitzMarket = openMarkets.find(
+      (m) => m.id.startsWith("blitz-") && m.close_time > now + 5
+    );
+
+    if (!blitzMarket) {
+      const newId = await ensureActiveBlitzMarket(db, COORDINATOR_CONFIG.potAddress);
+      blitzMarket = db.getMarket(newId) || undefined;
+    }
+
+    if (!blitzMarket) {
+      return reply.status(500).send({ error: "Failed to initialize active blitz market" });
+    }
+
+    const formatted = formatMarketResponse(blitzMarket, db);
+
+    return reply.send({
+      market: {
+        ...formatted,
+        market_type: "SPONSORED_DEMO",
+        payout_multiplier: 1.52,
+        seconds_left: Math.max(0, blitzMarket.close_time - now),
+        coordinator_public_key: Buffer.from(COORDINATOR_CONFIG.settlementPublicKey).toString("hex"),
+      },
     });
   });
 

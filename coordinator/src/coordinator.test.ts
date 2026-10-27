@@ -3,6 +3,7 @@ import { buildApp } from "./index.ts";
 import { CoordinatorDatabase } from "./db/index.ts";
 import { processSettlementOnce } from "./jobs/settlement.ts";
 import { COORDINATOR_CONFIG } from "./config.ts";
+import { packTlockEnvelope, encryptPayoutEnvelope } from "../../packages/shared/src/memo.ts";
 
 async function runCoordinatorApiTests() {
   console.log("=== Running Fastify Coordinator Backend Integration Tests ===\n");
@@ -287,6 +288,94 @@ async function runCoordinatorApiTests() {
   assert.strictEqual(db.getPayout(pRecord1.id)?.txid, "batch-txid-success-999");
   assert.strictEqual(db.getPayout(pRecord2.id)?.txid, "batch-txid-success-999");
   console.log("   PASS: Batch shielded payouts and SQLite address masking verified.");
+
+  // 10. Test GET /api/markets/blitz
+  console.log("10. Testing GET /api/markets/blitz (Dedicated 10-Min Demo Endpoint)...");
+  const blitzRes = await app.inject({
+    method: "GET",
+    url: "/api/markets/blitz",
+  });
+  assert.strictEqual(blitzRes.statusCode, 200);
+  const blitzBody = JSON.parse(blitzRes.payload);
+  assert(blitzBody.market, "Blitz market missing from response");
+  assert(blitzBody.market.id.startsWith("blitz-"), `Expected blitz- prefix, got ${blitzBody.market.id}`);
+  assert.strictEqual(blitzBody.market.market_type, "SPONSORED_DEMO");
+  assert.strictEqual(blitzBody.market.payout_multiplier, 1.52);
+  assert(typeof blitzBody.market.seconds_left === "number");
+  assert.strictEqual(blitzBody.market.category, "Crypto");
+  assert(blitzBody.market.coordinator_public_key, "Coordinator public key missing");
+  console.log("   PASS: GET /api/markets/blitz returned valid 1.52x sponsored market.");
+
+  // 11. Test Sponsored 1.52x Settlement on Blitz Market
+  console.log("11. Testing Sponsored 1.52x Settlement on Blitz Market...");
+  const blitzSettledMarket = db.createMarket({
+    id: `blitz-zec-demo-${Date.now()}`,
+    title: "Will Zcash (ZEC) outperform BTC over the next 10 minutes?",
+    category: "Crypto",
+    close_time: Math.floor(Date.now() / 1000) - 1, // Expired, ready for close & settlement
+    drand_round: 33400000,
+    pot_address: "utest1mepu5ag7trhrhuaaza3p30gjg89kkduv9tqjdrd8yujywwhdm4s30vtgf2xajppv0hrjldra8et4rfwnvsuvqqrmff0d4qcwwycfvex8",
+  });
+
+  const blitzWinnerAddress = "utest1mepu5ag7trhrhuaaza3p30gjg89kkduv9tqjdrd8yujywwhdm4s30vtgf2xajppv0hrjldra8et4rfwnvsuvqqrmff0d4qcwwycfvex8";
+  const blitzTlock = await packTlockEnvelope({
+    round: 33400000n,
+    side: "YES",
+    secret: "0123456789abcdef0123456789abcdef",
+    mock: true,
+  });
+  const blitzPayoutEnv = encryptPayoutEnvelope({
+    address: blitzWinnerAddress,
+    coordinatorPublicKey: COORDINATOR_CONFIG.settlementPublicKey,
+    marketId: blitzSettledMarket.id,
+  });
+
+  db.insertBet({
+    id: "blitz-test-bet-1",
+    market_id: blitzSettledMarket.id,
+    commitment: "commitment-blitz-yes-11111111111111111111111111111111111111111111111",
+    amount_zats: 5_000_000, // 0.05 ZEC stake
+    tlock_envelope: blitzTlock,
+    payout_envelope: blitzPayoutEnv,
+    deposit_txid: "blitz-deposit-txid-001",
+    block_height: 4500100,
+  });
+
+  let blitzDispatchedCount = 0;
+  let blitzDispatchedTxid = "";
+  const blitzBridge = {
+    sync: async () => "synced",
+    listNotes: async () => [],
+    sendShieldedPayoutsBatch: async (payouts: any[]) => {
+      blitzDispatchedCount = payouts.length;
+      blitzDispatchedTxid = "blitz-batch-txid-success-152";
+      return blitzDispatchedTxid;
+    },
+  };
+
+  const settlementResult = await processSettlementOnce({
+    db,
+    coordinatorSecretKey: COORDINATOR_CONFIG.settlementSecretKey,
+    potUvk: COORDINATOR_CONFIG.potUvk,
+    bridge: blitzBridge,
+    mockDrand: true,
+  });
+
+  assert(settlementResult.marketsClosed >= 1);
+  assert(settlementResult.marketsSettled >= 1);
+  assert.strictEqual(settlementResult.payoutsCreated, 1);
+
+  const updatedMarket = db.getMarket(blitzSettledMarket.id);
+  assert.strictEqual(updatedMarket?.status, "SETTLED");
+  assert.strictEqual(updatedMarket?.outcome, "YES");
+
+  const payouts = db.listPayoutsForMarket(blitzSettledMarket.id);
+  assert.strictEqual(payouts.length, 1);
+  // Gross = floor(5,000,000 * 1.52) = 7,600,000 zats. Net = gross - 10,000 fee = 7,590,000 zats.
+  assert.strictEqual(payouts[0].amount_zats, 7_590_000);
+  assert.strictEqual(payouts[0].status, "BROADCASTED");
+  assert.strictEqual(payouts[0].txid, "blitz-batch-txid-success-152");
+  console.log("   PASS: Sponsored Blitz market settled with 1.52x payout without zero-sum counterparty.");
 
   await app.close();
   db.close();

@@ -142,18 +142,64 @@ export async function processSettlementOnce(
       }
     }
 
-    // Calculate exact fee-on-profit payouts
-    const settlement = calculateParimutuelPayouts({
-      bets: betPositions,
-      outcome,
-    });
+    // Calculate payouts: Sponsored 1.52x fixed odds for Blitz demo markets, Parimutuel for standard markets
+    const isBlitzSponsored = market.id.startsWith("blitz-");
+    let settlementPayouts: Array<{
+      id: string;
+      returnAddress: string;
+      side: BetSide;
+      stakeZats: bigint;
+      grossPayoutZats: bigint;
+      netPayoutZats: bigint;
+      isRefund: boolean;
+    }> = [];
 
-    console.log(`[SettlementWorker] Settling Market ${market.id}: Status = ${settlement.status}`);
+    if (isBlitzSponsored) {
+      console.log(
+        `[SettlementWorker] Settling Sponsored Blitz Market ${market.id} with 1.52x payout...`
+      );
+      const zip317Fee = 10000n; // ZIP-317 base fee
+      for (const bet of betPositions) {
+        if (bet.side === "YES") {
+          // 1.52x gross payout sponsored by the pot wallet
+          const gross = BigInt(Math.floor(Number(bet.stakeZats) * 1.52));
+          const net = gross > zip317Fee ? gross - zip317Fee : 0n;
+          settlementPayouts.push({
+            id: bet.id,
+            returnAddress: bet.returnAddress,
+            side: bet.side,
+            stakeZats: bet.stakeZats,
+            grossPayoutZats: gross,
+            netPayoutZats: net,
+            isRefund: false,
+          });
+        } else {
+          settlementPayouts.push({
+            id: bet.id,
+            returnAddress: bet.returnAddress,
+            side: bet.side,
+            stakeZats: bet.stakeZats,
+            grossPayoutZats: 0n,
+            netPayoutZats: 0n,
+            isRefund: false,
+          });
+        }
+      }
+    } else {
+      const settlement = calculateParimutuelPayouts({
+        bets: betPositions,
+        outcome,
+      });
+      console.log(
+        `[SettlementWorker] Settling Market ${market.id}: Status = ${settlement.status}`
+      );
+      settlementPayouts = settlement.payouts;
+    }
 
     const batchPayouts: Array<{ destinationAddress: string; amountZats: bigint; memo?: string }> = [];
     const createdPayoutRecords: Array<{ id: string }> = [];
 
-    for (const p of settlement.payouts) {
+    for (const p of settlementPayouts) {
       if (p.grossPayoutZats <= 0n) continue;
 
       const payoutId = `payout-${market.id.slice(0, 8)}-${p.id}`;
@@ -174,7 +220,9 @@ export async function processSettlementOnce(
       batchPayouts.push({
         destinationAddress: p.returnAddress,
         amountZats: p.netPayoutZats,
-        memo: `Nocturne Settlement: ${market.id}`,
+        memo: isBlitzSponsored
+          ? `Nocturne Blitz Win: 1.52x Payout`
+          : `Nocturne Settlement: ${market.id}`,
       });
     }
 
