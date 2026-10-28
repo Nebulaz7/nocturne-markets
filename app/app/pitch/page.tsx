@@ -10,7 +10,7 @@ import {
   ExternalLink,
 } from "lucide-react";
 
-const TOTAL_SCENES = 5;
+const TOTAL_SCENES = 6;
 
 export default function PitchDeckPage() {
   const [currentSceneIdx, setCurrentSceneIdx] = useState(0);
@@ -96,7 +96,7 @@ export default function PitchDeckPage() {
 
         {/* Minimal Numbered Scene Pills */}
         <div className="flex items-center gap-2 font-mono text-xs">
-          {[0, 1, 2, 3, 4].map((idx) => (
+          {[0, 1, 2, 3, 4, 5].map((idx) => (
             <button
               key={idx}
               onClick={() => goToScene(idx)}
@@ -146,6 +146,7 @@ export default function PitchDeckPage() {
           {currentSceneIdx === 2 && <SceneThreeSolution key="scene-3" />}
           {currentSceneIdx === 3 && <SceneFourUnderTheHood key="scene-4" />}
           {currentSceneIdx === 4 && <SceneFiveLiveWalkthrough key="scene-5" />}
+          {currentSceneIdx === 5 && <SceneSixOutro key="scene-6" />}
         </AnimatePresence>
       </main>
 
@@ -491,6 +492,64 @@ function SceneFiveLiveWalkthrough() {
           </div>
         </Link>
       </motion.div>
+    </motion.div>
+  );
+}
+
+// ========================================================
+// SCENE 6: Outro
+// Full logo + "Your Business, Your Business"
+// ========================================================
+function SceneSixOutro() {
+  return (
+    <motion.div
+      initial={{ opacity: 0, scale: 0.94 }}
+      animate={{ opacity: 1, scale: 1 }}
+      exit={{ opacity: 0, scale: 1.04 }}
+      transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+      className="w-full max-w-2xl flex flex-col items-center text-center justify-center py-6"
+    >
+      {/* Full Logo Emblem */}
+      <motion.div
+        initial={{ y: -15, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ delay: 0.2 }}
+        className="relative w-32 h-32 sm:w-40 sm:h-40 mb-8 p-4 rounded-3xl bg-[#140e0b] border border-[#7c2d12]/60 shadow-2xl flex items-center justify-center"
+      >
+        <Image
+          src="/logo-full.png"
+          alt="Nocturne Markets"
+          width={130}
+          height={130}
+          className="object-contain"
+          priority
+        />
+      </motion.div>
+
+      {/* Brand Name */}
+      <motion.div
+        initial={{ y: 10, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ delay: 0.35 }}
+        className="flex items-baseline gap-2 mb-4"
+      >
+        <span className="text-4xl sm:text-6xl font-heading font-bold text-[#fef3c7] tracking-tight">
+          Nocturne
+        </span>
+        <span className="text-4xl sm:text-6xl font-heading font-bold text-[#fb923c] tracking-tight">
+          Markets
+        </span>
+      </motion.div>
+
+      {/* Subtext */}
+      <motion.p
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.5 }}
+        className="text-lg sm:text-2xl font-mono text-[#fb923c] font-semibold tracking-wide"
+      >
+        Your Business, Your Business.
+      </motion.p>
     </motion.div>
   );
 }
