@@ -273,7 +273,7 @@ export function MarketBetSlip({
         <div className="flex items-center justify-between gap-3 pb-3 mb-4 border-b border-[#7c2d12]/20">
           <div className="flex items-center gap-2.5 flex-1 min-w-0">
             <MarketAvatar
-              src={market.icon || market.image}
+              src={isBlitz ? "/zcash.svg" : (market.icon || market.image)}
               title={submarketTitle || market.title}
               category={market.category}
               size="sm"
@@ -558,6 +558,10 @@ export function MarketBetSlip({
               const relPct = Math.round(relPrice * 100);
               const targetSlug = rel.slug || rel.event_slug || rel.id;
 
+              const isRelBlitz =
+                rel.id.startsWith("blitz-") ||
+                rel.title?.toLowerCase().includes("blitz");
+
               return (
                 <Link
                   key={rel.id}
@@ -566,7 +570,7 @@ export function MarketBetSlip({
                 >
                   <div className="flex items-center gap-2 flex-1 min-w-0">
                     <MarketAvatar
-                      src={rel.icon || rel.image}
+                      src={isRelBlitz ? "/zcash.svg" : (rel.icon || rel.image)}
                       title={rel.title}
                       category={rel.category}
                       size="sm"

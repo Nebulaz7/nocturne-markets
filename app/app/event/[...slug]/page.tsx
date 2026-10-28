@@ -15,13 +15,25 @@ interface EventPageProps {
   params: Promise<{
     slug: string[];
   }>;
+  searchParams?: Promise<{
+    sub?: string;
+  }>;
 }
 
-export default async function PolymarketEventPage({ params }: EventPageProps) {
+export default async function PolymarketEventPage({
+  params,
+  searchParams,
+}: EventPageProps) {
   const { slug } = await params;
+  const resolvedSearchParams = searchParams ? await searchParams : {};
+  const subParam = resolvedSearchParams.sub;
   const eventSlug = (slug || [])[0] || "";
 
-  if (eventSlug === "blitz" || eventSlug === "blitz-market" || eventSlug.startsWith("blitz-")) {
+  if (
+    eventSlug === "blitz" ||
+    eventSlug === "blitz-market" ||
+    eventSlug.startsWith("blitz-")
+  ) {
     redirect("/blitz");
   }
 
@@ -64,6 +76,63 @@ export default async function PolymarketEventPage({ params }: EventPageProps) {
     } catch {
       // Submarkets fetch fallback
     }
+  }
+
+  // Fallback: If primary market was not found directly, but sibling submarkets exist for this event
+  if (!market && submarkets.length > 0) {
+    market = submarkets[0];
+  }
+
+  // If subParam was specified, pick that specific bracket
+  if (subParam && submarkets.length > 0) {
+    const selected = submarkets.find(
+      (m: any) =>
+        m.id === subParam ||
+        m.slug === subParam ||
+        m.market_slug === subParam
+    );
+    if (selected) {
+      market = selected;
+    }
+  }
+
+  // Fallback 3: Fuzzy search across all markets if still not matched
+  if (!market) {
+    try {
+      const allRes = await fetch(`${COORDINATOR_URL}/api/markets`, {
+        next: { revalidate: 10 },
+      });
+      if (allRes.ok) {
+        const allData = await allRes.json();
+        const allMarkets = allData.markets || [];
+        const clean = eventSlug.toLowerCase().replace(/[^a-z0-9]/g, "");
+        const matched = allMarkets.find((m: any) => {
+          const mSlug = (m.slug || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+          const mEvent = (m.event_slug || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+          const mMarket = (m.market_slug || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+          return (
+            mSlug === clean ||
+            mEvent === clean ||
+            mMarket === clean ||
+            (mSlug && clean && (mSlug.includes(clean) || clean.includes(mSlug))) ||
+            (mEvent && clean && (mEvent.includes(clean) || clean.includes(mEvent)))
+          );
+        });
+        if (matched) {
+          market = matched;
+          if (matched.event_slug) {
+            const subRes = await fetch(
+              `${COORDINATOR_URL}/api/markets?event_slug=${encodeURIComponent(matched.event_slug)}`,
+              { next: { revalidate: 10 } }
+            );
+            if (subRes.ok) {
+              const subData = await subRes.json();
+              submarkets = subData.markets || [];
+            }
+          }
+        }
+      }
+    } catch {}
   }
 
   // 3. Fetch related markets in the same category

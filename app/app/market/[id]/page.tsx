@@ -64,6 +64,24 @@ export default async function MarketDetailPage({ params }: MarketPageProps) {
     }
   }
 
+  // Fallback: If not found as a direct market ID or slug, check if it's an event slug
+  if (!market) {
+    try {
+      const subRes = await fetch(
+        `${COORDINATOR_URL}/api/markets?event_slug=${encodeURIComponent(id)}`,
+        { next: { revalidate: 10 } }
+      );
+      if (subRes.ok) {
+        const subData = await subRes.json();
+        if (subData.markets && subData.markets.length > 0) {
+          redirect(`/event/${encodeURIComponent(id)}`);
+        }
+      }
+    } catch {
+      // Event check fallback
+    }
+  }
+
   // 3. Fetch related markets in the same category
   if (market) {
     try {

@@ -224,7 +224,7 @@ export default function MarketCard({ market, submarkets }: MarketCardProps) {
           {/* Event Title with Icon Badge (matching Polymarket / Kalshi multi-card) */}
           <div className="flex items-start gap-3 mb-3.5 z-10 relative">
             <MarketAvatar
-              src={market.icon || market.image}
+              src={isBlitz ? "/zcash.svg" : (market.icon || market.image)}
               title={eventTitle}
               category={market.category}
               size="md"
@@ -259,9 +259,9 @@ export default function MarketCard({ market, submarkets }: MarketCardProps) {
               >
                 {/* Outcome Title */}
                 <div className="flex items-center gap-2 truncate flex-1 min-w-0">
-                  {(sm.icon || sm.image) && (
+                  {(sm.icon || sm.image || isBlitz) && (
                     <MarketAvatar
-                      src={sm.icon || sm.image}
+                      src={isBlitz ? "/zcash.svg" : (sm.icon || sm.image)}
                       title={outcomeName}
                       category={market.category}
                       size="sm"
@@ -420,7 +420,7 @@ export default function MarketCard({ market, submarkets }: MarketCardProps) {
         <div className="flex items-start justify-between gap-3 mb-4 z-10 relative">
           <div className="flex items-start gap-2.5 flex-1 min-w-0">
             <MarketAvatar
-              src={market.icon || market.image}
+              src={isBlitz ? "/zcash.svg" : (market.icon || market.image)}
               title={market.title}
               category={market.category}
               size="md"

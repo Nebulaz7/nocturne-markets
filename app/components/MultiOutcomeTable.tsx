@@ -88,7 +88,11 @@ export function MultiOutcomeTable({
               {/* Outcome Title & Pot Subtext */}
               <div className="flex items-center gap-3 flex-1 min-w-0 pr-2">
                 <MarketAvatar
-                  src={sm.icon || sm.image}
+                  src={
+                    sm.id.startsWith("blitz-") || sm.title?.toLowerCase().includes("blitz")
+                      ? "/zcash.svg"
+                      : (sm.icon || sm.image)
+                  }
                   title={outcomeName}
                   size="md"
                 />

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback, useRef } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import Navbar from "@/app/components/Navbar";
 import Footer from "@/app/components/Footer";
@@ -187,8 +188,14 @@ export default function BlitzPage() {
 
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-[#1c120c] border border-[#ea580c]/40 flex items-center justify-center text-[#fb923c] shrink-0">
-                      <Zap className="w-5 h-5 fill-[#fb923c]/20" />
+                    <div className="w-10 h-10 rounded-xl bg-[#1c120c] border border-[#ea580c]/40 flex items-center justify-center p-2 shrink-0">
+                      <Image
+                        src="/zcash.svg"
+                        alt="Zcash Logo"
+                        width={24}
+                        height={24}
+                        className="w-6 h-6 object-contain"
+                      />
                     </div>
                     <div>
                       <div className="flex items-center gap-2 flex-wrap">

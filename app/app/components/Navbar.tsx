@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { MyBetsDrawer } from "@/components/MyBetsDrawer";
 import { getBetReceipts } from "@/lib/vault";
+import { parsePolymarketUrl } from "@/lib/polymarket_url";
 
 export default function Navbar() {
   const router = useRouter();
@@ -86,13 +87,50 @@ export default function Navbar() {
     // Close mobile menu if open
     setIsMobileMenuOpen(false);
 
-    // Zero-leak URL teleporter: if user pasted a polymarket URL, teleport immediately
-    if (query.includes("polymarket.com")) {
-      const cleanUrl = query.startsWith("http") ? query : `https://${query}`;
-      router.push(`/${cleanUrl}`);
-    } else {
-      router.push(`/?q=${encodeURIComponent(query)}`);
+    // If query is a Blitz demo market alias
+    const lower = query.toLowerCase();
+    if (lower === "blitz" || lower === "blitz-zec" || lower.includes("blitz")) {
+      router.push("/blitz");
+      return;
     }
+
+    // Zero-leak URL teleporter: if user pasted a polymarket URL, path, or slug
+    const isPolymarket =
+      query.includes("polymarket.com") ||
+      query.startsWith("http://") ||
+      query.startsWith("https://") ||
+      query.startsWith("event/") ||
+      query.startsWith("/event/") ||
+      query.startsWith("market/") ||
+      query.startsWith("/market/");
+
+    if (isPolymarket) {
+      const parsed = parsePolymarketUrl(query);
+      if (parsed.sanitized) {
+        // If it's a specific event and bracket
+        if (parsed.eventSlug && parsed.marketSlug && parsed.isExplicitMarket) {
+          router.push(
+            `/event/${encodeURIComponent(parsed.eventSlug)}?sub=${encodeURIComponent(parsed.marketSlug)}`
+          );
+          return;
+        }
+        // If it's a multi-outcome event slug
+        if (parsed.eventSlug && !parsed.isExplicitMarket) {
+          router.push(`/event/${encodeURIComponent(parsed.eventSlug)}`);
+          return;
+        }
+        // If it's an explicit single market slug
+        if (parsed.marketSlug && parsed.isExplicitMarket) {
+          router.push(`/market/${encodeURIComponent(parsed.marketSlug)}`);
+          return;
+        }
+        // Otherwise route to the teleporter catch-all route [...polyUrl]
+        router.push(`/${parsed.sanitized}`);
+        return;
+      }
+    }
+
+    router.push(`/?q=${encodeURIComponent(query)}`);
   };
 
   const openMobileSearch = () => {

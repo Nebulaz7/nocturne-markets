@@ -127,7 +127,15 @@ export default function MarketAvatar({
           decoding="async"
           onLoad={() => setIsLoaded(true)}
           onError={() => setHasError(true)}
-          className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-300 ${
+          className={`absolute inset-0 w-full h-full ${
+            cleanSrc.endsWith(".svg")
+              ? size === "sm"
+                ? "object-contain p-0.5"
+                : size === "lg"
+                ? "object-contain p-2"
+                : "object-contain p-1.5"
+              : "object-cover"
+          } transition-opacity duration-300 ${
             isLoaded ? "opacity-100" : "opacity-0"
           }`}
         />

@@ -371,8 +371,8 @@ export async function ensureActiveBlitzMarket(
     close_time: closeTime,
     drand_round: drandRound,
     pot_address: potAddress,
-    image: "https://z.cash/wp-content/uploads/2023/12/zcash-logo-round-black.png",
-    icon: "https://z.cash/wp-content/uploads/2023/12/zcash-logo-round-black.png",
+    image: "/zcash.svg",
+    icon: "/zcash.svg",
   });
 
   console.log(

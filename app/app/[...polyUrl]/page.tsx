@@ -1,5 +1,7 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
+import Navbar from "@/app/components/Navbar";
+import Footer from "@/app/components/Footer";
 import {
   parsePolymarketUrl,
   matchPolymarketUrl,
@@ -25,7 +27,12 @@ export default async function PolymarketTeleportPage({
   const { polyUrl } = await params;
   const rawPath = (polyUrl || []).join("/");
 
-  // Fetch pre-indexed active markets from Coordinator
+  // 1. Direct Blitz route alias
+  if (rawPath.toLowerCase().includes("blitz")) {
+    redirect("/blitz");
+  }
+
+  // 2. Fetch pre-indexed active markets from Coordinator
   let markets: MarketSummary[] = [];
   try {
     const res = await fetch(`${COORDINATOR_URL}/api/markets`, {
@@ -41,18 +48,118 @@ export default async function PolymarketTeleportPage({
 
   const match = matchPolymarketUrl(rawPath, markets);
 
-  // If matched to a single market, teleport directly!
+  // 3. If matched to a single market, redirect directly to mirrored market view
   if (match.matched && match.type === "SINGLE_MARKET" && match.market) {
-    redirect(`/market/${match.market.id}`);
+    if (match.market.event_slug && match.market.event_slug !== "blitz-market") {
+      redirect(
+        `/event/${encodeURIComponent(match.market.event_slug)}?sub=${encodeURIComponent(
+          match.market.slug || match.market.id
+        )}`
+      );
+    } else {
+      redirect(`/market/${encodeURIComponent(match.market.id)}`);
+    }
   }
 
+  // 4. If matched to a multi-outcome event, redirect directly to mirrored event view
+  if (
+    match.matched &&
+    match.type === "MULTI_MARKET" &&
+    match.subMarkets &&
+    match.subMarkets.length > 0
+  ) {
+    const targetSlug =
+      match.parsed.eventSlug ||
+      match.subMarkets[0].event_slug ||
+      match.subMarkets[0].slug ||
+      match.subMarkets[0].id;
+
+    if (targetSlug) {
+      if (match.parsed.marketSlug && match.parsed.isExplicitMarket) {
+        redirect(
+          `/event/${encodeURIComponent(targetSlug)}?sub=${encodeURIComponent(
+            match.parsed.marketSlug
+          )}`
+        );
+      } else {
+        redirect(`/event/${encodeURIComponent(targetSlug)}`);
+      }
+    }
+  }
+
+  // 5. Coordinator fallback query if in-memory match was not found
+  const targetQuery =
+    match.parsed.eventSlug ||
+    match.parsed.marketSlug ||
+    match.parsed.sanitized;
+
+  if (targetQuery) {
+    // Try market query by ID or slug
+    try {
+      const res = await fetch(
+        `${COORDINATOR_URL}/api/markets/${encodeURIComponent(targetQuery)}`,
+        { next: { revalidate: 10 } }
+      );
+      if (res.ok) {
+        const data = await res.json();
+        if (data.market) {
+          if (data.market.event_slug && data.market.event_slug !== "blitz-market") {
+            redirect(`/event/${encodeURIComponent(data.market.event_slug)}`);
+          } else {
+            redirect(`/market/${encodeURIComponent(data.market.id)}`);
+          }
+        }
+      }
+    } catch {}
+
+    // Try event query by event_slug
+    try {
+      const eventRes = await fetch(
+        `${COORDINATOR_URL}/api/markets?event_slug=${encodeURIComponent(targetQuery)}`,
+        { next: { revalidate: 10 } }
+      );
+      if (eventRes.ok) {
+        const eventData = await eventRes.json();
+        if (eventData.markets && eventData.markets.length > 0) {
+          redirect(`/event/${encodeURIComponent(targetQuery)}`);
+        }
+      }
+    } catch {}
+
+    // Fuzzy matching against all markets
+    if (markets.length > 0) {
+      const clean = targetQuery.toLowerCase().replace(/[^a-z0-9]/g, "");
+      const matched = markets.find((m) => {
+        const mSlug = (m.slug || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+        const mEvent = (m.event_slug || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+        const mMarket = (m.market_slug || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+        return (
+          mSlug === clean ||
+          mEvent === clean ||
+          mMarket === clean ||
+          (mSlug && clean && (mSlug.includes(clean) || clean.includes(mSlug))) ||
+          (mEvent && clean && (mEvent.includes(clean) || clean.includes(mEvent)))
+        );
+      });
+      if (matched) {
+        if (matched.event_slug && matched.event_slug !== "blitz-market") {
+          redirect(`/event/${encodeURIComponent(matched.event_slug)}`);
+        } else {
+          redirect(`/market/${encodeURIComponent(matched.id)}`);
+        }
+      }
+    }
+  }
+
+  // 6. Warm Ember Obsidian Fallback Not-Found Screen
   return (
-    <div className="min-h-screen bg-black text-zinc-100 flex flex-col items-center justify-center p-6 font-sans">
-      <div className="w-full max-w-2xl bg-zinc-950 border border-zinc-800 rounded-2xl p-8 shadow-2xl">
-        <div className="flex items-center gap-3 mb-6">
-          <div className="w-10 h-10 rounded-xl bg-cyan-950/80 border border-cyan-500/30 flex items-center justify-center text-cyan-400">
+    <div className="min-h-screen bg-[#090706] text-[#fef3c7] flex flex-col font-sans selection:bg-[#fb923c] selection:text-[#431407]">
+      <Navbar />
+      <main className="flex-1 flex flex-col items-center justify-center p-6">
+        <div className="w-full max-w-xl bg-[#0e0a08] border border-[#7c2d12]/40 rounded-2xl p-8 text-center shadow-2xl">
+          <div className="w-12 h-12 rounded-xl bg-[#1c120c] border border-[#7c2d12]/50 text-[#fb923c] flex items-center justify-center mx-auto mb-4 font-mono font-bold text-sm">
             <svg
-              className="w-5 h-5"
+              className="w-6 h-6"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -65,102 +172,36 @@ export default async function PolymarketTeleportPage({
               />
             </svg>
           </div>
-          <div>
-            <h1 className="text-xl font-bold tracking-tight text-white">
-              Nocturne Markets Teleporter
-            </h1>
-            <p className="text-xs font-mono text-zinc-400">
-              Resolved: &ldquo;{match.parsed.sanitized || rawPath}&rdquo;
-            </p>
+
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#431407]/60 border border-[#ea580c]/40 text-[#fb923c] text-xs font-mono mb-4">
+            <span>Teleporter Query: &ldquo;{match.parsed.sanitized || rawPath}&rdquo;</span>
           </div>
-        </div>
 
-        {/* Multi-bracket event picker */}
-        {match.matched && match.type === "MULTI_MARKET" && match.subMarkets && (
-          <div>
-            <div className="flex items-center gap-2 mb-4 px-3 py-1.5 bg-emerald-950/50 border border-emerald-500/30 rounded-lg w-fit">
-              <span className="flex h-2 w-2 rounded-full bg-emerald-400"></span>
-              <span className="text-xs font-mono text-emerald-300">
-                Zero-Leak Match Found ({match.subMarkets.length} binary outcome
-                brackets)
-              </span>
-            </div>
+          <h1 className="text-xl font-heading font-bold text-[#fef3c7] mb-2">
+            Market Not in Pre-Indexed Active Pool
+          </h1>
+          <p className="text-xs font-mono text-[#fef3c7]/60 max-w-md mx-auto mb-6 leading-relaxed">
+            To guarantee zero privacy leaks, Nocturne only matches against
+            pre-indexed bulk pools without querying external Polymarket servers on-demand.
+          </p>
 
-            <p className="text-sm text-zinc-300 mb-4">
-              Select which specific binary outcome bracket you want to trade
-              with shielded ZEC:
-            </p>
-
-            <div className="grid grid-cols-1 gap-2.5 max-h-96 overflow-y-auto">
-              {match.subMarkets.map((sub) => (
-                <Link
-                  key={sub.id}
-                  href={`/market/${sub.id}`}
-                  className="flex items-center justify-between p-4 rounded-xl bg-zinc-900 border border-zinc-800 hover:border-cyan-500/60 hover:bg-zinc-800/50 transition-all group"
-                >
-                  <div className="flex-1 pr-4">
-                    <span className="text-sm font-semibold text-zinc-200 group-hover:text-cyan-300 transition-colors">
-                      {sub.group_item_title || sub.title}
-                    </span>
-                  </div>
-                  {typeof sub.ref_yes_price === "number" && (
-                    <span className="text-xs font-mono font-semibold px-2.5 py-1 rounded-lg bg-zinc-950 border border-zinc-700 text-zinc-300 shrink-0">
-                      {(sub.ref_yes_price * 100).toFixed(0)}¢ YES
-                    </span>
-                  )}
-                </Link>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Not Found Screen */}
-        {(!match.matched || match.type === "NOT_FOUND") && (
-          <div className="text-center py-6">
-            <div className="w-12 h-12 rounded-full bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-500 mx-auto mb-4">
-              <svg
-                className="w-6 h-6"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                />
-              </svg>
-            </div>
-            <h2 className="text-lg font-semibold text-zinc-200 mb-1">
-              Market Not in Pre-Indexed Active Pool
-            </h2>
-            <p className="text-sm text-zinc-400 max-w-md mx-auto mb-6">
-              To guarantee zero privacy leaks, Nocturne only matches against
-              pre-indexed bulk pools without querying Polymarket on-demand.
-            </p>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
             <Link
-              href="/"
-              className="inline-flex items-center gap-2 px-6 py-2.5 bg-zinc-800 hover:bg-zinc-700 text-white font-medium text-sm rounded-xl transition-colors"
+              href="/#markets"
+              className="inline-flex items-center justify-center px-5 py-2.5 rounded-xl bg-[#ea580c] hover:bg-[#c2410c] text-white text-xs font-mono font-bold transition-colors w-full sm:w-auto"
             >
-              <span>Explore All Shielded Markets</span>
-              <svg
-                className="w-4 h-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M14 5l7 7m0 0l-7 7m7-7H3"
-                />
-              </svg>
+              ← Explore All Shielded Markets
+            </Link>
+            <Link
+              href="/blitz"
+              className="inline-flex items-center justify-center px-5 py-2.5 rounded-xl bg-[#1c120c] hover:bg-[#2a1c14] border border-[#7c2d12]/60 text-[#fb923c] text-xs font-mono font-bold transition-colors w-full sm:w-auto"
+            >
+              Try 10m Blitz Demo
             </Link>
           </div>
-        )}
-      </div>
+        </div>
+      </main>
+      <Footer />
     </div>
   );
 }

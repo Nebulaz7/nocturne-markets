@@ -230,7 +230,7 @@ export function MarketTradeView({
           <div className="mb-6">
             <div className="flex items-start gap-3 sm:gap-4 mb-3">
               <MarketAvatar
-                src={market.icon || market.image}
+                src={isBlitz ? "/zcash.svg" : (market.icon || market.image)}
                 title={eventTitle}
                 category={market.category}
                 size="lg"
