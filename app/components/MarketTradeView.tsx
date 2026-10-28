@@ -18,8 +18,8 @@ import { MarketBetSlip } from "./MarketBetSlip";
 import { MyBetsDrawer } from "./MyBetsDrawer";
 import { AuditDrawer } from "./AuditDrawer";
 import type { BetSide } from "@/lib/bet_builder";
-
 import MarketAvatar from "./MarketAvatar";
+import { useNetwork } from "@/context/NetworkContext";
 
 export interface MarketTradeViewProps {
   market: {
@@ -85,6 +85,7 @@ export function MarketTradeView({
   submarkets = [],
   relatedMarkets = [],
 }: MarketTradeViewProps) {
+  const { currency } = useNetwork();
   const [selectedSubmarketId, setSelectedSubmarketId] = useState<string>(
     market.id
   );
@@ -269,7 +270,7 @@ export function MarketTradeView({
             {/* Stats Strip */}
             <div className="flex items-center gap-3 text-xs font-mono text-[#fef3c7]/60 pt-2 border-t border-[#7c2d12]/20">
               <span className="text-[#fef3c7] font-semibold">
-                {totalEventPot > 0 ? `${totalEventPot.toFixed(2)} ZEC Pot` : "0.00 ZEC Pot"}
+                {totalEventPot > 0 ? `${totalEventPot.toFixed(2)} ${currency} Pot` : `0.00 ${currency} Pot`}
               </span>
               {timeRemaining && <span>· {timeRemaining}</span>}
             </div>

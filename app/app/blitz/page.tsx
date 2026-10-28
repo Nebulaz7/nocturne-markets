@@ -11,6 +11,7 @@ import {
   type BlitzMarketItem,
 } from "@/lib/market_api";
 import type { BetSide } from "@/lib/bet_builder";
+import { useNetwork } from "@/context/NetworkContext";
 import {
   Clock,
   Zap,
@@ -23,6 +24,7 @@ import {
 } from "lucide-react";
 
 export default function BlitzPage() {
+  const { currency } = useNetwork();
   const [blitz, setBlitz] = useState<BlitzMarketItem | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -111,7 +113,7 @@ export default function BlitzPage() {
               <span>Markets</span>
             </Link>
             <span className="text-[#7c2d12]">/</span>
-            <span className="text-[#fb923c] font-bold">10M ZEC BLITZ</span>
+            <span className="text-[#fb923c] font-bold">10M {currency} BLITZ</span>
             <span className="px-2 py-0.5 rounded bg-[#431407] text-[#fb923c] border border-[#ea580c]/50 text-[10px] font-mono font-bold uppercase tracking-wider">
               DEMO
             </span>
@@ -225,7 +227,7 @@ export default function BlitzPage() {
                     <div className="text-lg font-bold text-emerald-400 mt-0.5">
                       {multiplier}x
                     </div>
-                    <div className="text-[10px] text-[#fef3c7]/40">TAZ Sponsored</div>
+                    <div className="text-[10px] text-[#fef3c7]/40">{currency} Sponsored</div>
                   </div>
 
                   <div className="p-3 rounded-xl bg-[#140e0b]/70 border border-[#7c2d12]/30">
@@ -247,7 +249,7 @@ export default function BlitzPage() {
                   <div className="p-3 rounded-xl bg-[#140e0b]/70 border border-[#7c2d12]/30">
                     <div className="text-[10px] text-[#fef3c7]/50 uppercase">Total Pot</div>
                     <div className="text-lg font-bold text-[#fef3c7] mt-0.5">
-                      {(blitz.total_pot_zec ?? 0).toFixed(4)} ZEC
+                      {(blitz.total_pot_zec ?? 0).toFixed(4)} {currency}
                     </div>
                     <div className="text-[10px] text-[#fef3c7]/40">Shielded Orchard</div>
                   </div>
@@ -291,7 +293,7 @@ export default function BlitzPage() {
                   <div className="p-3 rounded-xl bg-[#140e0b] border border-[#7c2d12]/20">
                     <div className="text-[#fb923c] font-bold mb-1">Non-Parimutuel Guarantee</div>
                     <div>
-                      Winning tickets receive a fixed {multiplier}x return from the house sponsorship pool, regardless of round volume.
+                      Winning tickets receive a fixed {multiplier}x return from the house sponsorship pool (Max 0.05 {currency} per bet).
                     </div>
                   </div>
                   <div className="p-3 rounded-xl bg-[#140e0b] border border-[#7c2d12]/20">

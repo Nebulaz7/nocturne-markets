@@ -528,7 +528,7 @@ export default function Navbar() {
                 >
                   <span className="font-bold flex items-center gap-2">
                     <span className="w-2 h-2 rounded-full bg-[#fb923c] animate-pulse" />
-                    10M ZEC BLITZ
+                    10M BLITZ
                   </span>
                   <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#431407] text-[#fb923c] border border-[#ea580c]/60 font-bold">
                     1.52x Fixed
@@ -564,7 +564,7 @@ export default function Navbar() {
                     onClick={() => setIsMobileMenuOpen(false)}
                     className="p-2 rounded-lg bg-[#140e0b] border border-[#7c2d12]/30 text-[#fb923c] font-bold hover:border-[#fb923c]/50 transition-colors flex items-center gap-1.5"
                   >
-                    <span>10m ZEC Blitz</span>
+                    <span>10m Blitz</span>
                   </Link>
                   <Link
                     href="/?cat=crypto"

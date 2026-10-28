@@ -34,8 +34,10 @@ import {
   verifyMerkleProof,
 } from "@/lib/merkle";
 import { getBetReceipts } from "@/lib/vault";
+import { useNetwork } from "@/context/NetworkContext";
 
 export default function MarketAuditPage() {
+  const { currency } = useNetwork();
   const params = useParams();
   const marketId = (params?.marketId as string) || "";
 
@@ -372,11 +374,11 @@ export default function MarketAuditPage() {
                   {isSettled ? (
                     <div className="space-y-1">
                       <div className="text-sm font-bold text-[#fef3c7]">
-                        {((audit.total_pot_zats || 0) / 100_000_000).toFixed(4)} ZEC
+                        {((audit.total_pot_zats || 0) / 100_000_000).toFixed(4)} {currency}
                       </div>
                       <div className="text-[10px] text-[#fef3c7]/60 flex items-center justify-between">
-                        <span>YES: {((audit.yes_pot_zats || 0) / 100_000_000).toFixed(2)} ZEC</span>
-                        <span>NO: {((audit.no_pot_zats || 0) / 100_000_000).toFixed(2)} ZEC</span>
+                        <span>YES: {((audit.yes_pot_zats || 0) / 100_000_000).toFixed(2)} {currency}</span>
+                        <span>NO: {((audit.no_pot_zats || 0) / 100_000_000).toFixed(2)} {currency}</span>
                       </div>
                     </div>
                   ) : (
@@ -675,7 +677,7 @@ export default function MarketAuditPage() {
                               </td>
                               <td className="py-3 px-4 text-[#fef3c7]/70">
                                 {c.amount_zec !== null && c.amount_zec !== undefined
-                                  ? `${c.amount_zec.toFixed(4)} ZEC`
+                                  ? `${c.amount_zec.toFixed(4)} ${currency}`
                                   : "SEALED"}
                               </td>
                               <td className="py-3 px-4 text-[#fef3c7]/50">

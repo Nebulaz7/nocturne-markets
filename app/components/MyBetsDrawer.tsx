@@ -25,6 +25,7 @@ import {
 } from "@/lib/vault";
 import { verifyLocalReceipts } from "@/lib/market_api";
 import { AuditDrawer } from "./AuditDrawer";
+import { useNetwork } from "@/context/NetworkContext";
 
 export interface MyBetsDrawerProps {
   isOpen: boolean;
@@ -34,6 +35,7 @@ export interface MyBetsDrawerProps {
 type VaultFilter = "ALL" | "ACTIVE" | "SETTLED";
 
 export function MyBetsDrawer({ isOpen, onClose }: MyBetsDrawerProps) {
+  const { currency } = useNetwork();
   const [receipts, setReceipts] = useState<PreparedBetReceipt[]>([]);
   const [filter, setFilter] = useState<VaultFilter>("ALL");
   const [search, setSearch] = useState("");
@@ -227,7 +229,7 @@ export function MyBetsDrawer({ isOpen, onClose }: MyBetsDrawerProps) {
               Staked
             </span>
             <span className="text-xs sm:text-sm font-bold text-[#fef3c7]">
-              {totalStakedZec.toFixed(2)} ZEC
+              {totalStakedZec.toFixed(2)} {currency}
             </span>
           </div>
 
@@ -348,7 +350,7 @@ export function MyBetsDrawer({ isOpen, onClose }: MyBetsDrawerProps) {
                         {r.side}
                       </span>
                       <span className="text-xs font-mono font-bold text-[#fef3c7]">
-                        {r.amountZec} ZEC
+                        {r.amountZec} {currency}
                       </span>
                     </div>
 

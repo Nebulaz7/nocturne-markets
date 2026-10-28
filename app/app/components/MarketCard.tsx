@@ -4,6 +4,7 @@ import React, { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Shield, Zap, Clock } from "lucide-react";
 import MarketAvatar from "../../components/MarketAvatar";
+import { useNetwork } from "@/context/NetworkContext";
 
 export interface MarketItem {
   id: string;
@@ -74,12 +75,16 @@ function getEventBadge(title: string, category?: string | null): string {
 
 export default function MarketCard({ market, submarkets }: MarketCardProps) {
   const router = useRouter();
+  const { currency } = useNetwork();
   const cardRef = useRef<HTMLDivElement>(null);
   const [isExpanded, setIsExpanded] = useState(false);
   const [isNavigating, setIsNavigating] = useState(false);
 
   const isMultiOutcome = Boolean(submarkets && submarkets.length > 1);
-  const isBlitz = market.id?.startsWith("blitz-");
+  const isBlitz =
+    market.id?.startsWith("blitz-") ||
+    market.slug?.startsWith("blitz-") ||
+    market.title?.toLowerCase().includes("blitz");
 
   // Format close time or drand round
   const formatTimeRemaining = (closeTime?: number) => {
@@ -118,7 +123,9 @@ export default function MarketCard({ market, submarkets }: MarketCardProps) {
 
   const handleCardClick = (targetId?: string) => {
     triggerLoader();
-    if (isMultiOutcome && market.event_slug && market.event_slug !== "blitz-market") {
+    if (isBlitz) {
+      router.push("/blitz");
+    } else if (isMultiOutcome && market.event_slug && market.event_slug !== "blitz-market") {
       const query = targetId ? `?sub=${targetId}` : "";
       router.push(`/event/${market.event_slug}${query}`);
     } else {
@@ -129,7 +136,9 @@ export default function MarketCard({ market, submarkets }: MarketCardProps) {
   const handleTradeYes = (e: React.MouseEvent, targetId?: string) => {
     e.stopPropagation();
     triggerLoader();
-    if (isMultiOutcome && market.event_slug && market.event_slug !== "blitz-market") {
+    if (isBlitz) {
+      router.push("/blitz?side=YES");
+    } else if (isMultiOutcome && market.event_slug && market.event_slug !== "blitz-market") {
       router.push(`/event/${market.event_slug}?side=YES&sub=${targetId || market.id}`);
     } else {
       router.push(`/market/${targetId || market.slug || market.id}?side=YES`);
@@ -139,7 +148,9 @@ export default function MarketCard({ market, submarkets }: MarketCardProps) {
   const handleTradeNo = (e: React.MouseEvent, targetId?: string) => {
     e.stopPropagation();
     triggerLoader();
-    if (isMultiOutcome && market.event_slug && market.event_slug !== "blitz-market") {
+    if (isBlitz) {
+      router.push("/blitz?side=NO");
+    } else if (isMultiOutcome && market.event_slug && market.event_slug !== "blitz-market") {
       router.push(`/event/${market.event_slug}?side=NO&sub=${targetId || market.id}`);
     } else {
       router.push(`/market/${targetId || market.slug || market.id}?side=NO`);
@@ -311,7 +322,7 @@ export default function MarketCard({ market, submarkets }: MarketCardProps) {
             <span>
               Pot:{" "}
               <strong className="text-[#fef3c7] font-bold">
-                {combinedPotZec > 0 ? combinedPotZec.toFixed(2) : "0.00"} ZEC
+                {combinedPotZec > 0 ? combinedPotZec.toFixed(2) : "0.00"} {currency}
               </strong>
             </span>
           </div>
@@ -363,7 +374,7 @@ export default function MarketCard({ market, submarkets }: MarketCardProps) {
               <div className="flex items-center gap-1.5 flex-wrap">
                 <span className="inline-flex items-center gap-1 text-[10px] font-mono font-bold px-2 py-0.5 rounded-md bg-[#431407] text-[#fb923c] border border-[#ea580c]/60">
                   <Zap className="w-2.5 h-2.5 text-[#fb923c]" />
-                  <span>10M ZEC BLITZ</span>
+                  <span>10M {currency} BLITZ</span>
                 </span>
                 <span className="inline-flex items-center text-[10px] font-mono font-bold px-1.5 py-0.5 rounded-md bg-[#12281c] text-[#22c55e] border border-[#22c55e]/30">
                   1.52x
@@ -476,7 +487,7 @@ export default function MarketCard({ market, submarkets }: MarketCardProps) {
                 <>
                   Pot:{" "}
                   <strong className="text-[#fef3c7] font-bold">
-                    {potZec > 0 ? potZec.toFixed(2) : "0.00"} ZEC
+                    {potZec > 0 ? potZec.toFixed(2) : "0.00"} {currency}
                   </strong>
                 </>
               )}

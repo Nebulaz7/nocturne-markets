@@ -17,6 +17,7 @@ import {
 import { saveBetReceipt, getBetReceipt } from "@/lib/vault";
 import { verifyLocalReceipts } from "@/lib/market_api";
 import MarketAvatar from "./MarketAvatar";
+import { useNetwork } from "@/context/NetworkContext";
 
 export interface MarketBetSlipProps {
   market: {
@@ -64,7 +65,13 @@ export function MarketBetSlip({
   onSideChange,
   relatedMarkets = [],
 }: MarketBetSlipProps) {
-  const [stakeAmount, setStakeAmount] = useState<string>("0.5");
+  const { currency } = useNetwork();
+  const isBlitz =
+    market.id.startsWith("blitz-") ||
+    market.market_type === "SPONSORED_DEMO" ||
+    market.title.toLowerCase().includes("blitz");
+
+  const [stakeAmount, setStakeAmount] = useState<string>(isBlitz ? "0.05" : "0.5");
   const [returnAddress, setReturnAddress] = useState<string>(DEMO_TESTNET_UA);
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
   const [receipt, setReceipt] = useState<PreparedBetReceipt | null>(null);
@@ -85,8 +92,6 @@ export function MarketBetSlip({
   const rawYesPrice = market.ref_yes_price ?? 0.5;
   const yesPrice = Math.max(0.01, Math.min(0.99, rawYesPrice));
   const noPrice = Math.max(0.01, Math.min(0.99, 1 - yesPrice));
-
-  const isBlitz = market.id.startsWith("blitz-");
 
   // ========================================================
   // EXACT PARIMUTUEL PAYOUT CALCULATION (Fee-on-Profit Math)
@@ -155,6 +160,10 @@ export function MarketBetSlip({
 
   // Preset chip increment
   const handleAddPreset = (val: number) => {
+    if (isBlitz) {
+      setStakeAmount(val.toString());
+      return;
+    }
     const current = parseFloat(stakeAmount) || 0;
     setStakeAmount((current + val).toFixed(2).replace(/\.00$/, ""));
   };
@@ -164,7 +173,12 @@ export function MarketBetSlip({
     setError(null);
     const parsed = parseFloat(stakeAmount);
     if (isNaN(parsed) || parsed <= 0) {
-      setError("Enter a stake amount greater than 0 ZEC");
+      setError(`Enter a stake amount greater than 0 ${currency}`);
+      return;
+    }
+
+    if (isBlitz && parsed > 0.05) {
+      setError(`Maximum Blitz stake is 0.05 ${currency} (House pool limit)`);
       return;
     }
 
@@ -331,7 +345,7 @@ export function MarketBetSlip({
                 />
               </div>
               <span className="text-xs font-mono text-[#fef3c7]/80 text-center">
-                <strong className="text-[#fef3c7]">{receipt.amountZec} ZEC</strong> on{" "}
+                <strong className="text-[#fef3c7]">{receipt.amountZec} {currency}</strong> on{" "}
                 <strong
                   className={
                     receipt.side === "YES" ? "text-[#22c55e]" : "text-[#f87171]"
@@ -431,8 +445,8 @@ export function MarketBetSlip({
             {/* Stake Input */}
             <div>
               <div className="flex items-center justify-between text-xs font-mono text-[#fef3c7]/60 mb-1">
-                <span>Amount</span>
-                <span className="text-[#fb923c] font-bold">ZEC</span>
+                <span>Amount {isBlitz ? `(Max 0.05 ${currency})` : ""}</span>
+                <span className="text-[#fb923c] font-bold">{currency}</span>
               </div>
 
               <div className="relative flex items-center rounded-xl bg-[#140e0b] border border-[#7c2d12]/40 focus-within:border-[#fb923c] transition-colors">
@@ -440,6 +454,7 @@ export function MarketBetSlip({
                   type="number"
                   step="0.01"
                   min="0.01"
+                  max={isBlitz ? "0.05" : undefined}
                   value={stakeAmount}
                   onChange={(e) => setStakeAmount(e.target.value)}
                   placeholder="0.00"
@@ -447,17 +462,17 @@ export function MarketBetSlip({
                 />
                 <button
                   type="button"
-                  onClick={() => setStakeAmount("0")}
+                  onClick={() => setStakeAmount(isBlitz ? "0.05" : "0")}
                   className="pr-3 text-xs font-mono text-[#fef3c7]/40 hover:text-[#fb923c] cursor-pointer"
                 >
-                  Clear
+                  {isBlitz ? "Max" : "Clear"}
                 </button>
               </div>
 
               {/* Preset Chips */}
               <div className="flex items-center gap-1.5 mt-2 flex-wrap">
-                {(isBlitz || market.market_type === "SPONSORED_DEMO"
-                  ? [0.05, 0.1, 0.5, 1.0]
+                {(isBlitz
+                  ? [0.01, 0.02, 0.05]
                   : [0.1, 0.5, 1.0, 5.0]
                 ).map((preset) => (
                   <button
@@ -466,7 +481,7 @@ export function MarketBetSlip({
                     onClick={() => handleAddPreset(preset)}
                     className="py-1 px-3 rounded-lg bg-[#1c120c] hover:bg-[#27150d] active:bg-[#140e0b] border border-[#7c2d12]/30 text-xs font-mono text-[#fef3c7]/80 hover:text-[#fb923c] transition-colors cursor-pointer"
                   >
-                    +{preset}
+                    {isBlitz ? `${preset}` : `+${preset}`}
                   </button>
                 ))}
               </div>
@@ -490,7 +505,7 @@ export function MarketBetSlip({
               </span>
               <div className="flex items-baseline gap-2">
                 <span className="text-lg font-bold text-[#22c55e]">
-                  {parimutuelEstimate.payoutZec} ZEC
+                  {parimutuelEstimate.payoutZec} {currency}
                 </span>
                 <span className="text-xs text-[#fb923c] font-bold">
                   ({parimutuelEstimate.multiplier}x{isBlitz || market.payout_multiplier ? " Fixed" : ""})
@@ -507,10 +522,10 @@ export function MarketBetSlip({
             {/* Action Button */}
             <button
               type="button"
-              disabled={isGenerating || market.status !== "OPEN"}
+              disabled={isGenerating || market.status?.toUpperCase() !== "OPEN"}
               onClick={handlePlaceBet}
               className={`w-full py-3.5 px-4 rounded-xl font-heading font-bold text-sm tracking-wide transition-all cursor-pointer shadow-none outline-none border-none flex items-center justify-center gap-2 ${
-                market.status !== "OPEN"
+                market.status?.toUpperCase() !== "OPEN"
                   ? "bg-[#1c120c] text-[#fef3c7]/30 cursor-not-allowed"
                   : "bg-[#ea580c] hover:bg-[#c2410c] active:bg-[#9a3412] text-white"
               }`}
@@ -520,10 +535,10 @@ export function MarketBetSlip({
                   <RefreshCw className="w-4 h-4 animate-spin text-white" />
                   <span>Preparing Bet...</span>
                 </>
-              ) : market.status !== "OPEN" ? (
+              ) : market.status?.toUpperCase() !== "OPEN" ? (
                 <span>Market Closed</span>
               ) : (
-                <span>Trade {selectedSide === "YES" ? "Yes" : "No"}</span>
+                <span>Trade {selectedSide === "YES" ? (isBlitz ? "Up (Yes)" : "Yes") : (isBlitz ? "Down (No)" : "No")}</span>
               )}
             </button>
           </div>

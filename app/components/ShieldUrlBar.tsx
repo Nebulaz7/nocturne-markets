@@ -7,6 +7,7 @@ import {
   type MarketSummary,
   type PolymarketMatchResult,
 } from "@/lib/polymarket_url";
+import { useNetwork } from "@/context/NetworkContext";
 
 interface ShieldUrlBarProps {
   markets: MarketSummary[];
@@ -19,6 +20,7 @@ export function ShieldUrlBar({
   onSelectMarket,
   className = "",
 }: ShieldUrlBarProps) {
+  const { currency } = useNetwork();
   const [inputValue, setInputValue] = useState("");
   const [isFocused, setIsFocused] = useState(false);
 
@@ -79,7 +81,7 @@ export function ShieldUrlBar({
               onChange={(e) => setInputValue(e.target.value)}
               onFocus={() => setIsFocused(true)}
               onBlur={() => setTimeout(() => setIsFocused(false), 250)}
-              placeholder="Paste any Polymarket URL or slug to trade privately with shielded ZEC..."
+              placeholder={`Paste any Polymarket URL or slug to trade privately with shielded ${currency}...`}
               className="w-full bg-transparent text-zinc-100 placeholder-zinc-500 text-sm md:text-base outline-none font-medium"
             />
           </div>
@@ -170,7 +172,7 @@ export function ShieldUrlBar({
                     Multi-Outcome Event
                   </span>
                   <h3 className="text-sm font-semibold text-zinc-200 mt-1">
-                    Select a binary outcome bracket to trade with shielded ZEC:
+                    Select a binary outcome bracket to trade with shielded {currency}:
                   </h3>
                 </div>
                 <span className="text-xs text-zinc-400 font-mono">

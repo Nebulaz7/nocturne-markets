@@ -25,10 +25,12 @@ import {
 } from "@/lib/vault";
 import { verifyLocalReceipts } from "@/lib/market_api";
 import { AuditDrawer } from "@/components/AuditDrawer";
+import { useNetwork } from "@/context/NetworkContext";
 
 type VaultFilter = "ALL" | "ACTIVE" | "SETTLED";
 
 export default function PrivateVaultPage() {
+  const { currency } = useNetwork();
   const [receipts, setReceipts] = useState<PreparedBetReceipt[]>([]);
   const [filter, setFilter] = useState<VaultFilter>("ALL");
   const [search, setSearch] = useState("");
@@ -222,7 +224,7 @@ export default function PrivateVaultPage() {
                   Staked
                 </span>
                 <span className="text-sm font-bold text-[#fef3c7]">
-                  {totalStakedZec.toFixed(2)} ZEC
+                  {totalStakedZec.toFixed(2)} {currency}
                 </span>
               </div>
 
@@ -345,7 +347,7 @@ export default function PrivateVaultPage() {
                           {r.side}
                         </span>
                         <span className="text-sm font-mono font-bold text-[#fef3c7]">
-                          {r.amountZec} ZEC
+                          {r.amountZec} {currency}
                         </span>
                       </div>
 

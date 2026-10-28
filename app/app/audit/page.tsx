@@ -21,10 +21,12 @@ import { fetchMarkets, type MarketAuditPackage } from "@/lib/market_api";
 import { getBetReceipts, type PreparedBetReceipt } from "@/lib/vault";
 import { generateMerkleProof, type MerkleProofResult } from "@/lib/merkle";
 import type { MarketItem } from "@/app/components/MarketCard";
+import { useNetwork } from "@/context/NetworkContext";
 
 type StatusFilter = "ALL" | "OPEN" | "SETTLED";
 
 export default function AuditExplorerPage() {
+  const { currency } = useNetwork();
   const [markets, setMarkets] = useState<MarketItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -400,7 +402,7 @@ export default function AuditExplorerPage() {
                         <span className="text-[#fef3c7]/40">Parimutuel Pot</span>
                         <span className="font-bold text-[#fef3c7]">
                           {isSettled
-                            ? `${((m.total_pot_zats || 0) / 100_000_000).toFixed(2)} ZEC`
+                            ? `${((m.total_pot_zats || 0) / 100_000_000).toFixed(2)} ${currency}`
                             : "Sealed Pool"}
                         </span>
                       </div>

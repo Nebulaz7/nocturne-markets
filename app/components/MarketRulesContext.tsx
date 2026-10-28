@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { Shield, Lock, FileText, ExternalLink, Info } from "lucide-react";
+import { useNetwork } from "@/context/NetworkContext";
 
 export interface MarketRulesContextProps {
   marketTitle: string;
@@ -28,6 +29,7 @@ export function MarketRulesContext({
   marketType,
   onOpenAudit,
 }: MarketRulesContextProps) {
+  const { currency } = useNetwork();
   const [activeTab, setActiveTab] = useState<"rules" | "context">("rules");
 
   const isBlitzDemo =
@@ -90,7 +92,7 @@ export function MarketRulesContext({
               </div>
 
               <p className="text-xs text-[#fef3c7]/80">
-                Winning tickets receive a guaranteed 1.52x return sponsored by the house TAZ reserve. Settled automatically on-chain by the coordinator settlement worker upon reaching the 10-minute closing timestamp.
+                Winning tickets receive a guaranteed 1.52x return sponsored by the house {currency} reserve. Settled automatically on-chain by the coordinator settlement worker upon reaching the 10-minute closing timestamp.
               </p>
 
               <div className="pt-2 text-xs font-mono text-[#fef3c7]/50 flex items-center gap-4">

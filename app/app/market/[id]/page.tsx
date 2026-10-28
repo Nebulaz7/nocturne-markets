@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import Navbar from "@/app/components/Navbar";
 import Footer from "@/app/components/Footer";
 import { MarketTradeView } from "@/components/MarketTradeView";
@@ -19,6 +19,10 @@ interface MarketPageProps {
 
 export default async function MarketDetailPage({ params }: MarketPageProps) {
   const { id } = await params;
+
+  if (id === "blitz" || id === "blitz-zec" || id.startsWith("blitz-")) {
+    redirect("/blitz");
+  }
 
   let market: any = null;
   let submarkets: any[] = [];

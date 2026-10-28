@@ -129,8 +129,9 @@ export class CoordinatorDatabase {
       SELECT * FROM markets 
       WHERE LOWER(market_slug) = ? 
          OR LOWER(event_slug) = ? 
-         OR LOWER(slug) = ? 
+         OR LOWER(slug) = ?
          OR id = ?
+      ORDER BY CASE WHEN status = 'OPEN' THEN 0 ELSE 1 END, created_at DESC
       LIMIT 1
     `);
     const row = stmt.get(clean, clean, clean, slug) as any;

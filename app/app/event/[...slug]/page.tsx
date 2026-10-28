@@ -1,3 +1,4 @@
+import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import Navbar from "@/app/components/Navbar";
 import Footer from "@/app/components/Footer";
@@ -19,6 +20,10 @@ interface EventPageProps {
 export default async function PolymarketEventPage({ params }: EventPageProps) {
   const { slug } = await params;
   const eventSlug = (slug || [])[0] || "";
+
+  if (eventSlug === "blitz" || eventSlug === "blitz-market" || eventSlug.startsWith("blitz-")) {
+    redirect("/blitz");
+  }
 
   let market: any = null;
   let submarkets: any[] = [];

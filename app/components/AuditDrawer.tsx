@@ -16,6 +16,7 @@ import {
   computeMerkleRootClient,
 } from "@/lib/merkle";
 import { getBetReceipts } from "@/lib/vault";
+import { useNetwork } from "@/context/NetworkContext";
 
 export interface AuditDrawerProps {
   isOpen: boolean;
@@ -63,6 +64,7 @@ export function AuditDrawer({
   marketTitle,
   initialCommitment,
 }: AuditDrawerProps) {
+  const { currency } = useNetwork();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [audit, setAudit] = useState<AuditData | null>(null);
@@ -338,7 +340,7 @@ export function AuditDrawer({
                       Total Pot
                     </span>
                     <span className="font-bold text-[#fef3c7]">
-                      {(audit.total_pot_zats / 100_000_000).toFixed(2)} ZEC
+                      {(audit.total_pot_zats / 100_000_000).toFixed(2)} {currency}
                     </span>
                   </div>
                   <div className="p-2.5 rounded-xl bg-[#12281c] border border-[#22c55e]/30">
@@ -346,7 +348,7 @@ export function AuditDrawer({
                       YES Pot
                     </span>
                     <span className="font-bold text-[#22c55e]">
-                      {(audit.yes_pot_zats / 100_000_000).toFixed(2)} ZEC
+                      {(audit.yes_pot_zats / 100_000_000).toFixed(2)} {currency}
                     </span>
                   </div>
                   <div className="p-2.5 rounded-xl bg-[#361212] border border-[#f87171]/30">
@@ -354,7 +356,7 @@ export function AuditDrawer({
                       NO Pot
                     </span>
                     <span className="font-bold text-[#f87171]">
-                      {(audit.no_pot_zats / 100_000_000).toFixed(2)} ZEC
+                      {(audit.no_pot_zats / 100_000_000).toFixed(2)} {currency}
                     </span>
                   </div>
                 </div>
@@ -400,7 +402,7 @@ export function AuditDrawer({
                           >
                             {vb.side}
                           </span>
-                          <span>{vb.amountZec} ZEC</span>
+                          <span>{vb.amountZec} {currency}</span>
                           <span className="text-[#fef3c7]/40">
                             {vb.commitment.slice(0, 8)}...
                           </span>
@@ -579,7 +581,7 @@ export function AuditDrawer({
                                 </span>
                               </td>
                               <td className="p-2.5 text-[#fef3c7]">
-                                {c.amount_zec} ZEC
+                                {c.amount_zec} {currency}
                               </td>
                               <td className="p-2.5 text-right">
                                 <button

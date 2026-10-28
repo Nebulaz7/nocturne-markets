@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Plus_Jakarta_Sans, Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import TopLoader from "./components/TopLoader";
+import { NetworkProvider } from "@/context/NetworkContext";
+import NetworkFloatingToggle from "./components/NetworkFloatingToggle";
 
 const plusJakartaSans = Plus_Jakarta_Sans({
   variable: "--font-heading",
@@ -44,8 +46,11 @@ export default function RootLayout({
       className={`${inter.variable} ${plusJakartaSans.variable} ${jetbrainsMono.variable} h-full antialiased dark`}
     >
       <body className="min-h-full flex flex-col font-sans bg-black text-zinc-100">
-        <TopLoader />
-        {children}
+        <NetworkProvider>
+          <TopLoader />
+          {children}
+          <NetworkFloatingToggle />
+        </NetworkProvider>
       </body>
     </html>
   );

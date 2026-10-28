@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import MarketAvatar from "./MarketAvatar";
+import { useNetwork } from "@/context/NetworkContext";
 
 export interface SubmarketItem {
   id: string;
@@ -48,6 +49,7 @@ export function MultiOutcomeTable({
   activeSide,
   onSelect,
 }: MultiOutcomeTableProps) {
+  const { currency } = useNetwork();
   const [showResolved, setShowResolved] = useState(false);
 
   // Sort submarkets descending by probability
@@ -99,7 +101,7 @@ export function MultiOutcomeTable({
                     {outcomeName}
                   </span>
                   <span className="text-[11px] font-mono text-[#fef3c7]/40 block mt-0.5">
-                    {potZec > 0 ? `${potZec.toFixed(2)} ZEC Pot` : "Parimutuel Pool"}
+                    {potZec > 0 ? `${potZec.toFixed(2)} ${currency} Pot` : "Parimutuel Pool"}
                   </span>
                 </div>
               </div>
