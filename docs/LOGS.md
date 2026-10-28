@@ -412,6 +412,7 @@ Before crossing into Phase 2, we upgraded our core Zcash memo and settlement arc
 ## 17. Polymarket Prediction Title Images Pipeline & Progressive Lazy Loading
 
 ### Summary of Completed Work
+
 Implemented real Polymarket prediction title image/icon retrieval and progressive lazy loading across the application, optimizing performance and eliminating layout shifts:
 
 1. **Database Schema & Ingestion Pipeline**:
@@ -446,6 +447,7 @@ Implemented real Polymarket prediction title image/icon retrieval and progressiv
 ## 18. Private Vault Modernization, Dedicated Page & Warm Ember Obsidian Theme Upgrade
 
 ### Summary of Completed Work
+
 Upgraded the Private Vault experience across the application, adhering strictly to the Nocturne Warm Ember / Obsidian aesthetic, eliminating emoji and secondary text clutter, and letting the structured layout do the explaining:
 
 1. **Private Vault Sidebar / Drawer ([`app/components/MyBetsDrawer.tsx`](file:///c:/Users/PC/Desktop/Coding/nocture-markets/app/components/MyBetsDrawer.tsx))**:
@@ -474,6 +476,7 @@ Upgraded the Private Vault experience across the application, adhering strictly 
 ## 20. Interactive `/pitch` Motion Design Page & 2-Minute Demo Flow
 
 ### Summary of Completed Work
+
 Replaced third-party AI video generation with an in-engine interactive motion presentation deck at [`app/app/pitch/page.tsx`](file:///c:/Users/PC/Desktop/Coding/nocture-markets/app/app/pitch/page.tsx), enabling pristine 60fps screen recording aligned to the 2-minute ElevenLabs voiceover:
 
 1. **5 Synced Presentation Scenes**:
@@ -483,12 +486,12 @@ Replaced third-party AI video generation with an in-engine interactive motion pr
    - **Scene 4 (0:50 – 1:05) — Under The Hood**: Cryptographic breakdown of the `NOC2:` 500-char memo structure, drand Quicknet timelock, and TweetNaCl boxed return UA.
    - **Scene 5 (1:05 – 2:00) — Live Walkthrough Bridge**: 3 quick-launch doors to transition into screen recording the live app: Homepage (`/`), Blitz Demo (`/blitz`), and Private Vault (`/vault`).
 
-2. **Presenter HUD & Screen Recording Features**:
-   - **Auto-Play Mode**: Automatically synchronizes scene transitions with the exact voiceover duration (`0:00 / 2:00`).
-   - **Keyboard Navigation**: `←` / `→` arrow keys, spacebar (play/pause), `T` (toggle teleprompter subtitles), and `F` (fullscreen mode).
-   - **Design Integrity**: Strict compliance with the Warm Ember Obsidian palette (`#090706` base, `#0e0a08` card surface, `#7c2d12` rust border, `#fb923c` ember accent, `#fef3c7` cream text) and zero emojis.
+3. **Minimalist Layout Compliance (No Secondary Text / No Media Player Clutter)**:
+   - Stripped all secondary labels, helper descriptions, and badge tags across all 5 scenes, letting the structured layout and data do the talking.
+   - Removed subtitle caption box and player controls (`Play`, `Pause`, elapsed timer, scrubber bar) for an ultra-clean, borderless recording canvas.
+   - Preserved seamless keyboard navigation (`ArrowRight` / `Space` to advance, `ArrowLeft` to go back, `F` for fullscreen) and click-to-advance.
 
-3. **Verification**:
+4. **Verification**:
    - `pnpm --dir app exec tsc --noEmit` exited cleanly with code `0`.
    - All 6 unit and integration test suites passed (`100% PASS`).
 
@@ -508,5 +511,3 @@ Replaced third-party AI video generation with an in-engine interactive motion pr
    - Final threat model whitepaper / leak audit (`docs/LEAK_AUDIT.md`).
    - Screen record 2-minute demo using `/pitch` + live app walkthrough with ElevenLabs audio.
    - Complete ZECATHON submission.
-
-
