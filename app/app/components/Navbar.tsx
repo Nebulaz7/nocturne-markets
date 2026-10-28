@@ -157,6 +157,15 @@ export default function Navbar() {
                   10+
                 </span>
               </Link>
+              <Link
+                href="/blitz"
+                className="text-[#fb923c] hover:text-[#fed7aa] transition-colors py-1 flex items-center gap-1.5"
+              >
+                <span>BLITZ</span>
+                <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-[#431407] text-[#fb923c] border border-[#ea580c]/60 font-mono font-bold">
+                  10m
+                </span>
+              </Link>
 
               {/* MORE Dropdown */}
               <div className="relative" ref={moreRef}>
@@ -511,6 +520,20 @@ export default function Navbar() {
                     12 Active
                   </span>
                 </Link>
+
+                <Link
+                  href="/blitz"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="flex items-center justify-between p-2.5 rounded-lg text-sm text-[#fb923c] hover:bg-[#201510] transition-colors"
+                >
+                  <span className="font-bold flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-[#fb923c] animate-pulse" />
+                    10M ZEC BLITZ
+                  </span>
+                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#431407] text-[#fb923c] border border-[#ea580c]/60 font-bold">
+                    1.52x Fixed
+                  </span>
+                </Link>
               </div>
 
               {/* 3. Mobile Action Button (Vault only - Audit Proofs hidden on mobile) */}
@@ -537,11 +560,11 @@ export default function Navbar() {
                 </div>
                 <div className="grid grid-cols-2 gap-2 text-xs">
                   <Link
-                    href="/?cat=blitz"
+                    href="/blitz"
                     onClick={() => setIsMobileMenuOpen(false)}
                     className="p-2 rounded-lg bg-[#140e0b] border border-[#7c2d12]/30 text-[#fb923c] font-bold hover:border-[#fb923c]/50 transition-colors flex items-center gap-1.5"
                   >
-                    <span>5m Blitz</span>
+                    <span>10m ZEC Blitz</span>
                   </Link>
                   <Link
                     href="/?cat=crypto"

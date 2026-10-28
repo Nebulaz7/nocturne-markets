@@ -360,10 +360,15 @@ export default function MarketCard({ market, submarkets }: MarketCardProps) {
         <div className="flex items-center justify-between gap-2 mb-3 z-10 relative">
           <div className="flex items-center gap-1.5 flex-wrap">
             {isBlitz ? (
-              <span className="inline-flex items-center gap-1 text-[10px] font-mono font-bold px-2 py-0.5 rounded-md bg-[#431407] text-[#fb923c] border border-[#ea580c]/60">
-                <Zap className="w-2.5 h-2.5 text-[#fb923c]" />
-                <span>5-MIN BLITZ</span>
-              </span>
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <span className="inline-flex items-center gap-1 text-[10px] font-mono font-bold px-2 py-0.5 rounded-md bg-[#431407] text-[#fb923c] border border-[#ea580c]/60">
+                  <Zap className="w-2.5 h-2.5 text-[#fb923c]" />
+                  <span>10M ZEC BLITZ</span>
+                </span>
+                <span className="inline-flex items-center text-[10px] font-mono font-bold px-1.5 py-0.5 rounded-md bg-[#12281c] text-[#22c55e] border border-[#22c55e]/30">
+                  1.52x
+                </span>
+              </div>
             ) : (
               <span className="text-[10px] font-mono font-semibold px-2 py-0.5 rounded-md bg-[#160f0c] text-[#fef3c7]/70 border border-[#7c2d12]/40">
                 {market.category || "General"}
@@ -460,13 +465,23 @@ export default function MarketCard({ market, submarkets }: MarketCardProps) {
           <div className="flex items-center gap-1.5">
             <Shield className="w-3.5 h-3.5 text-[#fb923c]/70 shrink-0" />
             <span>
-              Pot:{" "}
-              <strong className="text-[#fef3c7] font-bold">
-                {potZec > 0 ? potZec.toFixed(2) : "0.00"} ZEC
-              </strong>
+              {isBlitz ? (
+                <>
+                  Payout: <strong className="text-[#22c55e] font-bold">1.52x Fixed</strong>
+                </>
+              ) : (
+                <>
+                  Pot:{" "}
+                  <strong className="text-[#fef3c7] font-bold">
+                    {potZec > 0 ? potZec.toFixed(2) : "0.00"} ZEC
+                  </strong>
+                </>
+              )}
             </span>
           </div>
-          <span className="text-[11px] text-[#fef3c7]/40">Parimutuel Pool</span>
+          <span className="text-[11px] text-[#fef3c7]/40">
+            {isBlitz ? "Sponsored Demo" : "Parimutuel Pool"}
+          </span>
         </div>
 
         {/* Action Trade YES / NO Buttons */}
@@ -476,7 +491,7 @@ export default function MarketCard({ market, submarkets }: MarketCardProps) {
             onClick={(e) => handleTradeYes(e)}
             className="w-full py-2.5 px-3 rounded-xl bg-[#12281c] hover:bg-[#183525] active:bg-[#0d1e15] text-[#22c55e] font-sans font-bold text-sm flex items-center justify-center transition-colors cursor-pointer shadow-none outline-none border-none"
           >
-            Yes
+            {isBlitz ? "Up (Yes)" : "Yes"}
           </button>
 
           <button
@@ -484,7 +499,7 @@ export default function MarketCard({ market, submarkets }: MarketCardProps) {
             onClick={(e) => handleTradeNo(e)}
             className="w-full py-2.5 px-3 rounded-xl bg-[#361212] hover:bg-[#461717] active:bg-[#290d0d] text-[#f87171] font-sans font-bold text-sm flex items-center justify-center transition-colors cursor-pointer shadow-none outline-none border-none"
           >
-            No
+            {isBlitz ? "Down (No)" : "No"}
           </button>
         </div>
       </div>

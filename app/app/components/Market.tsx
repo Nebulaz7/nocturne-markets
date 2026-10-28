@@ -28,7 +28,7 @@ const CATEGORIES: { label: string; value: CategoryType }[] = [
   { label: "Crypto", value: "Crypto" },
   { label: "Sports", value: "Sports" },
   { label: "Others", value: "Others" },
-  { label: "5m Blitz", value: "Blitz" },
+  { label: "10m ZEC Blitz", value: "Blitz" },
 ];
 
 interface MarketProps {

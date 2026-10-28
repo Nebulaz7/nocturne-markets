@@ -34,6 +34,9 @@ export interface MarketBetSlipProps {
     total_pot_zec?: number;
     yes_pot_zec?: number;
     no_pot_zec?: number;
+    market_type?: string | null;
+    payout_multiplier?: number | null;
+    seconds_left?: number | null;
   };
   submarketTitle?: string;
   selectedSide: BetSide;
@@ -91,7 +94,21 @@ export function MarketBetSlip({
   const parimutuelEstimate = useMemo(() => {
     const stake = parseFloat(stakeAmount) || 0;
     if (stake <= 0) {
-      return { payoutZec: "0.000", multiplier: "1.00" };
+      return { payoutZec: "0.000", multiplier: "1.00", isFixed: false };
+    }
+
+    // Fixed House Payout for Sponsored Blitz Demo Markets
+    const fixedMultiplier =
+      market.payout_multiplier ||
+      (isBlitz || market.market_type === "SPONSORED_DEMO" ? 1.52 : null);
+
+    if (fixedMultiplier) {
+      const grossPayout = stake * fixedMultiplier;
+      return {
+        payoutZec: grossPayout.toFixed(4),
+        multiplier: Number(fixedMultiplier).toFixed(2),
+        isFixed: true,
+      };
     }
 
     const yesPot = market.yes_pot_zec ?? 0;
@@ -110,6 +127,7 @@ export function MarketBetSlip({
       return {
         payoutZec: grossPayout.toFixed(3),
         multiplier: (grossPayout / stake).toFixed(2),
+        isFixed: false,
       };
     }
 
@@ -121,12 +139,16 @@ export function MarketBetSlip({
     return {
       payoutZec: grossPayout.toFixed(3),
       multiplier: (grossPayout / stake).toFixed(2),
+      isFixed: false,
     };
   }, [
     stakeAmount,
     selectedSide,
     market.yes_pot_zec,
     market.no_pot_zec,
+    market.payout_multiplier,
+    market.market_type,
+    isBlitz,
     yesPrice,
     noPrice,
   ]);
@@ -419,7 +441,10 @@ export function MarketBetSlip({
 
               {/* Preset Chips */}
               <div className="flex items-center gap-1.5 mt-2 flex-wrap">
-                {[0.1, 0.5, 1.0, 5.0].map((preset) => (
+                {(isBlitz || market.market_type === "SPONSORED_DEMO"
+                  ? [0.05, 0.1, 0.5, 1.0]
+                  : [0.1, 0.5, 1.0, 5.0]
+                ).map((preset) => (
                   <button
                     key={preset}
                     type="button"
@@ -443,15 +468,17 @@ export function MarketBetSlip({
               />
             </div>
 
-            {/* Parimutuel Pot Payout Calculation */}
-            <div className="p-3.5 rounded-xl bg-[#140e0b] border border-[#7c2d12]/30 flex items-center justify-between">
-              <span className="text-xs font-mono text-[#fef3c7]/60">To win</span>
+            {/* Payout Calculation Strip */}
+            <div className="p-3.5 rounded-xl bg-[#140e0b] border border-[#7c2d12]/30 flex items-center justify-between font-mono">
+              <span className="text-xs text-[#fef3c7]/60">
+                {isBlitz || market.payout_multiplier ? "Fixed Return" : "To win"}
+              </span>
               <div className="flex items-baseline gap-2">
-                <span className="text-lg font-bold font-mono text-[#22c55e]">
+                <span className="text-lg font-bold text-[#22c55e]">
                   {parimutuelEstimate.payoutZec} ZEC
                 </span>
-                <span className="text-xs font-mono text-[#fb923c]">
-                  ({parimutuelEstimate.multiplier}x)
+                <span className="text-xs text-[#fb923c] font-bold">
+                  ({parimutuelEstimate.multiplier}x{isBlitz || market.payout_multiplier ? " Fixed" : ""})
                 </span>
               </div>
             </div>

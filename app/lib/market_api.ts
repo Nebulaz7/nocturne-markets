@@ -315,3 +315,44 @@ export async function fetchMarketAudit(
   const json = await res.json();
   return json.audit || json;
 }
+
+export interface BlitzMarketItem {
+  id: string;
+  title: string;
+  slug?: string;
+  market_slug?: string;
+  event_slug?: string;
+  question?: string;
+  group_item_title?: string;
+  category: string;
+  image?: string | null;
+  icon?: string | null;
+  close_time: number;
+  drand_round: number;
+  status: string;
+  pot_address: string;
+  coordinator_public_key: string;
+  market_type: string;
+  payout_multiplier: number;
+  seconds_left: number;
+  total_pot_zec?: number;
+  yes_pot_zec?: number;
+  no_pot_zec?: number;
+  ref_yes_price?: number;
+}
+
+/**
+ * Fetches the currently active 10-Minute Rolling ZEC Blitz market from the coordinator.
+ */
+export async function fetchBlitzMarket(baseUrl?: string): Promise<BlitzMarketItem> {
+  const root = getCoordinatorBaseUrl(baseUrl);
+  const res = await fetch(`${root}/api/markets/blitz`, {
+    headers: { Accept: "application/json" },
+  });
+  if (!res.ok) {
+    throw new Error(`Failed to fetch blitz market: HTTP ${res.status}`);
+  }
+  const data = await res.json();
+  return data.market;
+}
+
