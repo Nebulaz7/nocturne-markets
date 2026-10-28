@@ -471,7 +471,30 @@ Upgraded the Private Vault experience across the application, adhering strictly 
 
 ---
 
-## 19. Active Focus & Immediate Next Actions
+## 20. Interactive `/pitch` Motion Design Page & 2-Minute Demo Flow
+
+### Summary of Completed Work
+Replaced third-party AI video generation with an in-engine interactive motion presentation deck at [`app/app/pitch/page.tsx`](file:///c:/Users/PC/Desktop/Coding/nocture-markets/app/app/pitch/page.tsx), enabling pristine 60fps screen recording aligned to the 2-minute ElevenLabs voiceover:
+
+1. **5 Synced Presentation Scenes**:
+   - **Scene 1 (0:00 – 0:14) — The Premise**: Interactive prediction card with animated probability gauge (74% YES / 26% NO) and flat green/red trade buttons.
+   - **Scene 2 (0:14 – 0:34) — The Problem**: Public surveillance ledger grid with wallet hashes (`0x71C...`) and exposed user node showing `Financial Privacy = 0%`.
+   - **Scene 3 (0:34 – 0:50) — The Solution**: Surveillance lines dissolve as an obsidian shield locks in. Split-screen: Polymarket Oracle Mirror vs. Independent Shielded Zcash Pool.
+   - **Scene 4 (0:50 – 1:05) — Under The Hood**: Cryptographic breakdown of the `NOC2:` 500-char memo structure, drand Quicknet timelock, and TweetNaCl boxed return UA.
+   - **Scene 5 (1:05 – 2:00) — Live Walkthrough Bridge**: 3 quick-launch doors to transition into screen recording the live app: Homepage (`/`), Blitz Demo (`/blitz`), and Private Vault (`/vault`).
+
+2. **Presenter HUD & Screen Recording Features**:
+   - **Auto-Play Mode**: Automatically synchronizes scene transitions with the exact voiceover duration (`0:00 / 2:00`).
+   - **Keyboard Navigation**: `←` / `→` arrow keys, spacebar (play/pause), `T` (toggle teleprompter subtitles), and `F` (fullscreen mode).
+   - **Design Integrity**: Strict compliance with the Warm Ember Obsidian palette (`#090706` base, `#0e0a08` card surface, `#7c2d12` rust border, `#fb923c` ember accent, `#fef3c7` cream text) and zero emojis.
+
+3. **Verification**:
+   - `pnpm --dir app exec tsc --noEmit` exited cleanly with code `0`.
+   - All 6 unit and integration test suites passed (`100% PASS`).
+
+---
+
+## 21. Active Focus & Immediate Next Actions
 
 ### Next Priority: Phase 4 — Production VM Daemon & Remote Deployment (Days 14 - 15)
 
@@ -483,7 +506,7 @@ Upgraded the Private Vault experience across the application, adhering strictly 
    - Connect GitHub repository to Vercel with `NEXT_PUBLIC_COORDINATOR_URL` pointed to the Azure VM.
 3. **Phase 5: Hackathon Submission Artifacts**:
    - Final threat model whitepaper / leak audit (`docs/LEAK_AUDIT.md`).
-   - 5-minute Blitz testnet demo run for ZECATHON judges.
-   - Demo video recording and submission text.
+   - Screen record 2-minute demo using `/pitch` + live app walkthrough with ElevenLabs audio.
+   - Complete ZECATHON submission.
 
 
