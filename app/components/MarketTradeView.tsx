@@ -241,6 +241,12 @@ export function MarketTradeView({
                     {market.category || "General"}
                   </span>
 
+                  {isBlitz && (
+                    <span className="text-[10px] font-mono font-bold uppercase px-2 py-0.5 rounded bg-[#431407] text-[#fb923c] border border-[#ea580c]/50">
+                      DEMO
+                    </span>
+                  )}
+
                   {timeRemaining && (
                     <span className="inline-flex items-center gap-1 text-[11px] font-mono text-[#fef3c7]/50">
                       <Clock className="w-3 h-3 text-[#fef3c7]/40" />
@@ -300,6 +306,8 @@ export function MarketTradeView({
             potAddress={market.pot_address}
             coordinatorPublicKey={market.coordinator_public_key}
             conditionId={market.condition_id}
+            isBlitz={isBlitz}
+            marketType={(market as any).market_type}
             onOpenAudit={() => setAuditOpen(true)}
           />
         </div>

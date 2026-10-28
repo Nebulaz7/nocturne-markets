@@ -368,6 +368,9 @@ export default function MarketCard({ market, submarkets }: MarketCardProps) {
                 <span className="inline-flex items-center text-[10px] font-mono font-bold px-1.5 py-0.5 rounded-md bg-[#12281c] text-[#22c55e] border border-[#22c55e]/30">
                   1.52x
                 </span>
+                <span className="inline-flex items-center text-[10px] font-mono font-bold px-1.5 py-0.5 rounded-md bg-[#431407] text-[#fb923c] border border-[#ea580c]/50 uppercase">
+                  DEMO
+                </span>
               </div>
             ) : (
               <span className="text-[10px] font-mono font-semibold px-2 py-0.5 rounded-md bg-[#160f0c] text-[#fef3c7]/70 border border-[#7c2d12]/40">
@@ -480,7 +483,7 @@ export default function MarketCard({ market, submarkets }: MarketCardProps) {
             </span>
           </div>
           <span className="text-[11px] text-[#fef3c7]/40">
-            {isBlitz ? "Sponsored Demo" : "Parimutuel Pool"}
+            {isBlitz ? "Resolves YES · Demo" : "Parimutuel Pool"}
           </span>
         </div>
 

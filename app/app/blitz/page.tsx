@@ -112,8 +112,8 @@ export default function BlitzPage() {
             </Link>
             <span className="text-[#7c2d12]">/</span>
             <span className="text-[#fb923c] font-bold">10M ZEC BLITZ</span>
-            <span className="hidden sm:inline-block px-2 py-0.5 rounded bg-[#431407] text-[#fb923c] border border-[#ea580c]/50 text-[10px] font-bold">
-              SPONSORED DEMO
+            <span className="px-2 py-0.5 rounded bg-[#431407] text-[#fb923c] border border-[#ea580c]/50 text-[10px] font-mono font-bold uppercase tracking-wider">
+              DEMO
             </span>
           </div>
 
@@ -192,6 +192,9 @@ export default function BlitzPage() {
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className="text-[10px] font-mono font-bold uppercase px-2 py-0.5 rounded bg-[#431407] text-[#fb923c] border border-[#ea580c]/50">
                           10-Minute Blitz
+                        </span>
+                        <span className="text-[10px] font-mono font-bold uppercase px-2 py-0.5 rounded bg-[#2a1308] text-[#fb923c] border border-[#ea580c]/40">
+                          DEMO
                         </span>
                         <span className="text-[10px] font-mono text-[#fef3c7]/60">
                           ID: {blitz.id}
@@ -275,7 +278,16 @@ export default function BlitzPage() {
                   </span>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-[11px] text-[#fef3c7]/70">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-[11px] text-[#fef3c7]/70">
+                  <div className="p-3 rounded-xl bg-[#140e0b] border border-[#ea580c]/30">
+                    <div className="text-emerald-400 font-bold mb-1 flex items-center gap-1.5">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                      Always Resolves to YES
+                    </div>
+                    <div>
+                      This demo market is programmed to always resolve to YES every 10 minutes without relying on external oracle delays.
+                    </div>
+                  </div>
                   <div className="p-3 rounded-xl bg-[#140e0b] border border-[#7c2d12]/20">
                     <div className="text-[#fb923c] font-bold mb-1">Non-Parimutuel Guarantee</div>
                     <div>

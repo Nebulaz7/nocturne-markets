@@ -267,6 +267,11 @@ export function MarketBetSlip({
             <h2 className="text-sm font-heading font-bold text-[#fef3c7] truncate">
               {submarketTitle || market.title}
             </h2>
+            {(isBlitz || market.market_type === "SPONSORED_DEMO") && (
+              <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-[#431407] text-[#fb923c] border border-[#ea580c]/50 uppercase shrink-0">
+                DEMO
+              </span>
+            )}
           </div>
           <span
             className={`text-xs font-mono font-bold px-2.5 py-0.5 rounded ${
@@ -412,6 +417,16 @@ export function MarketBetSlip({
                 {isBlitz ? "Down" : "No"} {(noPrice * 100).toFixed(1)}¢
               </button>
             </div>
+
+            {(isBlitz || market.market_type === "SPONSORED_DEMO") && (
+              <div className="p-2.5 rounded-xl bg-[#140e0b] border border-[#ea580c]/30 text-xs font-mono flex items-center justify-between">
+                <span className="text-[11px] text-[#fef3c7]/80 flex items-center gap-1.5 font-semibold">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                  Resolves to YES every 10m
+                </span>
+                <span className="text-[10px] text-[#22c55e] font-bold">1.52x Fixed</span>
+              </div>
+            )}
 
             {/* Stake Input */}
             <div>
