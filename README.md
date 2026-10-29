@@ -1,11 +1,28 @@
+<p align="center">
+  <img src="logo.png" alt="Nocturne Markets Logo" width="130" />
+</p>
 
-# Nocturne Markets
 
-Public prices. Private people.
+<h1 align="center">Nocturne Markets</h1>
 
-A zero-knowledge, zero-POST prediction market built on Zcash for the ZECATHON Private Markets track. Nocturne Markets mirrors live Polymarket event reference data and resolves outcomes into independent, shielded Zcash parimutuel pools.
+<p align="center">
+  <strong>Public prices. Private people.</strong>
+</p>
 
-Demo Video: https://youtu.be/MhBTP-hAOfE
+
+<p align="center">
+  A zero-knowledge, zero-POST prediction market built on Zcash for the ZECATHON Private Markets track. Nocturne Markets mirrors live Polymarket event reference data and resolves outcomes into independent, shielded Zcash parimutuel pools.
+</p>
+
+<p align="center">
+  <a href="https://youtu.be/MhBTP-hAOfE" target="_blank">
+    <img src="https://img.youtube.com/vi/MhBTP-hAOfE/maxresdefault.jpg" alt="Nocturne Markets 2-Minute Demo Video Walkthrough" width="720" />
+  </a>
+</p>
+
+<p align="center">
+  <a href="https://youtu.be/MhBTP-hAOfE"><strong>Watch the 2-Minute Submission Demo Video</strong></a>
+</p>
 
 ---
 
