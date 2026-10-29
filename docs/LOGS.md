@@ -497,7 +497,28 @@ Replaced third-party AI video generation with an in-engine interactive motion pr
 
 ---
 
-## 21. Active Focus & Immediate Next Actions
+## 21. Production README.md & Visual Architecture Specifications
+
+### Summary of Completed Work
+Implemented the comprehensive hackathon documentation in [`README.md`](file:///c:/Users/PC/Desktop/Coding/nocture-markets/README.md) formatted strictly for ZECATHON judges:
+
+1. **Submission Metadata & Labels Strip**: Project details, track (Private Markets), video link (`https://youtu.be/MhBTP-hAOfE`), live domain (`nocturnemarkets.tech`), target network (Zcash Testnet Orchard), and core primitives.
+2. **Technical Architecture & Zcash Leverage**:
+   - Shielded Orchard Unified Addresses (`utest1...`) and identical pot addresses for both YES/NO sides.
+   - Standard ZIP-321 payment request URIs carrying valid 500-byte wire memos (`NOC2:<base64url>~...`).
+   - Dual-Envelope cryptography: drand Quicknet timelock (`tlock-js`) + TweetNaCl box payout address encryption.
+   - Fee-on-profit parimutuel math in exact BigInt zatoshis (2% fee strictly on losing pot; 100% single-sided/void refund guarantee).
+   - Safe public IVK auditing without bettor return address leakage.
+3. **Mermaid Diagrams**:
+   - Diagram 1: High-level System Architecture (Client Layer, Zcash Network, Coordinator Service, Public Services).
+   - Diagram 2: Dual-Envelope Betting & Settlement Sequence (Deposit, Time-lock Decryption, Parimutuel Shares, Shielded Payout).
+   - Diagram 3: Public Merkle Proof Verification Flow.
+4. **Honest Threat Model & Trust Analysis Table**: Enumeration of attack vectors, mitigations, and residual risks.
+5. **Strict Compliance**: Zero emojis and zero em dashes throughout the entire file.
+
+---
+
+## 22. Active Focus & Immediate Next Actions
 
 ### Next Priority: Phase 4 — Production VM Daemon & Remote Deployment (Days 14 - 15)
 
